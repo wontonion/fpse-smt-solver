@@ -1,0 +1,7 @@
+(executable
+ (public_name backend)
+ (name main)
+ (libraries 
+  backend
+  dream
+ ))
