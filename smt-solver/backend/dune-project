@@ -17,8 +17,8 @@
 
 (package
  (name backend)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "SAT/SMT solver backend")
+ (description "SAT/SMT solver backend")
  (depends 
   ocaml 
   dream
@@ -28,6 +28,6 @@
   ppx_jane
  )
  (tags
-  (topics "to describe" your project)))
+  (SMT SAT solver)))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
