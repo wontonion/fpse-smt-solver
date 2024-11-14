@@ -1,5 +1,5 @@
 (library
- (name sat_cdcl)
+ (name cdcl)
  (modules variable literal clause assignment solver)
  (libraries core)
  (preprocess
