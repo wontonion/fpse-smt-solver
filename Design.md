@@ -31,8 +31,45 @@ Overall, we are planning to build up a website to for three main functions:
 3. Once all blanks is filled, the website will trigger the SAT solver to check whether the sudoku is correct
 4. User can also directly choose to reveal the solution by a button if they don't want to or unable to finish the sudoku
 
-### 2.2 Describe of SAT/SMT solution with Ocaml
+### 2.2 Description of Conflict-Driven Clause Learning (CDCL) Algorithm
+
 If the basis of your project is just some hard algorithm, take this chance to describe the algorithm and how OCaml will work with it. Show example uses and discuss desired performance.
+
+The Boolean Satisfiability Problem (SAT) is a fundamental question in computer science: given a boolean formula, can we find an assignment of its variables that makes the formula evaluate to true? This problem is known to be NP-Complete, meaning that, in the worst case, it can take an exponential amount of time to solve. However, many real-world problems often exhibit structures that can be leveraged to improve search efficiency.
+
+In this project, we will explore the Conflict-Driven Clause Learning (CDCL) algorithm, a modern SAT solver that significantly enhances the search process compared to earlier methods, such as the Davis-Putnam-Logemann-Loveland (DPLL) algorithm developed in the 1960s.
+
+#### Overview of CDCL
+
+CDCL builds on the foundation laid by DPLL but introduces several key innovations:
+
+- Clause Learning: When CDCL encounters a conflict (i.e., a situation where no variable assignment can satisfy the formula), it analyzes the decisions and implications that led to this conflict. By constructing an implication graph, it identifies a new clause that represents this learned information. This clause is added to the formula, allowing the solver to avoid similar conflicts in the future.
+- Non-Chronological Backtracking: Unlike DPLL, which can only backtrack one level when a conflict is reached, CDCL can backtrack multiple levels. This ability to skip over large sections of the search space is critical for improving performance, especially in complex formulas.
+- Boolean Constraint Propagation (BCP): CDCL employs BCP extensively, automatically inferring variable assignments based on the current state of the formula. This process helps in simplifying the formula and quickly identifying unit clauses that must be satisfied.
+
+#### How CDCL Works
+
+The algorithm operates as follows:
+
+- Initialization: Start with an empty assignment of variables.
+- BCP Execution: Continuously apply BCP to deduce variable assignments until no more unit clauses can be found.
+- Decision Making: If the formula is still undecided, select an unassigned variable and attempt to assign it true or false, recursively applying the CDCL process.
+- Conflict Resolution: Upon encountering a conflict, construct the implication graph, learn a new clause, and perform non-chronological backtracking to a decision point that allows for exploration of new possibilities.
+- Repeat: Repeat the process, until all variables are assigned.
+
+#### How OCaml will work with it
+
+OCaml is particularly well-suited for implementing the Conflict-Driven Clause Learning (CDCL) algorithm:
+
+- Higher-Order Functions: These allow for the creation of flexible and reusable components, such as abstractions for heuristics, decision-making and conflict resolution. This enhances code modularity and readability, making it easier to implement complex logic.
+- Pattern Matching: OCaml’s powerful pattern matching capabilities simplify the handling of different states within the algorithm. This feature allows us to easily distinguish between satisfied clauses, conflicts, and undecided variables, reducing the likelihood of errors.
+- Code Clarity and Robustness: The combination of higher-order functions and pattern matching promotes clearer code and more maintainable implementations. This results in a more efficient SAT solver that effectively tackles complex Boolean formulas.
+
+#### Performance Considerations
+
+While OCaml's immutable data structures promote safety and ease of reasoning, adopting mutable data structures can significantly enhance performance, particularly in scenarios involving frequent updates and dynamic modifications. Mutable arrays, for instance, allow for efficient in-place updates of variable assignments and clause representations, reducing the overhead associated with creating new copies of data on each modification.
+
+However, we will likely avoid using mutable data structures to deepen our understanding of OCaml. Instead, we will utilize OCaml's profiling tools, such as landmark, to identify bottlenecks in the CDCL implementation. By analyzing runtime performance, we can concentrate on optimizing critical sections of the code, such as Boolean Constraint Propagation (BCP) and conflict resolution, ultimately enhancing overall execution speed.
 
 ## 3. Libraries and Tools
 
