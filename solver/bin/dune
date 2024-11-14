@@ -1,0 +1,4 @@
+(executable
+ (public_name solver)
+ (name main)
+ (libraries cdcl))
