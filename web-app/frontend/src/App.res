@@ -1,3 +1,6 @@
+open Utilities
+
+
 @react.component
 let make = () => {
   let (count, setCount) = React.useState(() => 0)
@@ -11,6 +14,9 @@ let make = () => {
     <Button onClick={_ => setCount(count => count + 1)}>
       {React.string(`count is ${count->Int.toString}`)}
     </Button>
+    <ButtonToBackend onClick={_ => connectToBackend()}>
+      {React.string(`This is a button to test backend hello`)}
+    </ButtonToBackend>
     <p>
       {React.string("Edit ")}
       <code> {React.string("src/App.res")} </code>

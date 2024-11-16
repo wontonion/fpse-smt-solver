@@ -14,6 +14,9 @@ importers:
       '@rescript/react':
         specifier: ^0.12.1
         version: 0.12.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      bs-fetch:
+        specifier: ^0.6.2
+        version: 0.6.2
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -23,6 +26,9 @@ importers:
       rescript:
         specifier: ^11.1.4
         version: 11.1.4
+      rescript-request:
+        specifier: ^3.0.1
+        version: 3.0.1
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.2.1
@@ -479,6 +485,9 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
+  bs-fetch@0.6.2:
+    resolution: {integrity: sha512-VXEjp8kY3vHPckaoy3d96Bx0KYjJAPLNISBwfpwMN26K6DtuZYwI2HKhx7zeHBajz1bRArfx7O8OOLcdtujMvg==}
+
   camelcase-css@2.0.1:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
     engines: {node: '>= 6'}
@@ -805,6 +814,12 @@ packages:
   readdirp@3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
+
+  rescript-future@2.1.0:
+    resolution: {integrity: sha512-WUgneUX0ikoavBmfhoBluGIlDuCfn5pKXBECTKpNknfBYKbSvQUzdXPbqViHhK8kTfJwGTicMpZJGf+RyiwfNw==}
+
+  rescript-request@3.0.1:
+    resolution: {integrity: sha512-u8VLEysG40vcfRFHFGiR+k8wUQujSkdhD72j8AfpLQs+EUzonBIT+ZrQ1l7A2cdMXWcx6U/PmUijnB2cuJ0zDw==}
 
   rescript@11.1.4:
     resolution: {integrity: sha512-0bGU0bocihjSC6MsE3TMjHjY0EUpchyrREquLS8VsZ3ohSMD+VHUEwimEfB3kpBI1vYkw3UFZ3WD8R28guz/Vw==}
@@ -1329,6 +1344,8 @@ snapshots:
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.2)
 
+  bs-fetch@0.6.2: {}
+
   camelcase-css@2.0.1: {}
 
   caniuse-lite@1.0.30001680: {}
@@ -1620,6 +1637,12 @@ snapshots:
   readdirp@3.6.0:
     dependencies:
       picomatch: 2.3.1
+
+  rescript-future@2.1.0: {}
+
+  rescript-request@3.0.1:
+    dependencies:
+      rescript-future: 2.1.0
 
   rescript@11.1.4: {}
 

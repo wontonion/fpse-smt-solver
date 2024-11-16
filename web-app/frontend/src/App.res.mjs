@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import * as Button from "./Button.res.mjs";
+import * as Utilities from "./utilities/utilities.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
+import * as ButtonToBackend from "./ButtonToBackend.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
 function App(props) {
@@ -29,6 +31,12 @@ function App(props) {
                           setCount(function (count) {
                                 return count + 1 | 0;
                               });
+                        })
+                    }),
+                JsxRuntime.jsx(ButtonToBackend.make, {
+                      children: "This is a button to test backend hello",
+                      onClick: (function (param) {
+                          Utilities.connectToBackend();
                         })
                     }),
                 JsxRuntime.jsxs("p", {
