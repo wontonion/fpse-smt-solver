@@ -62,7 +62,7 @@ Follow command below to run demo of Dream:
 ```bash
 cd web-app/backend
 # If dune tool has been properly installed
-dune exec main
+dune exec backend
 
 # The last command invoke dream at port 8080
 ```
