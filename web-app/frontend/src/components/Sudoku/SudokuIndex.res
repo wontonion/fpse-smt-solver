@@ -1,0 +1,36 @@
+@react.component
+let make = () => {
+  let (gridSize, setGridSize) = React.useState(() => 9)
+
+  <div className="grid grid-cols-2 gap-6">
+    <div>
+      <div className="text-xl font-semibold mb-4 justify-start flex items-center">
+        <h2> {React.string("Sudoku Grid")} </h2>
+        <div className="flex items-center gap-2 ml-2">
+          <select
+            className="border border-gray-300 rounded px-2 py-1"
+            value={gridSize->Int.toString}
+            onChange={event => {
+              let newSize = ReactEvent.Form.target(event)["value"]->Int.fromString->Option.getOr(9)
+              setGridSize(_ => newSize)
+            }}>
+            <option value="4"> {React.string("4x4")} </option>
+            <option value="6"> {React.string("6x6")} </option>
+            <option value="9"> {React.string("9x9")} </option>
+          </select>
+        </div>
+      </div>
+      <div className="border-2 border-gray-300 p-4 justify-center flex">
+        <Grid size={gridSize} />
+      </div>
+    </div>
+    <div>
+      <h2 className="text-xl font-semibold mb-4"> {React.string("Controls")} </h2>
+      <div className="space-y-4">
+        <Button onClick={_ => ()}> {React.string("Solve Puzzle")} </Button>
+        <Button onClick={_ => ()}> {React.string("Clear Grid")} </Button>
+        <Button onClick={_ => ()}> {React.string("Generate New Puzzle")} </Button>
+      </div>
+    </div>
+  </div>
+}
