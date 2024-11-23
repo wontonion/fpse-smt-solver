@@ -2,7 +2,7 @@
 
 import * as Grid from "./Grid.res.mjs";
 import * as React from "react";
-import * as Button from "../Button.res.mjs";
+import * as Button from "../Button/Button.res.mjs";
 import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";

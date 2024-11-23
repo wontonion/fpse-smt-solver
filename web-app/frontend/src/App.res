@@ -6,9 +6,11 @@ let make = () => {
   let testBackendConnection = () => {
     open Promise
     Fetch.fetch("/api/backend/hello")
-    ->then(Fetch.Response.text)
+    ->then(response => {
+      Fetch.Response.text(response)
+      })
     ->then(message => {
-      setBackendMessage(_ => message)
+  setBackendMessage(_ =>                      message)
       resolve()
     })
     ->ignore
