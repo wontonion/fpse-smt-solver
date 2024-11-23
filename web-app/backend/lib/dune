@@ -1,2 +1,5 @@
 (library
- (name backend))
+ (name hello)
+ (libraries dream yojson)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
