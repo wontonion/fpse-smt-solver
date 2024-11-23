@@ -14,25 +14,25 @@
 let make = () => {
   let (activeTab, setActiveTab) = React.useState(() => "sudoku")
   let (backendMessage, setBackendMessage) = React.useState(() => "")
-  
+
   let testBackendConnection = () => {
     open Promise
     Fetch.fetch("/api/backend/hello")
     ->then(response => {
-      Fetch.Response.json(response)  // 使用 json 而不是 text
+      Fetch.Response.json(response)  // use json
     })
     ->then(json => {
-      // 解析 JSON 响应
+      // Deserialize JSON 
       let response = json->Js.Json.decodeObject->Belt.Option.getExn
       let status = response->Js.Dict.get("status")->Belt.Option.getExn->Js.Json.decodeString->Belt.Option.getExn
       let message = response->Js.Dict.get("message")->Belt.Option.getExn->Js.Json.decodeString->Belt.Option.getExn
       
-      // 打印到控制台
+      // print to console
       Js.Console.log2("Response status:", status)
       Js.Console.log2("Response message:", message)
       Js.Console.log2("Full response:", json)
 
-      // 更新状态显示格式化的消息
+      // display message 
       setBackendMessage(_ => `Status: ${status}\nMessage: ${message}`)
       resolve()
     })
@@ -40,6 +40,7 @@ let make = () => {
       let errorMsg = Js.String.make(error)
       Js.Console.error2("Error fetching backend:", errorMsg)
       setBackendMessage(_ => `Error: ${errorMsg}`)
+
       resolve()
     })
     ->ignore
