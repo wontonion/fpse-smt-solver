@@ -2,8 +2,12 @@
 
 import * as Fetch from "bs-fetch/src/Fetch.res.mjs";
 import * as React from "react";
+import * as Js_dict from "rescript/lib/es6/js_dict.js";
+import * as Js_json from "rescript/lib/es6/js_json.js";
+import * as Belt_Option from "rescript/lib/es6/belt_Option.js";
 import * as SolverIndex from "./components/Solver/SolverIndex.res.mjs";
 import * as SudokuIndex from "./components/Sudoku/SudokuIndex.res.mjs";
+import * as Core__Promise from "@rescript/core/src/Core__Promise.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
 function App(props) {
@@ -18,14 +22,27 @@ function App(props) {
   var setBackendMessage = match$1[1];
   var backendMessage = match$1[0];
   var testBackendConnection = function () {
-    fetch("/api/backend/hello").then(function (response) {
-            return Fetch.$$Response.text(response);
-          }).then(function (message) {
-          setBackendMessage(function (param) {
-                return message;
-              });
-          return Promise.resolve();
-        });
+    Core__Promise.$$catch(fetch("/api/backend/hello").then(function (response) {
+                return Fetch.$$Response.json(response);
+              }).then(function (json) {
+              var response = Belt_Option.getExn(Js_json.decodeObject(json));
+              var status = Belt_Option.getExn(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(response, "status"))));
+              var message = Belt_Option.getExn(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(response, "message"))));
+              console.log("Response status:", status);
+              console.log("Response message:", message);
+              console.log("Full response:", json);
+              setBackendMessage(function (param) {
+                    return "Status: " + status + "\nMessage: " + message;
+                  });
+              return Promise.resolve();
+            }), (function (error) {
+            var errorMsg = String(error);
+            console.error("Error fetching backend:", errorMsg);
+            setBackendMessage(function (param) {
+                  return "Error: " + errorMsg;
+                });
+            return Promise.resolve();
+          }));
   };
   var tmp;
   switch (activeTab) {
@@ -61,7 +78,10 @@ function App(props) {
                                 })
                             }),
                         backendMessage !== "" ? JsxRuntime.jsx("div", {
-                                children: backendMessage,
+                                children: JsxRuntime.jsx("pre", {
+                                      children: backendMessage,
+                                      className: "whitespace-pre-wrap"
+                                    }),
                                 className: "mt-2 p-2 bg-gray-100 rounded"
                               }) : null
                       ],
