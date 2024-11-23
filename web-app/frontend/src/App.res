@@ -1,3 +1,15 @@
+  // 首先定义类型来匹配后端的响应结构
+  type solution = {
+    problem_type: string,
+    assignments: option<array<(string, string)>>,
+    time_taken: float
+  }
+
+  type response = {
+    status: string,
+    message: string,
+    data: option<solution>
+  }
 @react.component
 let make = () => {
   let (activeTab, setActiveTab) = React.useState(() => "sudoku")
@@ -7,10 +19,28 @@ let make = () => {
     open Promise
     Fetch.fetch("/api/backend/hello")
     ->then(response => {
-      Fetch.Response.text(response)
-      })
-    ->then(message => {
-  setBackendMessage(_ =>                      message)
+      Fetch.Response.json(response)  // use json
+    })
+    ->then(json => {
+      // Deserialize JSON 
+      let response = json->Js.Json.decodeObject->Belt.Option.getExn
+      let status = response->Js.Dict.get("status")->Belt.Option.getExn->Js.Json.decodeString->Belt.Option.getExn
+      let message = response->Js.Dict.get("message")->Belt.Option.getExn->Js.Json.decodeString->Belt.Option.getExn
+      
+      // print to console
+      Js.Console.log2("Response status:", status)
+      Js.Console.log2("Response message:", message)
+      Js.Console.log2("Full response:", json)
+
+      // display message 
+      setBackendMessage(_ => `Status: ${status}\nMessage: ${message}`)
+      resolve()
+    })
+    ->catch(error => {
+      let errorMsg = Js.String.make(error)
+      Js.Console.error2("Error fetching backend:", errorMsg)
+      setBackendMessage(_ => `Error: ${errorMsg}`)
+
       resolve()
     })
     ->ignore
@@ -27,7 +57,7 @@ let make = () => {
       </button>
       {backendMessage !== "" 
         ? <div className="mt-2 p-2 bg-gray-100 rounded">
-            {React.string(backendMessage)}
+            <pre className="whitespace-pre-wrap"> {React.string(backendMessage)} </pre>
           </div>
         : React.null}
     </div>
