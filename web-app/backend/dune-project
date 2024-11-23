@@ -26,6 +26,7 @@
   core
   lwt
   ppx_jane
+  yojson
  )
  (tags
   (backend webapp)))

@@ -84,6 +84,7 @@ RUN eval $(opam env) && \
     core \
     ppx_jane \
     landmarks \
+    yojson \
     && opam clean
 
 # Create app directory and set permissions
