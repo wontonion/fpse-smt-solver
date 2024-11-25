@@ -1,3 +1,5 @@
+open Cell
+
 @react.component
 let make = () => {
   let (gridSize, setGridSize) = React.useState(() => 9)
@@ -5,7 +7,12 @@ let make = () => {
 
   let createEmptyGrid = size => {
     Belt.Array.makeBy(size, _ => 
-      Belt.Array.make(size, {Cell.value: "", isInitial: false, isValid: true})
+      Belt.Array.make(size, {
+        value: "",
+        isInitial: false,
+        isValid: true,
+        notes: [],
+      }: cellState)
     )
   }
   
@@ -24,7 +31,8 @@ let make = () => {
         if (i === row) {
           Belt.Array.mapWithIndex(rowArr, (j, cell) => {
             if (j === col) {
-              {...cell, value: value}
+              let isValid = true
+              {...cell, value: value, isValid: isValid}
             } else {
               cell
             }

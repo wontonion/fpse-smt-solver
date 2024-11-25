@@ -19,7 +19,8 @@ function SudokuIndex(props) {
                   return Belt_Array.make(size, {
                               value: "",
                               isInitial: false,
-                              isValid: true
+                              isValid: true,
+                              notes: []
                             });
                 }));
   };
@@ -44,7 +45,8 @@ function SudokuIndex(props) {
                                           return {
                                                   value: value,
                                                   isInitial: cell.isInitial,
-                                                  isValid: cell.isValid
+                                                  isValid: true,
+                                                  notes: cell.notes
                                                 };
                                         } else {
                                           return cell;

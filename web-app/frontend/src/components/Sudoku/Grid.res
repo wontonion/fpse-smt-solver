@@ -1,25 +1,41 @@
+open Cell
+
 @react.component
-let make = (~size: int, ~values: array<array<Cell.cellState>>, ~onCellChange: ((int, int, string)) => unit) => {
-  // Calculate sub-grid size (e.g., 3 for 9x9, 2 for 4x4)
+let make = (~size: int, ~values: array<array<cellState>>, ~onCellChange: ((int, int, string)) => unit) => {
   let subGridSize = switch size {
   | 9 => 3
   | 6 => 2
   | 4 => 2
-  | _ => 3 // default to 3x3 sub-grids
+  | _ => 3
+  }
+
+  let validateCell = (row, col, value, grid) => {
+    let rowValid = Belt.Array.get(grid, row)
+    ->Option.map(rowArr => 
+      Belt.Array.every(rowArr, cell => 
+        cell.value !== value || cell.value === ""
+      )
+    )
+    ->Option.getOr(true)
+    
+    let colValid = Belt.Array.every(grid, row => {
+      Belt.Array.get(row, col)
+      ->Option.map(cell => cell.value)
+      ->Option.getOr("")
+      ->value => value !== value || value === ""
+    })
+
+    rowValid && colValid
   }
 
   <div className="grid gap-0">
-    {Array.make(~length=size, 0)
-    ->Array.mapWithIndex((rowIndex, _) => {
+    {values
+    ->Belt.Array.mapWithIndex((rowIndex, row) => {
       <div key={rowIndex->Int.toString} className="flex">
-        {Array.make(~length=size, 0)
-        ->Array.mapWithIndex((colIndex, _) => {
+        {row
+        ->Belt.Array.mapWithIndex((colIndex, cell) => {
           let isRightBorder = mod(colIndex + 1, subGridSize) == 0 && colIndex != size - 1
           let isBottomBorder = mod(rowIndex + 1, subGridSize) == 0 && rowIndex != size - 1
-          
-          let cell = Belt.Array.get(values, rowIndex)
-            ->Option.flatMap(row => Belt.Array.get(row, colIndex))
-            ->Option.getOr({value: "", isInitial: false, isValid: true})
 
           <Cell
             key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`}
@@ -28,7 +44,10 @@ let make = (~size: int, ~values: array<array<Cell.cellState>>, ~onCellChange: ((
             colIndex
             isRightBorder
             isBottomBorder
-            onCellChange
+            onCellChange={((row, col, value)) => {
+              let isValid = validateCell(row, col, value, values)
+              onCellChange((row, col, value))
+            }}
           />
         })
         ->React.array}

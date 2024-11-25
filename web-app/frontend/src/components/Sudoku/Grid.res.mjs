@@ -3,7 +3,6 @@
 import * as Cell from "./Cell.res.mjs";
 import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as Caml_int32 from "rescript/lib/es6/caml_int32.js";
-import * as Core__Array from "@rescript/core/src/Core__Array.res.mjs";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
@@ -20,31 +19,60 @@ function Grid(props) {
     default:
       subGridSize = 3;
   }
+  var validateCell = function (row, col, value, grid) {
+    var rowValid = Core__Option.getOr(Core__Option.map(Belt_Array.get(grid, row), (function (rowArr) {
+                return Belt_Array.every(rowArr, (function (cell) {
+                              if (cell.value !== value) {
+                                return true;
+                              } else {
+                                return cell.value === "";
+                              }
+                            }));
+              })), true);
+    var colValid = Belt_Array.every(grid, (function (row) {
+            var value = Core__Option.getOr(Core__Option.map(Belt_Array.get(row, col), (function (cell) {
+                        return cell.value;
+                      })), "");
+            if (value !== value) {
+              return true;
+            } else {
+              return value === "";
+            }
+          }));
+    if (rowValid) {
+      return colValid;
+    } else {
+      return false;
+    }
+  };
   return JsxRuntime.jsx("div", {
-              children: Core__Array.make(size, 0).map(function (rowIndex, param) {
-                    return JsxRuntime.jsx("div", {
-                                children: Core__Array.make(size, 0).map(function (colIndex, param) {
-                                      var isRightBorder = Caml_int32.mod_(colIndex + 1 | 0, subGridSize) === 0 && colIndex !== (size - 1 | 0);
-                                      var isBottomBorder = Caml_int32.mod_(rowIndex + 1 | 0, subGridSize) === 0 && rowIndex !== (size - 1 | 0);
-                                      var cell = Core__Option.getOr(Core__Option.flatMap(Belt_Array.get(values, rowIndex), (function (row) {
-                                                  return Belt_Array.get(row, colIndex);
-                                                })), {
-                                            value: "",
-                                            isInitial: false,
-                                            isValid: true
-                                          });
-                                      return JsxRuntime.jsx(Cell.make, {
-                                                  cell: cell,
-                                                  rowIndex: rowIndex,
-                                                  colIndex: colIndex,
-                                                  isRightBorder: isRightBorder,
-                                                  isBottomBorder: isBottomBorder,
-                                                  onCellChange: onCellChange
-                                                }, rowIndex.toString() + "-" + colIndex.toString());
-                                    }),
-                                className: "flex"
-                              }, rowIndex.toString());
-                  }),
+              children: Belt_Array.mapWithIndex(values, (function (rowIndex, row) {
+                      return JsxRuntime.jsx("div", {
+                                  children: Belt_Array.mapWithIndex(row, (function (colIndex, cell) {
+                                          var isRightBorder = Caml_int32.mod_(colIndex + 1 | 0, subGridSize) === 0 && colIndex !== (size - 1 | 0);
+                                          var isBottomBorder = Caml_int32.mod_(rowIndex + 1 | 0, subGridSize) === 0 && rowIndex !== (size - 1 | 0);
+                                          return JsxRuntime.jsx(Cell.make, {
+                                                      cell: cell,
+                                                      rowIndex: rowIndex,
+                                                      colIndex: colIndex,
+                                                      isRightBorder: isRightBorder,
+                                                      isBottomBorder: isBottomBorder,
+                                                      onCellChange: (function (param) {
+                                                          var value = param[2];
+                                                          var col = param[1];
+                                                          var row = param[0];
+                                                          validateCell(row, col, value, values);
+                                                          onCellChange([
+                                                                row,
+                                                                col,
+                                                                value
+                                                              ]);
+                                                        })
+                                                    }, rowIndex.toString() + "-" + colIndex.toString());
+                                        })),
+                                  className: "flex"
+                                }, rowIndex.toString());
+                    })),
               className: "grid gap-0"
             });
 }

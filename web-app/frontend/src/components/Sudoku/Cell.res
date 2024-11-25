@@ -2,6 +2,7 @@ type cellState = {
   value: string,
   isInitial: bool,
   isValid: bool,
+  notes: array<string>,
 }
 
 @react.component
@@ -14,7 +15,7 @@ let make = (
   ~onCellChange: ((int, int, string)) => unit,
 ) => {
   let getCellClassName = () => {
-    let baseStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center"
+    let baseStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center relative"
     let borderStyle = switch (isRightBorder, isBottomBorder) {
     | (true, true) => " border-r-2 border-b-2 border-r-gray-800 border-b-gray-800"
     | (true, false) => " border-r-2 border-r-gray-800"
@@ -30,20 +31,19 @@ let make = (
     baseStyle ++ borderStyle ++ validityStyle ++ initialStyle
   }
 
-  let handleInput = event => {
-    let newValue = ReactEvent.Form.target(event)["value"]
-    onCellChange((rowIndex, colIndex, newValue))
-  }
-
-  <div key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`} className={getCellClassName()}>
+  <div className={getCellClassName()}>
     <input
       type_="text"
-      className="w-full h-full text-center focus:outline-none"
+      className="w-full h-full text-center focus:outline-none bg-transparent"
       maxLength=1
-      pattern="[1-9]*"
       value={cell.value}
       disabled={cell.isInitial}
-      onInput={handleInput}
+      onChange={event => {
+        let newValue = ReactEvent.Form.target(event)["value"]
+        if (newValue === "" || Js.Re.test_(%re("/^[1-9]$/"), newValue)) {
+          onCellChange((rowIndex, colIndex, newValue))
+        }
+      }}
     />
   </div>
 }

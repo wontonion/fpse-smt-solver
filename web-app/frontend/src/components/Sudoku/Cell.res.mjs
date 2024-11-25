@@ -19,28 +19,29 @@ function Cell(props) {
     var match$1 = cell.value !== "";
     var validityStyle = match || !match$1 ? "" : " bg-red-100";
     var initialStyle = cell.isInitial ? " bg-gray-100" : "";
-    return "w-10 h-10 border border-gray-300 flex items-center justify-center" + borderStyle + validityStyle + initialStyle;
-  };
-  var handleInput = function ($$event) {
-    var newValue = $$event.target.value;
-    onCellChange([
-          rowIndex,
-          colIndex,
-          newValue
-        ]);
+    return "w-10 h-10 border border-gray-300 flex items-center justify-center relative" + borderStyle + validityStyle + initialStyle;
   };
   return JsxRuntime.jsx("div", {
               children: JsxRuntime.jsx("input", {
-                    className: "w-full h-full text-center focus:outline-none",
+                    className: "w-full h-full text-center focus:outline-none bg-transparent",
                     disabled: cell.isInitial,
                     maxLength: 1,
-                    pattern: "[1-9]*",
                     type: "text",
                     value: cell.value,
-                    onInput: handleInput
+                    onChange: (function ($$event) {
+                        var newValue = $$event.target.value;
+                        if (newValue === "" || /^[1-9]$/.test(newValue)) {
+                          return onCellChange([
+                                      rowIndex,
+                                      colIndex,
+                                      newValue
+                                    ]);
+                        }
+                        
+                      })
                   }),
               className: getCellClassName()
-            }, rowIndex.toString() + "-" + colIndex.toString());
+            });
 }
 
 var make = Cell;
