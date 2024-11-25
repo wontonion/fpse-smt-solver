@@ -4,6 +4,7 @@ import * as Cell from "./Cell.res.mjs";
 import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as Caml_int32 from "rescript/lib/es6/caml_int32.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
+import * as Belt_SetString from "rescript/lib/es6/belt_SetString.js";
 import * as JsxRuntime from "react/jsx-runtime";
 
 function Grid(props) {
@@ -19,6 +20,58 @@ function Grid(props) {
     default:
       subGridSize = 3;
   }
+  var isRowComplete = function (rowIndex, grid) {
+    var row = Core__Option.getOr(Belt_Array.get(grid, rowIndex), []);
+    var numbers = Belt_Array.map(row, (function (cell) {
+            return cell.value;
+          }));
+    var allFilled = Belt_Array.every(numbers, (function (value) {
+            return value !== "";
+          }));
+    var uniqueNumbers = Belt_SetString.size(Belt_SetString.fromArray(numbers));
+    if (allFilled) {
+      return uniqueNumbers === size;
+    } else {
+      return false;
+    }
+  };
+  var isColComplete = function (colIndex, grid) {
+    var numbers = Belt_Array.keepMap(grid, (function (row) {
+            return Core__Option.map(Belt_Array.get(row, colIndex), (function (cell) {
+                          return cell.value;
+                        }));
+          }));
+    var allFilled = Belt_Array.every(numbers, (function (value) {
+            return value !== "";
+          }));
+    var uniqueNumbers = Belt_SetString.size(Belt_SetString.fromArray(numbers));
+    if (allFilled) {
+      return uniqueNumbers === size;
+    } else {
+      return false;
+    }
+  };
+  var hasRowConflict = function (rowIndex, grid) {
+    var row = Core__Option.getOr(Belt_Array.get(grid, rowIndex), []);
+    var numbers = Belt_Array.map(Belt_Array.keep(row, (function (cell) {
+                return cell.value !== "";
+              })), (function (cell) {
+            return cell.value;
+          }));
+    var uniqueNumbers = Belt_SetString.size(Belt_SetString.fromArray(numbers));
+    return numbers.length > uniqueNumbers;
+  };
+  var hasColConflict = function (colIndex, grid) {
+    var numbers = Belt_Array.keepMap(grid, (function (row) {
+            return Core__Option.filter(Core__Option.map(Belt_Array.get(row, colIndex), (function (cell) {
+                              return cell.value;
+                            })), (function (value) {
+                          return value !== "";
+                        }));
+          }));
+    var uniqueNumbers = Belt_SetString.size(Belt_SetString.fromArray(numbers));
+    return numbers.length > uniqueNumbers;
+  };
   var validateCell = function (row, col, value, grid) {
     var rowValid = Core__Option.getOr(Core__Option.map(Belt_Array.get(grid, row), (function (rowArr) {
                 return Belt_Array.every(rowArr, (function (cell) {
@@ -47,16 +100,24 @@ function Grid(props) {
   };
   return JsxRuntime.jsx("div", {
               children: Belt_Array.mapWithIndex(values, (function (rowIndex, row) {
+                      var hasRowError = hasRowConflict(rowIndex, values);
+                      var rowComplete = isRowComplete(rowIndex, values);
                       return JsxRuntime.jsx("div", {
                                   children: Belt_Array.mapWithIndex(row, (function (colIndex, cell) {
                                           var isRightBorder = Caml_int32.mod_(colIndex + 1 | 0, subGridSize) === 0 && colIndex !== (size - 1 | 0);
                                           var isBottomBorder = Caml_int32.mod_(rowIndex + 1 | 0, subGridSize) === 0 && rowIndex !== (size - 1 | 0);
+                                          var hasColError = hasColConflict(colIndex, values);
+                                          var colComplete = isColComplete(colIndex, values);
                                           return JsxRuntime.jsx(Cell.make, {
                                                       cell: cell,
                                                       rowIndex: rowIndex,
                                                       colIndex: colIndex,
                                                       isRightBorder: isRightBorder,
                                                       isBottomBorder: isBottomBorder,
+                                                      hasRowError: hasRowError,
+                                                      hasColError: hasColError,
+                                                      isRowComplete: rowComplete,
+                                                      isColComplete: colComplete,
                                                       onCellChange: (function (param) {
                                                           var value = param[2];
                                                           var col = param[1];
@@ -70,7 +131,11 @@ function Grid(props) {
                                                         })
                                                     }, rowIndex.toString() + "-" + colIndex.toString());
                                         })),
-                                  className: "flex"
+                                  className: "flex " + (
+                                    hasRowError ? "bg-red-100" : (
+                                        rowComplete ? "bg-green-100" : ""
+                                      )
+                                  )
                                 }, rowIndex.toString());
                     })),
               className: "grid gap-0"

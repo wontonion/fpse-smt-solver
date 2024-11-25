@@ -12,6 +12,10 @@ let make = (
   ~colIndex: int,
   ~isRightBorder: bool,
   ~isBottomBorder: bool,
+  ~hasRowError: bool,
+  ~hasColError: bool,
+  ~isRowComplete: bool,
+  ~isColComplete: bool,
   ~onCellChange: ((int, int, string)) => unit,
 ) => {
   let getCellClassName = () => {
@@ -27,14 +31,23 @@ let make = (
     | _ => ""
     }
     let initialStyle = cell.isInitial ? " bg-gray-100" : ""
+    let completionStyle = switch (isRowComplete, isColComplete, hasRowError, hasColError) {
+    | (_, _, true, true) => " bg-red-200"  // 冲突优先级最高
+    | (_, _, true, false) | (_, _, false, true) => " bg-red-100"
+    | (true, true, false, false) => " bg-green-200"  // 行列都完成
+    | (true, false, false, false) | (false, true, false, false) => " bg-green-100"  // 行或列完成
+    | _ => ""
+    }
 
-    baseStyle ++ borderStyle ++ validityStyle ++ initialStyle
+    baseStyle ++ borderStyle ++ validityStyle ++ initialStyle ++ completionStyle
   }
 
   <div className={getCellClassName()}>
     <input
       type_="text"
-      className="w-full h-full text-center focus:outline-none bg-transparent"
+      className={`w-full h-full text-center focus:outline-none bg-transparent
+        ${(hasRowError || hasColError) ? "text-red-600 font-bold" :
+          (isRowComplete || isColComplete) ? "text-green-600 font-bold" : ""}`}
       maxLength=1
       value={cell.value}
       disabled={cell.isInitial}

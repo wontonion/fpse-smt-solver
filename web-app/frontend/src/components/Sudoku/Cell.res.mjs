@@ -4,6 +4,10 @@ import * as JsxRuntime from "react/jsx-runtime";
 
 function Cell(props) {
   var onCellChange = props.onCellChange;
+  var isColComplete = props.isColComplete;
+  var isRowComplete = props.isRowComplete;
+  var hasColError = props.hasColError;
+  var hasRowError = props.hasRowError;
   var isBottomBorder = props.isBottomBorder;
   var isRightBorder = props.isRightBorder;
   var colIndex = props.colIndex;
@@ -19,11 +23,26 @@ function Cell(props) {
     var match$1 = cell.value !== "";
     var validityStyle = match || !match$1 ? "" : " bg-red-100";
     var initialStyle = cell.isInitial ? " bg-gray-100" : "";
-    return "w-10 h-10 border border-gray-300 flex items-center justify-center relative" + borderStyle + validityStyle + initialStyle;
+    var completionStyle = hasRowError ? (
+        hasColError ? " bg-red-200" : " bg-red-100"
+      ) : (
+        hasColError ? " bg-red-100" : (
+            isRowComplete ? (
+                isColComplete ? " bg-green-200" : " bg-green-100"
+              ) : (
+                isColComplete ? " bg-green-100" : ""
+              )
+          )
+      );
+    return "w-10 h-10 border border-gray-300 flex items-center justify-center relative" + borderStyle + validityStyle + initialStyle + completionStyle;
   };
   return JsxRuntime.jsx("div", {
               children: JsxRuntime.jsx("input", {
-                    className: "w-full h-full text-center focus:outline-none bg-transparent",
+                    className: "w-full h-full text-center focus:outline-none bg-transparent\n        " + (
+                      hasRowError || hasColError ? "text-red-600 font-bold" : (
+                          isRowComplete || isColComplete ? "text-green-600 font-bold" : ""
+                        )
+                    ),
                     disabled: cell.isInitial,
                     maxLength: 1,
                     type: "text",
