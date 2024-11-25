@@ -12,6 +12,7 @@ function Cell(props) {
   var isRightBorder = props.isRightBorder;
   var colIndex = props.colIndex;
   var rowIndex = props.rowIndex;
+  var size = props.size;
   var cell = props.cell;
   var getCellClassName = function () {
     var borderStyle = isRightBorder ? (
@@ -49,7 +50,25 @@ function Cell(props) {
                     value: cell.value,
                     onChange: (function ($$event) {
                         var newValue = $$event.target.value;
-                        if (newValue === "" || /^[1-9]$/.test(newValue)) {
+                        var validNumberPattern;
+                        var exit = 0;
+                        switch (size) {
+                          case 4 :
+                              validNumberPattern = /^[1-4]$/;
+                              break;
+                          case 6 :
+                              validNumberPattern = /^[1-6]$/;
+                              break;
+                          case 9 :
+                              validNumberPattern = /^[1-9]$/;
+                              break;
+                          default:
+                            exit = 1;
+                        }
+                        if (exit === 1) {
+                          validNumberPattern = /^[1-9]$/;
+                        }
+                        if (newValue === "" || validNumberPattern.test(newValue)) {
                           return onCellChange([
                                       rowIndex,
                                       colIndex,

@@ -110,6 +110,7 @@ function Grid(props) {
                                           var colComplete = isColComplete(colIndex, values);
                                           return JsxRuntime.jsx(Cell.make, {
                                                       cell: cell,
+                                                      size: size,
                                                       rowIndex: rowIndex,
                                                       colIndex: colIndex,
                                                       isRightBorder: isRightBorder,

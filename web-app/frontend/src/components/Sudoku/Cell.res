@@ -8,6 +8,7 @@ type cellState = {
 @react.component
 let make = (
   ~cell: cellState,
+  ~size: int,
   ~rowIndex: int,
   ~colIndex: int,
   ~isRightBorder: bool,
@@ -53,7 +54,13 @@ let make = (
       disabled={cell.isInitial}
       onChange={event => {
         let newValue = ReactEvent.Form.target(event)["value"]
-        if (newValue === "" || Js.Re.test_(%re("/^[1-9]$/"), newValue)) {
+        let validNumberPattern = switch size {
+        | 4 => %re("/^[1-4]$/")
+        | 6 => %re("/^[1-6]$/")
+        | 9 => %re("/^[1-9]$/")
+        | _ => %re("/^[1-9]$/")
+        }
+        if (newValue === "" || Js.Re.test_(validNumberPattern, newValue)) {
           onCellChange((rowIndex, colIndex, newValue))
         }
       }}

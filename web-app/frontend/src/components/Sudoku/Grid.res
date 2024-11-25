@@ -98,6 +98,7 @@ let make = (~size: int, ~values: array<array<cellState>>, ~onCellChange: ((int, 
           <Cell
             key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`}
             cell
+            size
             rowIndex
             colIndex
             isRightBorder
