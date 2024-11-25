@@ -1,5 +1,5 @@
 @react.component
-let make = (~size: int) => {
+let make = (~size: int, ~values: array<array<Cell.cellState>>, ~onCellChange: ((int, int, string)) => unit) => {
   // Calculate sub-grid size (e.g., 3 for 9x9, 2 for 4x4)
   let subGridSize = switch size {
   | 9 => 3
@@ -7,9 +7,6 @@ let make = (~size: int) => {
   | 4 => 2
   | _ => 3 // default to 3x3 sub-grids
   }
-
-  let cellStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center"
-  let thickBorderStyle = "border-2 border-gray-800"
 
   <div className="grid gap-0">
     {Array.make(~length=size, 0)
@@ -19,24 +16,20 @@ let make = (~size: int) => {
         ->Array.mapWithIndex((colIndex, _) => {
           let isRightBorder = mod(colIndex + 1, subGridSize) == 0 && colIndex != size - 1
           let isBottomBorder = mod(rowIndex + 1, subGridSize) == 0 && rowIndex != size - 1
+          
+          let cell = Belt.Array.get(values, rowIndex)
+            ->Option.flatMap(row => Belt.Array.get(row, colIndex))
+            ->Option.getOr({value: "", isInitial: false, isValid: true})
 
-          let borderStyles = switch (isRightBorder, isBottomBorder) {
-          | (true, true) =>
-            cellStyle ++ " border-r-" ++ thickBorderStyle ++ " border-b-" ++ thickBorderStyle
-          | (true, false) => cellStyle ++ " border-r-" ++ thickBorderStyle
-          | (false, true) => cellStyle ++ " border-b-" ++ thickBorderStyle
-          | (false, false) => cellStyle
-          }
-
-          <div key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`} className=borderStyles>
-            <input
-              type_="text"
-              className="w-full h-full text-center focus:outline-none"
-              maxLength=1
-              pattern="[1-9]*"
-              onInput={_ => ()} // TODO: Add input handling
-            />
-          </div>
+          <Cell
+            key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`}
+            cell
+            rowIndex
+            colIndex
+            isRightBorder
+            isBottomBorder
+            onCellChange
+          />
         })
         ->React.array}
       </div>
