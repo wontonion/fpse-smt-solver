@@ -5,7 +5,7 @@
     time_taken: float
   }
 
-  type response = {
+  type _response = {
     status: string,
     message: string,
     data: option<solution>

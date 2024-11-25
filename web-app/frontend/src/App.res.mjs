@@ -22,7 +22,6 @@ function App(props) {
   var setBackendMessage = match$1[1];
   var backendMessage = match$1[0];
   var testBackendConnection = function () {
-
     Core__Promise.$$catch(fetch("/api/backend/hello").then(function (response) {
                 return Fetch.$$Response.json(response);
               }).then(function (json) {
@@ -44,7 +43,6 @@ function App(props) {
                 });
             return Promise.resolve();
           }));
-
   };
   var tmp;
   switch (activeTab) {
@@ -80,12 +78,10 @@ function App(props) {
                                 })
                             }),
                         backendMessage !== "" ? JsxRuntime.jsx("div", {
-
                                 children: JsxRuntime.jsx("pre", {
                                       children: backendMessage,
                                       className: "whitespace-pre-wrap"
                                     }),
-
                                 className: "mt-2 p-2 bg-gray-100 rounded"
                               }) : null
                       ],

@@ -4,6 +4,7 @@ import * as Grid from "./Grid.res.mjs";
 import * as React from "react";
 import * as Button from "../Button/Button.res.mjs";
 import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
+import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
@@ -13,6 +14,55 @@ function SudokuIndex(props) {
       });
   var setGridSize = match[1];
   var gridSize = match[0];
+  var createEmptyGrid = function (size) {
+    return Belt_Array.makeBy(size, (function (param) {
+                  return Belt_Array.make(size, {
+                              value: "",
+                              isInitial: false,
+                              isValid: true,
+                              notes: []
+                            });
+                }));
+  };
+  var match$1 = React.useState(function () {
+        return createEmptyGrid(gridSize);
+      });
+  var setGridValues = match$1[1];
+  React.useEffect((function () {
+          setGridValues(function (param) {
+                return createEmptyGrid(gridSize);
+              });
+        }), [gridSize]);
+  var handleCellChange = function (param) {
+    var value = param[2];
+    var col = param[1];
+    var row = param[0];
+    setGridValues(function (prev) {
+          return Belt_Array.mapWithIndex(prev, (function (i, rowArr) {
+                        if (i === row) {
+                          return Belt_Array.mapWithIndex(rowArr, (function (j, cell) {
+                                        if (j === col) {
+                                          return {
+                                                  value: value,
+                                                  isInitial: cell.isInitial,
+                                                  isValid: true,
+                                                  notes: cell.notes
+                                                };
+                                        } else {
+                                          return cell;
+                                        }
+                                      }));
+                        } else {
+                          return rowArr;
+                        }
+                      }));
+        });
+  };
+  var handleClearGrid = function () {
+    setGridValues(function (param) {
+          return createEmptyGrid(gridSize);
+        });
+  };
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsxs("div", {
@@ -54,7 +104,9 @@ function SudokuIndex(props) {
                             }),
                         JsxRuntime.jsx("div", {
                               children: JsxRuntime.jsx(Grid.make, {
-                                    size: gridSize
+                                    size: gridSize,
+                                    values: match$1[0],
+                                    onCellChange: handleCellChange
                                   }),
                               className: "border-2 border-gray-300 p-4 justify-center flex"
                             })
@@ -77,7 +129,7 @@ function SudokuIndex(props) {
                                 JsxRuntime.jsx(Button.make, {
                                       children: "Clear Grid",
                                       onClick: (function (param) {
-                                          
+                                          handleClearGrid();
                                         })
                                     }),
                                 JsxRuntime.jsx(Button.make, {
