@@ -1,5 +1,20 @@
 (library
  (name hello)
- (libraries dream yojson)
+ (modules hello)
+ (libraries dream yojson types)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
+
+(library
+ (name sudoku)
+ (modules sudoku)
+ (libraries core)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
+
+(library
+ (name types)
+ (modules types)
+ (libraries core)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))  

@@ -1,4 +1,4 @@
-(* type grid = int array array [@@deriving yojson] *)
+type grid = int array array [@@deriving yojson]
 
 type problem_type =
   | Boolean (** indicates SAT problem*)
@@ -10,7 +10,7 @@ let problem_type_to_yojson = function
 
 let problem_type_of_yojson = function
   | `String "Boolean" -> Ok Boolean
-  | `String "Integer" -> Ok Integer
+  | `String "Integer" -> Ok Integer 
   | _ -> Error "Invalid problem_type"
 
 type problem = {

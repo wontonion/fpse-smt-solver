@@ -1,2 +1,9 @@
 (test
- (name test_backend))
+ (name test_backend)
+ (libraries
+  ounit2
+  hello
+  sudoku
+  types)
+ (preprocess
+  (pps ppx_deriving_yojson)))

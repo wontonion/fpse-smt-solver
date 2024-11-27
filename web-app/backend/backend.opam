@@ -17,6 +17,7 @@ depends: [
   "lwt"
   "ppx_jane"
   "yojson"
+  "ounit2"
   "odoc" {with-doc}
 ]
 build: [
