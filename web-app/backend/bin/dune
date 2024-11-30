@@ -4,6 +4,6 @@
  (libraries 
   dream
   lwt
-  hello
+  handlers
   sudoku
  ))

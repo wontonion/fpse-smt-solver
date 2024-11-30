@@ -1,34 +1,22 @@
-// type httpMethod =
-//   | @as("GET") Get
-//   | @as("POST") Post
-//   | @as("PUT") Put
-//   | @as("DELETE") Delete
+type response
+type fetchOptions = {
+  method?: string,
+  headers?: Dict.t<string>,
+  body?: string,
+}
 
-// type fetchOption = {
-//   method: httpMethod,
-//   headers?: {.},
-//   body?: string,
-// }
-// type response
-// @val external fetch: (~url: string, ~opts: fetchOption) => promise<response> = "fetch"
-// @send external json: response => promise<'a> = "json"
+@val external fetch: (string, fetchOptions) => promise<response> = "fetch"
+@send external json: response => promise<Js.Json.t> = "json"
+@get external ok: response => bool = "ok"
 
-// let makeRequest = async url => {
-//   let response = await fetch(url)
-//   // let json = await response->json
-//   let json = await response->json
-//   Js.log(json)
-// }
-// let connectToBackend = () => {
-//   // let _ = makeRequest("http://localhost:8080/backend/hello")
-//   // ->Promise.then(response => {
-//   //   Js.log(response)
-//   //   Promise.resolve()
-//   // })
-//   // ->Promise.catch(error => {
-//   //   Js.log2("Error:", error)
-//   //   Promise.resolve()
-//   // })
-//   // ()
-//   Js.log("triggered")
-// }
+// 用于处理 Sudoku API 的函数
+let fetchSudokuGrid = () => {
+  fetch("/api/sudoku/generate", {method: "GET"})
+  ->Promise.then(response => {
+    if ok(response) {
+      response->json
+    } else {
+      Promise.reject(Js.Exn.raiseError("Network response was not ok"))
+    }
+  })
+}

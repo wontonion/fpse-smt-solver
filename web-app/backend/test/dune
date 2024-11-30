@@ -2,7 +2,7 @@
  (name test_sudoku)
  (libraries
   ounit2
-  hello
+  handlers
   sudoku
   types)
  (preprocess

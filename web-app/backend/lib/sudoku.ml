@@ -1,3 +1,5 @@
+open Types
+
 type grid = int list list
 
 (* create empty grid *)
@@ -52,56 +54,73 @@ let find_empty (grid: grid) : (int * int) option =
 let rec solve_and_count (grid: grid) (count: int ref) (max_solutions: int) : unit =
   if !count >= max_solutions then ()
   else match find_empty grid with
-    | None -> incr count
+    | None -> 
+        incr count;
+        Printf.printf "Found solution %d\n" !count
     | Some (row, col) ->
-        List.iter (fun num ->
+        for num = 1 to 9 do
           if is_valid grid row col num then begin
             let new_grid = update_grid grid row col num in
-            solve_and_count new_grid count max_solutions;
-            if !count < max_solutions then
-              solve_and_count (update_grid grid row col 0) count max_solutions
+            solve_and_count new_grid count max_solutions
           end
-        ) (List.init 9 (fun i -> i + 1))
+        done
 
-(* Generate puzzle *)
+(* 添加一个辅助函数来填充完整的数独 *)
+let rec solve_grid (grid: grid) : grid option =
+  match find_empty grid with
+  | None -> Some grid  (* 找到解决方案 *)
+  | Some (row, col) ->
+      let numbers = List.init 9 (fun i -> i + 1) in
+      (* 随机打乱1-9的顺序，增加随机性 *)
+      let shuffled = List.sort (fun _ _ -> Random.int 3 - 1) numbers in
+      let rec try_numbers = function
+        | [] -> None
+        | num :: rest ->
+            if is_valid grid row col num then
+              match solve_grid (update_grid grid row col num) with
+              | Some solution -> Some solution
+              | None -> try_numbers rest
+            else try_numbers rest
+      in
+      try_numbers shuffled
+
+(* 改进的生成算法 *)
 let generate_puzzle () : grid =
-  let initial_grid = create_empty_grid () in
+  Random.self_init ();
   
-  (* Fill random cells *)
-  let rec fill_random_cells grid count =
-    if count = 0 then grid
-    else 
-      let row = Random.int 9 in
-      let col = Random.int 9 in
-      let num = Random.int 9 + 1 in
-      if List.nth (List.nth grid row) col = 0 && is_valid grid row col num then
-        fill_random_cells (update_grid grid row col num) (count - 1)
-      else
-        fill_random_cells grid count
+  let solved_grid = 
+    match solve_grid (create_empty_grid ()) with
+    | Some grid -> grid
+    | None -> failwith "Failed to generate a complete grid"
   in
   
-  (* Check for unique solution *)
-  let has_unique_solution grid =
-    let count = ref 0 in
-    solve_and_count grid count 2;
-    !count = 1
-  in
-  
-  let filled_grid = fill_random_cells initial_grid 17 in
-  
-  (* Remove numbers while maintaining unique solution *)
   let positions = List.init 81 (fun i -> (i / 9, i mod 9)) in
   let shuffled_positions = 
     List.sort (fun _ _ -> Random.int 3 - 1) positions in
   
-  List.fold_left (fun grid (row, col) ->
-    let current = List.nth (List.nth grid row) col in
-    if current = 0 then grid
-    else 
-      let new_grid = update_grid grid row col 0 in
-      if has_unique_solution new_grid then new_grid
-      else update_grid grid row col current
-  ) filled_grid shuffled_positions
+  let rec remove_numbers grid positions removed =
+    match positions with
+    | [] -> 
+        Printf.printf "No more positions to try, removed %d numbers\n" removed;
+        grid
+    | (row, col) :: rest ->
+        if removed >= 50 then 
+          (Printf.printf "Target reached: removed %d numbers\n" removed;
+           grid)
+        else begin
+          Printf.printf "Trying to remove at (%d,%d)\n" row col;
+          let new_grid = update_grid grid row col 0 in
+          let count = ref 0 in
+          solve_and_count new_grid count 2;
+          Printf.printf "Position (%d,%d) has %d solutions\n" row col !count;
+          if !count = 1 then
+            remove_numbers new_grid rest (removed + 1)
+          else
+            remove_numbers grid rest removed
+        end
+  in
+  
+  remove_numbers solved_grid shuffled_positions 0
 
 (* Print board *)
 let print_board (grid: grid) : unit =
@@ -118,3 +137,31 @@ let print_board (grid: grid) : unit =
     ) row;
     print_newline ()
   ) grid
+
+
+let convert_to_sudoku_data (grid: grid) : sudoku_data =
+  let convert_cell value =
+    { value = if value = 0 then "" else string_of_int value;
+      is_initial = value <> 0;
+      is_valid = true;
+    }
+  in
+  {
+    size = 9;
+    grid = List.map (fun row ->
+      List.map convert_cell row
+    ) grid
+  }
+
+let generate_puzzle_with_timeout ?(timeout=2.0) () : grid =
+  let start_time = Unix.gettimeofday () in
+  
+  let rec try_generate () =
+    if Unix.gettimeofday () -. start_time > timeout then
+      raise (Failure "Timeout while generating puzzle")
+    else
+      try 
+        generate_puzzle ()
+      with _ -> try_generate ()
+  in
+  try_generate ()

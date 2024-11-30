@@ -1,4 +1,4 @@
-let routes = [ Hello.hello_handler; Hello.backend_hello_handler ] 
+let routes = [ Handlers.hello_handler; Handlers.generate_sudoku_handler ] 
 
 
 let () = Dream.run ~interface:"0.0.0.0" ~port:8080 

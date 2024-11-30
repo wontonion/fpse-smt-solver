@@ -48,6 +48,59 @@ let make = () => {
     setGridValues(_ => createEmptyGrid(gridSize))
   }
 
+  // 添加加载状态
+  let (isLoading, setIsLoading) = React.useState(() => false)
+
+  let handleGenerateGrid = () => {
+    open Promise
+    setIsLoading(_ => true)
+    
+    Utils.fetchSudokuGrid()
+    ->then(json => {
+      // 解析返回的JSON数据
+      let response = json->Js.Json.decodeObject->Belt.Option.getExn
+      let data = response->Js.Dict.get("data")->Belt.Option.getExn
+      let grid = data->Js.Json.decodeObject->Belt.Option.getExn
+      ->Js.Dict.get("grid")->Belt.Option.getExn
+      ->Js.Json.decodeArray->Belt.Option.getExn
+
+      // 转换后端的grid格式为前端的格式
+      let newGrid = grid->Belt.Array.map(row => {
+        row->Js.Json.decodeArray->Belt.Option.getExn
+        ->Belt.Array.map(cell => {
+          let cellObj = cell->Js.Json.decodeObject->Belt.Option.getExn
+          {
+            value: cellObj
+              ->Js.Dict.get("value")
+              ->Belt.Option.getExn
+              ->Js.Json.decodeString
+              ->Belt.Option.getWithDefault(""),
+            isInitial: cellObj
+              ->Js.Dict.get("is_initial")
+              ->Belt.Option.getExn
+              ->Js.Json.decodeBoolean
+              ->Belt.Option.getWithDefault(false),
+            isValid: cellObj
+              ->Js.Dict.get("is_valid")
+              ->Belt.Option.getExn
+              ->Js.Json.decodeBoolean
+              ->Belt.Option.getWithDefault(true),
+            notes: [],
+          }
+        })
+      })
+      setGridValues(_ => newGrid)
+      setIsLoading(_ => false)
+      Promise.resolve()
+    })
+    ->catch(error => {
+      Js.Console.error2("Error generating grid:", error)
+      setIsLoading(_ => false)
+      Promise.resolve()
+    })
+    ->ignore
+  }
+
   <div className="grid grid-cols-2 gap-6">
     <div>
       <div className="text-xl font-semibold mb-4 justify-start flex items-center">
@@ -74,8 +127,14 @@ let make = () => {
       <h2 className="text-xl font-semibold mb-4"> {React.string("Controls")} </h2>
       <div className="space-y-4">
         <Button onClick={_ => ()}> {React.string("Solve Puzzle")} </Button>
-        <Button onClick={_ => handleClearGrid()}> {React.string("Clear Grid")} </Button>
-        <Button onClick={_ => ()}> {React.string("Generate New Puzzle")} </Button>
+        <div>
+          <Button onClick={_ => handleGenerateGrid()}>
+            {React.string("Generate New Puzzle")}
+          </Button>
+          <Button onClick={_ => handleClearGrid()}>
+            {React.string("Clear Grid")}
+          </Button>
+        </div>
       </div>
     </div>
   </div>

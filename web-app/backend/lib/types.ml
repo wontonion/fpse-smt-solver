@@ -1,17 +1,29 @@
-type grid = int array array [@@deriving yojson]
-
 type problem_type =
-  | Boolean (** indicates SAT problem*)
-  | Integer (** indicates SMT problem*)
+  | Sudoku
+  | SAT
+  | SMT
 
 let problem_type_to_yojson = function
-  | Boolean -> `String "Boolean"
-  | Integer -> `String "Integer"
+  | SAT -> `String "SAT"
+  | SMT -> `String "SMT"
+  | Sudoku -> `String "sudoku"
 
 let problem_type_of_yojson = function
-  | `String "Boolean" -> Ok Boolean
-  | `String "Integer" -> Ok Integer 
+  | `String "SAT" -> Ok SAT
+  | `String "SMT" -> Ok SMT
+  | `String "sudoku" -> Ok Sudoku
   | _ -> Error "Invalid problem_type"
+
+type sudoku_cell = {
+  value: string;
+  is_initial: bool;
+  is_valid: bool;
+} [@@deriving yojson]
+
+type sudoku_data = {
+  size: int;
+  grid: sudoku_cell list list;
+} [@@deriving yojson]
 
 type problem = {
   problem_type: problem_type;
@@ -25,7 +37,6 @@ type solution = {
   time_taken: float;
 } [@@deriving yojson]
 
-(* 通用响应类型 *)
 type 'a response = {
   status: string;
   message: string;

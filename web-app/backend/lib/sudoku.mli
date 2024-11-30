@@ -1,3 +1,5 @@
+open Types
+
 type grid = int list list
 
 val create_empty_grid : unit -> grid
@@ -24,3 +26,9 @@ val generate_puzzle : unit -> grid
 
 val print_board : grid -> unit 
 (** print the grid *)
+
+val convert_to_sudoku_data : grid -> sudoku_data
+(** convert the grid to sudoku_data *)
+
+val generate_puzzle_with_timeout : ?timeout:float -> unit -> grid
+(** generate a puzzle with a timeout *)

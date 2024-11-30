@@ -31,7 +31,7 @@ let make = (
     | (false, true) => " bg-red-100"
     | _ => ""
     }
-    let initialStyle = cell.isInitial ? " bg-gray-100" : ""
+    let initialStyle = cell.isInitial ? " bg-gray-500 text-white" : ""
     let completionStyle = switch (isRowComplete, isColComplete, hasRowError, hasColError) {
     | (_, _, true, true) => " bg-red-200"  // 冲突优先级最高
     | (_, _, true, false) | (_, _, false, true) => " bg-red-100"

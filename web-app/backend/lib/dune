@@ -1,14 +1,14 @@
 (library
- (name hello)
- (modules hello)
- (libraries dream yojson types)
+ (name handlers)
+ (modules handlers)
+ (libraries dream yojson types utils sudoku )
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
 (library
  (name sudoku)
  (modules sudoku)
- (libraries core)
+ (libraries core types utils)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
@@ -16,5 +16,12 @@
  (name types)
  (modules types)
  (libraries core)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
+
+(library
+ (name utils)
+ (modules utils)
+ (libraries dream yojson types)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))  
