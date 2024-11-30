@@ -27,6 +27,7 @@
   lwt
   ppx_jane
   yojson
+  ounit2
  )
  (tags
   (backend webapp)))

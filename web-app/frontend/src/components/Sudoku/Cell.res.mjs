@@ -23,7 +23,7 @@ function Cell(props) {
     var match = cell.isValid;
     var match$1 = cell.value !== "";
     var validityStyle = match || !match$1 ? "" : " bg-red-100";
-    var initialStyle = cell.isInitial ? " bg-gray-100" : "";
+    var initialStyle = cell.isInitial ? " bg-gray-500 text-white" : "";
     var completionStyle = hasRowError ? (
         hasColError ? " bg-red-200" : " bg-red-100"
       ) : (

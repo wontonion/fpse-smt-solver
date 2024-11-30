@@ -1,15 +1,17 @@
-  // 首先定义类型来匹配后端的响应结构
-  type solution = {
-    problem_type: string,
-    assignments: option<array<(string, string)>>,
-    time_taken: float
-  }
+open Utils
 
-  type _response = {
-    status: string,
-    message: string,
-    data: option<solution>
-  }
+// 首先定义类型来匹配后端的响应结构
+type solution = {
+  problem_type: string,
+  assignments: option<array<(string, string)>>,
+  time_taken: float
+}
+
+type _response = {
+  status: string,
+  message: string,
+  data: option<solution>
+}
 @react.component
 let make = () => {
   let (activeTab, setActiveTab) = React.useState(() => "sudoku")
@@ -17,9 +19,13 @@ let make = () => {
 
   let testBackendConnection = () => {
     open Promise
-    Fetch.fetch("/api/backend/hello")
+    Utils.fetch("/api/hello", {method: "GET"})
     ->then(response => {
-      Fetch.Response.json(response)  // use json
+      if Utils.ok(response) {
+        Utils.json(response)
+      } else {
+        Promise.reject(Js.Exn.raiseError("Network response was not ok"))
+      }
     })
     ->then(json => {
       // Deserialize JSON 
@@ -31,17 +37,13 @@ let make = () => {
       Js.Console.log2("Response status:", status)
       Js.Console.log2("Response message:", message)
       Js.Console.log2("Full response:", json)
-
-      // display message 
-      setBackendMessage(_ => `Status: ${status}\nMessage: ${message}`)
-      resolve()
+      
+      setBackendMessage(_ => message)
+      Promise.resolve()
     })
     ->catch(error => {
-      let errorMsg = Js.String.make(error)
-      Js.Console.error2("Error fetching backend:", errorMsg)
-      setBackendMessage(_ => `Error: ${errorMsg}`)
-
-      resolve()
+      Js.Console.error2("Error:", error)
+      Promise.resolve()
     })
     ->ignore
   }
