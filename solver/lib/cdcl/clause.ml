@@ -1,11 +1,15 @@
-type t
+open Core;;
 
-let create : Literal.t list -> t = failwith "Not implemented"
+type t = Literal.t list
 
-let literals : t -> Literal.t list = failwith "Not implemented"
+let create (ls : Literal.t list) : t = ls
 
-let bcp : t -> Assignment.t -> Assignment.t option = failwith "Not implemented"
+let string_of_t (c : t) : string =
+  String.concat ~sep:"V" (List.map ~f:Literal.string_of_t c)
 
-let is_satisfied : t -> Assignment.t -> bool = failwith "Not implemented"
+let literals (c : t) : Literal.t list = c
 
-let next_free_literal : t -> Assignment.t -> Literal.t option = failwith "Not implemented"
+let variables (c : t) : Int.Set.t =
+  List.fold_left c ~init:(Int.Set.empty) ~f:(fun acc l -> Set.add acc (Literal.variable l))
+
+let equal (c1 : t) (c2 : t) : bool = List.equal Literal.equal c1 c2

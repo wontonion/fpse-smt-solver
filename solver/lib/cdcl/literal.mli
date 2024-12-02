@@ -1,7 +1,16 @@
-type t
+type t = { variable : int; negation : bool }
 
-val create : Variable.t -> bool -> t
-(** [create v p] creates a literal from a variable [v] and a polarity [p] *)
+val create : int -> bool -> t
+(** [create v n] creates a literal from a variable [v] and a negation [n] *)
 
-val value : t -> Assignment.t -> Assignment.value
-(** [value l] returns the value of the literal [l] in the current assignment *)
+val string_of_t : t -> string
+(** [string_of_t l] returns a string representation of literal [l] *)
+
+val neg : t -> t
+(** [neg l] returns the negation of literal [l] *)
+
+val equal : t -> t -> bool
+(** [equal l1 l2] returns [true] if [l1] and [l2] are equal, [false] otherwise *)
+
+val variable : t -> int
+(** [variable l] returns the variable of literal [l] *)
