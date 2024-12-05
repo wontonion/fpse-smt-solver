@@ -68,15 +68,8 @@ function SudokuIndex(props) {
           return createEmptyGrid(gridSize);
         });
   };
-  var match$2 = React.useState(function () {
-        return false;
-      });
-  var setIsLoading = match$2[1];
   var handleGenerateGrid = function () {
-    setIsLoading(function (param) {
-          return true;
-        });
-    Core__Promise.$$catch(Utils.fetchSudokuGrid().then(function (json) {
+    Core__Promise.$$catch(Utils.sudokuGenerate().then(function (json) {
               var response = Belt_Option.getExn(Js_json.decodeObject(json));
               var data = Belt_Option.getExn(Js_dict.get(response, "data"));
               var grid = Belt_Option.getExn(Js_json.decodeArray(Belt_Option.getExn(Js_dict.get(Belt_Option.getExn(Js_json.decodeObject(data)), "grid"))));
@@ -94,15 +87,9 @@ function SudokuIndex(props) {
               setGridValues(function (param) {
                     return newGrid;
                   });
-              setIsLoading(function (param) {
-                    return false;
-                  });
               return Promise.resolve();
             }), (function (error) {
             console.error("Error generating grid:", error);
-            setIsLoading(function (param) {
-                  return false;
-                });
             return Promise.resolve();
           }));
   };

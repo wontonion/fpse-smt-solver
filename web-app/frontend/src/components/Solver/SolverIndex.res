@@ -1,5 +1,14 @@
 @react.component
+
+let satExample = "p cnf 3 2 \n 1 2 -3 0 \n -2 3 0"
+let smtExample = ""
+
 let make = (~tabName: string) => {
+  let displayExample = if tabName == "SAT" {
+    satExample
+  }else{
+    smtExample
+  }
  <div className="grid grid-cols-2 gap-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">
@@ -7,7 +16,7 @@ let make = (~tabName: string) => {
             </h2>
             <textarea
               className="w-full h-64 p-2 border rounded"
-              placeholder={`Enter ${tabName->String.toUpperCase} formula...`}
+              placeholder={`Enter ${tabName->String.toUpperCase} formula... \n ${displayExample}` }
             />
             // <div className="flex mt-4">
               <Button onClick={_ => ()}> {React.string("Download Template")} </Button>

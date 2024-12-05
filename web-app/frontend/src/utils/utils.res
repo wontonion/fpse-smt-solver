@@ -9,8 +9,7 @@ type fetchOptions = {
 @send external json: response => promise<Js.Json.t> = "json"
 @get external ok: response => bool = "ok"
 
-// 用于处理 Sudoku API 的函数
-let fetchSudokuGrid = () => {
+let sudokuGenerate = () => {
   fetch("/api/sudoku/generate", {method: "GET"})
   ->Promise.then(response => {
     if ok(response) {

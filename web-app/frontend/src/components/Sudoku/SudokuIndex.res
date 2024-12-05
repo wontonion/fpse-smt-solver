@@ -48,23 +48,23 @@ let make = () => {
     setGridValues(_ => createEmptyGrid(gridSize))
   }
 
-  // 添加加载状态
-  let (isLoading, setIsLoading) = React.useState(() => false)
+  // loading state 
+  // let (isLoading, setIsLoading) = React.useState(() => false)
 
   let handleGenerateGrid = () => {
     open Promise
-    setIsLoading(_ => true)
+    // setIsLoading(_ => true)
     
-    Utils.fetchSudokuGrid()
+    Utils.sudokuGenerate()
     ->then(json => {
-      // 解析返回的JSON数据
+      // deserial respond JSON
       let response = json->Js.Json.decodeObject->Belt.Option.getExn
       let data = response->Js.Dict.get("data")->Belt.Option.getExn
       let grid = data->Js.Json.decodeObject->Belt.Option.getExn
       ->Js.Dict.get("grid")->Belt.Option.getExn
       ->Js.Json.decodeArray->Belt.Option.getExn
 
-      // 转换后端的grid格式为前端的格式
+      // transfer backend grid to frontend grid 
       let newGrid = grid->Belt.Array.map(row => {
         row->Js.Json.decodeArray->Belt.Option.getExn
         ->Belt.Array.map(cell => {
@@ -90,12 +90,12 @@ let make = () => {
         })
       })
       setGridValues(_ => newGrid)
-      setIsLoading(_ => false)
+      // setIsLoading(_ => false)
       Promise.resolve()
     })
     ->catch(error => {
       Js.Console.error2("Error generating grid:", error)
-      setIsLoading(_ => false)
+      // setIsLoading(_ => false)
       Promise.resolve()
     })
     ->ignore
