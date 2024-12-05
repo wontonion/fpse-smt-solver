@@ -1,6 +1,6 @@
 (library
  (name cdcl)
- (modules literal clause formula assignment)
+ (modules literal clause formula assignment solver)
  (libraries core)
  (preprocess
   (pps ppx_deriving.show ppx_jane)))

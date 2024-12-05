@@ -1,20 +1,35 @@
+open Core
+
 type d = { value : bool; antecedent : Clause.t option; dl : int }
-type t = { dl : int; values : d Map.Make(Int).t }
+type t = { dl : int; values : (d Core.Map.M(Core.Int).t);}
 
-module IntMap = Map.Make (Int)
+let empty = { dl = 0; values = Map.empty (module Int) }
 
-let empty = { dl = 0; values = IntMap.empty }
-
-let value (a : t) (l : Literal.t) : bool =
+let value (a : t) (l : Literal.t) : bool option =
   let v = l.variable in
-  match IntMap.find v a.values with
-  | { value; _ } -> if l.negation then not value else value
+  match Map.find a.values v with
+  | None -> None
+  | Some { value; _ } -> if l.negation then Some (not value) else Some value
+
+let antecedent (a : t) (v : int) : Clause.t option =
+  match Map.find a.values v with
+  | None -> None
+  | Some { antecedent; _ } -> antecedent
+
+let dl (a : t) (v : int) : int option =
+  match Map.find a.values v with
+  | None -> None
+  | Some { dl; _ } -> Some dl
 
 let assign (a : t) (v : int) (b : bool) (c : Clause.t option) : t =
-  { a with values = IntMap.add v { value = b; antecedent = c; dl = a.dl } a.values }
+  { a with values = Map.set a.values ~key:v ~data:{ value = b; antecedent = c; dl = a.dl }}
 
 let unassign (a : t) (v : int) : t =
-  { a with values = IntMap.remove v a.values }
+  { a with values = Map.remove a.values v}
 
 let satisfy (a : t) (f : Formula.t) : bool =
-  Formula.clauses f |> List.for_all (fun c -> Clause.literals c |> List.exists (fun l -> value a l))
+  Formula.clauses f |> List.for_all ~f:(fun c ->
+      List.exists (Clause.literals c) ~f:(fun l ->
+          match value a l with
+          | Some b -> b
+          | None -> false))
