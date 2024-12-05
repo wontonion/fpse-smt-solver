@@ -3,6 +3,47 @@
 import * as Button from "../Button/Button.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
+var $$Blob = {};
+
+function getSolverExample(tabName) {
+  var match;
+  switch (tabName) {
+    case "sat" :
+        match = [
+          "Enter CNF formula in DIMACS format",
+          "p cnf 3 2\n1 2 -3 0\n-2 3 0"
+        ];
+        break;
+    case "smt" :
+        match = [
+          "Enter SMT-LIB2 formula",
+          "(declare-const x Int)\n(assert (> x 0))\n(check-sat)\n(get-model)"
+        ];
+        break;
+    default:
+      match = [
+        "",
+        ""
+      ];
+  }
+  return match[0] + "\n\nExample:\n" + match[1];
+}
+
+function downloadTemplate(tabName) {
+  var content = getSolverExample(tabName) + "\n\nDelete all template text before entering your formula";
+  var element = document.createElement("a");
+  var file = new Blob([content], {
+        type: "text/plain"
+      });
+  var url = URL.createObjectURL(file);
+  element.setAttribute("href", url);
+  element.setAttribute("download", tabName.toLowerCase() + "_template.txt");
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+  URL.revokeObjectURL(url);
+}
+
 function SolverIndex(props) {
   var tabName = props.tabName;
   return JsxRuntime.jsxs("div", {
@@ -14,20 +55,25 @@ function SolverIndex(props) {
                               className: "text-xl font-semibold mb-4"
                             }),
                         JsxRuntime.jsx("textarea", {
-                              className: "w-full h-64 p-2 border rounded",
-                              placeholder: "Enter " + tabName.toUpperCase() + " formula..."
+                              className: "w-full h-64 p-2 border rounded font-mono whitespace-pre",
+                              placeholder: getSolverExample(tabName)
                             }),
-                        JsxRuntime.jsx(Button.make, {
-                              children: "Download Template",
-                              onClick: (function (param) {
-                                  
-                                })
-                            }),
-                        JsxRuntime.jsx(Button.make, {
-                              children: "Upload problme batch",
-                              onClick: (function (param) {
-                                  
-                                })
+                        JsxRuntime.jsxs("div", {
+                              children: [
+                                JsxRuntime.jsx(Button.make, {
+                                      children: "Download Template",
+                                      onClick: (function (param) {
+                                          downloadTemplate(tabName);
+                                        })
+                                    }),
+                                JsxRuntime.jsx(Button.make, {
+                                      children: "Upload problem batch",
+                                      onClick: (function (param) {
+                                          
+                                        })
+                                    })
+                              ],
+                              className: "flex mt-4 gap-4"
                             })
                       ]
                     }),
@@ -58,6 +104,9 @@ function SolverIndex(props) {
 var make = SolverIndex;
 
 export {
+  $$Blob ,
+  getSolverExample ,
+  downloadTemplate ,
   make ,
 }
 /* Button Not a pure module */
