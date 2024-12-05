@@ -11,7 +11,7 @@ let create (ls : Clause.t list) : t =
 
 let string_of_t ((ls, _) : t) : string =
   List.map ls ~f:(fun c -> "(" ^ Clause.string_of_t c ^ ")")
-  |> String.concat ~sep:" ∧ "
+  |> String.concat ~sep:" & "
 
 let clauses ((ls, _) : t) : Clause.t list = ls
 let variables ((_, vs) : t) : Int.Set.t = vs
