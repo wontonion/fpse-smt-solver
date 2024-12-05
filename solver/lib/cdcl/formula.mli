@@ -13,3 +13,6 @@ val clauses : t -> Clause.t list
 
 val variables : t -> Int.Set.t
 (** [variables f] returns the set of variables in formula [f] *)
+
+val add_clause : t -> Clause.t -> t
+(** [add_clause f c] adds clause [c] to formula [f] *)

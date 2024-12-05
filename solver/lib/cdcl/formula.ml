@@ -15,3 +15,6 @@ let string_of_t ((ls, _) : t) : string =
 
 let clauses ((ls, _) : t) : Clause.t list = ls
 let variables ((_, vs) : t) : Int.Set.t = vs
+
+let add_clause ((ls, vs) : t) (c : Clause.t) : t =
+  (c :: ls, Set.union vs (Clause.variables c))
