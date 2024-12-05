@@ -2,7 +2,7 @@
 
 import * as Js_exn from "rescript/lib/es6/js_exn.js";
 
-function fetchSudokuGrid() {
+function sudokuGenerate() {
   return fetch("/api/sudoku/generate", {
                 method: "GET"
               }).then(function (response) {
@@ -15,6 +15,6 @@ function fetchSudokuGrid() {
 }
 
 export {
-  fetchSudokuGrid ,
+  sudokuGenerate ,
 }
 /* No side effect */

@@ -4,6 +4,8 @@ import * as JsxRuntime from "react/jsx-runtime";
 
 function Cell(props) {
   var onCellChange = props.onCellChange;
+  var isBlockComplete = props.isBlockComplete;
+  var hasBlockConflict = props.hasBlockConflict;
   var isColComplete = props.isColComplete;
   var isRowComplete = props.isRowComplete;
   var hasColError = props.hasColError;
@@ -22,19 +24,63 @@ function Cell(props) {
       );
     var match = cell.isValid;
     var match$1 = cell.value !== "";
-    var validityStyle = match || !match$1 ? "" : " bg-red-100";
-    var initialStyle = cell.isInitial ? " bg-gray-500 text-white" : "";
-    var completionStyle = hasRowError ? (
-        hasColError ? " bg-red-200" : " bg-red-100"
-      ) : (
-        hasColError ? " bg-red-100" : (
-            isRowComplete ? (
-                isColComplete ? " bg-green-200" : " bg-green-100"
-              ) : (
-                isColComplete ? " bg-green-100" : ""
-              )
-          )
+    var validityStyle = match || !match$1 ? "" : (
+        hasBlockConflict ? " bg-red-200" : " bg-red-100"
       );
+    var initialStyle = cell.isInitial ? " bg-gray-500 text-white" : "";
+    var completionStyle;
+    var exit = 0;
+    var exit$1 = 0;
+    if (isRowComplete) {
+      var exit$2 = 0;
+      if (isColComplete && isBlockComplete) {
+        if (hasRowError) {
+          exit$1 = 2;
+        } else if (hasColError) {
+          if (hasColError) {
+            completionStyle = " bg-red-100 opacity-50";
+          } else {
+            exit = 1;
+          }
+        } else if (hasBlockConflict) {
+          exit = 1;
+        } else {
+          completionStyle = " bg-green-200 opacity-50";
+        }
+      } else {
+        exit$2 = 3;
+      }
+      if (exit$2 === 3) {
+        if (hasRowError) {
+          exit$1 = 2;
+        } else if (hasColError) {
+          if (hasColError) {
+            completionStyle = " bg-red-100 opacity-50";
+          } else {
+            exit = 1;
+          }
+        } else if (hasBlockConflict) {
+          exit = 1;
+        } else {
+          completionStyle = " bg-green-100 opacity-50";
+        }
+      }
+      
+    } else {
+      exit$1 = 2;
+    }
+    if (exit$1 === 2) {
+      if (hasRowError || hasColError) {
+        completionStyle = " bg-red-100 opacity-50";
+      } else {
+        exit = 1;
+      }
+    }
+    if (exit === 1) {
+      completionStyle = hasBlockConflict ? " bg-red-100 opacity-50" : (
+          isBlockComplete || isColComplete ? " bg-green-100 opacity-50" : ""
+        );
+    }
     return "w-10 h-10 border border-gray-300 flex items-center justify-center relative" + borderStyle + validityStyle + initialStyle + completionStyle;
   };
   return JsxRuntime.jsx("div", {
@@ -66,7 +112,7 @@ function Cell(props) {
                             exit = 1;
                         }
                         if (exit === 1) {
-                          validNumberPattern = /^[1-9]$/;
+                          validNumberPattern = /^$/;
                         }
                         if (newValue === "" || validNumberPattern.test(newValue)) {
                           return onCellChange([

@@ -2,7 +2,7 @@ type cellState = {
   value: string,
   isInitial: bool,
   isValid: bool,
-  notes: array<string>,
+  notes: array<string>, // this is designed for future use of notes
 }
 
 @react.component
@@ -17,6 +17,8 @@ let make = (
   ~hasColError: bool,
   ~isRowComplete: bool,
   ~isColComplete: bool,
+  ~hasBlockConflict: bool,
+  ~isBlockComplete: bool,
   ~onCellChange: ((int, int, string)) => unit,
 ) => {
   let getCellClassName = () => {
@@ -27,16 +29,16 @@ let make = (
     | (false, true) => " border-b-2 border-b-gray-800"
     | (false, false) => ""
     }
-    let validityStyle = switch (cell.isValid, cell.value !== "") {
-    | (false, true) => " bg-red-100"
+    let validityStyle = switch (cell.isValid, cell.value !== "", hasBlockConflict) {
+    | (false, true, true) => " bg-red-200"
+    | (false, true, false) => " bg-red-100"
     | _ => ""
     }
     let initialStyle = cell.isInitial ? " bg-gray-500 text-white" : ""
-    let completionStyle = switch (isRowComplete, isColComplete, hasRowError, hasColError) {
-    | (_, _, true, true) => " bg-red-200"  // 冲突优先级最高
-    | (_, _, true, false) | (_, _, false, true) => " bg-red-100"
-    | (true, true, false, false) => " bg-green-200"  // 行列都完成
-    | (true, false, false, false) | (false, true, false, false) => " bg-green-100"  // 行或列完成
+    let completionStyle = switch (isRowComplete, isColComplete, isBlockComplete, hasRowError, hasColError, hasBlockConflict) {
+    | (_, _, _, true, _, _) | (_, _, _, _, true, _) | (_, _, _, _, _, true) => " bg-red-100 opacity-50"
+    | (true, true, true, false, false, false) => " bg-green-200 opacity-50"
+    | (true, _, _, false, false, false) | (_, true, _, false, false, false) | (_, _, true, false, false, false) => " bg-green-100 opacity-50"
     | _ => ""
     }
 
@@ -58,8 +60,8 @@ let make = (
         | 4 => %re("/^[1-4]$/")
         | 6 => %re("/^[1-6]$/")
         | 9 => %re("/^[1-9]$/")
-        | _ => %re("/^[1-9]$/")
-        }
+        | _ => %re("/^$/")}
+        
         if (newValue === "" || Js.Re.test_(validNumberPattern, newValue)) {
           onCellChange((rowIndex, colIndex, newValue))
         }
