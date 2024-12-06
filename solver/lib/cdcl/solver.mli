@@ -1,16 +1,11 @@
 type status = SATISFIED | UNSATISFIED | UNIT | UNRESOLVED
 
-module type Heuristic = sig
-  val pick_branching_variable : Formula.t -> Assignment.t -> int * bool
-  (** [pick_branching_variable f a] picks a branching variable in formula [f] with assignment [a] *)
-end
-
-module type Solver = sig
-  val cdcl_solve : Formula.t -> Assignment.t option
+module type S = sig
+  val cdcl_solve : Formula.t -> [ `SAT of Assignment.t | `UNSAT ]
   (** [cdcl_solve f] solves formula [f] using the CDCL algorithm *)
 end
 
-module Make (_ : Heuristic) : Solver
+module Make (_ : Heuristic.H) : S
 
 val all_variables_assigned : Formula.t -> Assignment.t -> bool
 (** [all_variables_assigned f a] returns [true] if all variables in formula [f] are assigned in assignment [a] *)
@@ -32,6 +27,3 @@ val resolve : Clause.t -> Clause.t -> int -> Clause.t
 
 val conflict_analysis : Clause.t -> Assignment.t -> int * Clause.t
 (** [conflict_analysis c a] performs conflict analysis on clause [c] with assignment [a], returns the decision level and the learned clause *)
-
-val cdcl_solve : Formula.t -> Assignment.t option
-  (** [cdcl_solve f] solves formula [f] using the CDCL algorithm *)

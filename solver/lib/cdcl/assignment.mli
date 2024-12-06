@@ -20,3 +20,6 @@ val unassign : t -> int -> t
 
 val satisfy : t -> Formula.t -> bool
 (** [satisfy a f] returns [true] if formula [f] is satisfied by assignment [a], [false] otherwise *)
+
+val string_of_t : t -> string
+(** [string_of_t a] returns a string representation of assignment [a] *)

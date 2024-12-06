@@ -2,20 +2,8 @@ open Core
 
 type status = SATISFIED | UNSATISFIED | UNIT | UNRESOLVED
 
-[@@@warning "-32"]
-
-module type Heuristic = sig
-  val pick_branching_variable : Formula.t -> Assignment.t -> int * bool
-  (** [pick_branching_variable f a] picks a branching variable in formula [f] with assignment [a] *)
-end
-
-module type Solver = sig
-  val cdcl_solve : Formula.t -> Assignment.t option
-  (** [cdcl_solve f] solves formula [f] using the CDCL algorithm *)
-end
-
-module Make (H : Heuristic) : Solver = struct
-  let cdcl_solve = failwith "unimplemented"
+module type S = sig
+  val cdcl_solve : Formula.t -> [ `SAT of Assignment.t | `UNSAT ]
 end
 
 let all_variables_assigned (f : Formula.t) (a : Assignment.t) : bool =
@@ -25,20 +13,6 @@ let all_variables_assigned (f : Formula.t) (a : Assignment.t) : bool =
       match Assignment.value a (Literal.create v false) with
       | Some _ -> true
       | None -> false)
-
-let pick_branching_variable (f : Formula.t) (a : Assignment.t) : int * bool =
-  let rec loop (vars : int list) : int * bool =
-    match vars with
-    | [] -> failwith "no unassigned variables"
-    | v :: vs -> (
-        match Assignment.value a (Literal.create v false) with
-        | Some _ -> loop vs
-        | None ->
-            let b = Random.bool () in
-            printf "Picking variable %d with value %b\n" v b;
-            (v, b))
-  in
-  loop (Set.to_list (Formula.variables f))
 
 let backtrack (a : Assignment.t) (dl : int) : Assignment.t =
   { values = Map.filter ~f:(fun (d : Assignment.d) -> d.dl <= dl) a.values; dl }
@@ -126,34 +100,41 @@ let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
     | 0 | 1 -> (0, clause)
     | _ -> (List.nth_exn decision_levels 1, clause)
 
-let cdcl_solve (formula : Formula.t) : Assignment.t option =
-  let rec learn_clause (f : Formula.t) (a : Assignment.t) :
-      Formula.t * Assignment.t =
-    let assignment, conflict = unit_propagation f a in
+module Make (Heuristic : Heuristic.H) : S = struct
+  let cdcl_solve (formula : Formula.t) : [ `SAT of Assignment.t | `UNSAT ] =
+    let rec learn_clause (f : Formula.t) (a : Assignment.t)
+        (heuristic : Heuristic.t) : Formula.t * Assignment.t * Heuristic.t =
+      let assignment, conflict = unit_propagation f a in
+      match conflict with
+      | `NoConflict -> (f, assignment, heuristic)
+      | `Conflict clause ->
+          let dl, learnt = conflict_analysis clause assignment in
+          let formula' = Formula.add_clause f learnt in
+          let assignment' = backtrack assignment dl in
+          let heuristic' = Heuristic.backtrack heuristic dl in
+          learn_clause formula' assignment' heuristic'
+    in
+    let rec cdcl_solve_once (formula : Formula.t) (assignment : Assignment.t)
+        (heuristic : Heuristic.t) : [ `SAT of Assignment.t | `UNSAT ] =
+      match all_variables_assigned formula assignment with
+      | true -> `SAT assignment
+      | false ->
+          let heuristic', variable, value =
+            Heuristic.pick_branching_variable heuristic formula assignment
+          in
+          let assignment' =
+            Assignment.assign
+              { assignment with dl = assignment.dl + 1 }
+              variable value None
+          in
+          let formula', assignment'', heuristic'' =
+            learn_clause formula assignment' heuristic'
+          in
+          cdcl_solve_once formula' assignment'' heuristic''
+    in
+    let a = Assignment.empty in
+    let assignment, conflict = unit_propagation formula a in
     match conflict with
-    | `NoConflict -> (f, assignment)
-    | `Conflict clause ->
-        let dl, learnt = conflict_analysis clause assignment in
-        let formula' = Formula.add_clause f learnt in
-        let assignment' = backtrack assignment dl in
-        learn_clause formula' assignment'
-  in
-  let rec cdcl_solve_once (formula : Formula.t) (assignment : Assignment.t) :
-      Assignment.t option =
-    match all_variables_assigned formula assignment with
-    | true -> Some assignment
-    | false ->
-        let variable, value = pick_branching_variable formula assignment in
-        let assignment' =
-          Assignment.assign
-            { assignment with dl = assignment.dl + 1 }
-            variable value None
-        in
-        let formula', assignment'' = learn_clause formula assignment' in
-        cdcl_solve_once formula' assignment''
-  in
-  let a = Assignment.empty in
-  let assignment, conflict = unit_propagation formula a in
-  match conflict with
-  | `Conflict _ -> None
-  | `NoConflict -> cdcl_solve_once formula assignment
+    | `Conflict _ -> `UNSAT
+    | `NoConflict -> cdcl_solve_once formula assignment Heuristic.empty
+end
