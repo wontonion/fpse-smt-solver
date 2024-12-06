@@ -1,5 +1,5 @@
 type d = { value : bool; antecedent : Clause.t option; dl : int }
-type t = { dl : int; values : (d Core.Map.M(Core.Int).t);}
+type t = { dl : int; values : d Core.Map.M(Core.Int).t }
 
 val empty : t
 

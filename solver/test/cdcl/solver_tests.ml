@@ -185,8 +185,9 @@ let test_conflict_analysis _ =
     [ Cdcl.Literal.create 5 true; Cdcl.Literal.create 1 true ]
     (Cdcl.Clause.literals learned)
 
+module TrueFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.TrueFirst)
+module FalseFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.FalseFirst)
 module RandomSolver = Cdcl.Solver.Make (Cdcl.Heuristic.Random)
-open Printf
 
 let test_cdcl_solve_1 _ =
   let c1 =
@@ -255,11 +256,24 @@ let test_cdcl_solve_1 _ =
   in
   let f = Cdcl.Formula.create [ c1; c2; c3; c4; c5; c6; c7; c8 ] in
   let assignment =
+    match TrueFirstSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f);
+
+  let assignment =
+    match FalseFirstSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f);
+
+  let assignment =
     match RandomSolver.cdcl_solve f with
     | `SAT a -> a
     | `UNSAT -> failwith "Expected a solution"
   in
-  printf "%s\n" (Cdcl.Assignment.string_of_t assignment);
   assert_equal true (Cdcl.Assignment.satisfy assignment f)
 
 let test_cdcl_solve_2 _ =
@@ -274,6 +288,48 @@ let test_cdcl_solve_2 _ =
   in
   let c4 = Cdcl.Clause.create [ Cdcl.Literal.create 3 true ] in
   let f = Cdcl.Formula.create [ c1; c2; c3; c4 ] in
+  assert_equal `UNSAT (TrueFirstSolver.cdcl_solve f);
+  assert_equal `UNSAT (FalseFirstSolver.cdcl_solve f);
+  assert_equal `UNSAT (RandomSolver.cdcl_solve f)
+
+let test_cdcl_solve_3 _ =
+  let c =
+    Cdcl.Clause.create
+      [
+        Cdcl.Literal.create 1 false;
+        Cdcl.Literal.create 2 false;
+        Cdcl.Literal.create 3 false;
+      ]
+  in
+  let f = Cdcl.Formula.create [ c ] in
+  let assignment =
+    match TrueFirstSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f);
+
+  let assignment =
+    match FalseFirstSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f);
+
+  let assignment =
+    match RandomSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f)
+
+let test_cdcl_solve_4 _ =
+  let c1 = Cdcl.Clause.create [ Cdcl.Literal.create 1 false; Cdcl.Literal.create 2 false ] in
+  let c2 = Cdcl.Clause.create [ Cdcl.Literal.create 1 true ] in
+  let c3 = Cdcl.Clause.create [ Cdcl.Literal.create 2 true ] in
+  let f = Cdcl.Formula.create [ c1; c2; c3 ] in
+  assert_equal `UNSAT (TrueFirstSolver.cdcl_solve f);
+  assert_equal `UNSAT (FalseFirstSolver.cdcl_solve f);
   assert_equal `UNSAT (RandomSolver.cdcl_solve f)
 
 let series =
@@ -287,4 +343,6 @@ let series =
          "Test conflict_analysis" >:: test_conflict_analysis;
          "Test cdcl_solve 1" >:: test_cdcl_solve_1;
          "Test cdcl_solve 2" >:: test_cdcl_solve_2;
+         "Test cdcl_solve 3" >:: test_cdcl_solve_3;
+         "Test cdcl_solve 4" >:: test_cdcl_solve_4;
        ]

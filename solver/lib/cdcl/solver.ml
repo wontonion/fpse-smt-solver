@@ -67,34 +67,39 @@ let resolve (c1 : Clause.t) (c2 : Clause.t) (v : int) : Clause.t =
 let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
   let rec conflict_analysis_once (c : Clause.t) (a : Assignment.t) : Clause.t =
     let literals =
-      List.filter (Clause.literals c) ~f:(fun l ->
-          match Assignment.dl a l.variable with
-          | Some dl -> dl = a.dl
-          | None -> false)
+      (List.filter (Clause.literals c) ~f:(fun l ->
+           match Assignment.dl a l.variable with
+           | Some dl -> dl = a.dl
+           | None -> false)
+      [@coverage off])
+      (* Conflict clause has no unassigned literals *)
     in
     match List.length literals with
     | 1 -> c
     | _ ->
         let literal =
-          List.find_exn literals ~f:(fun l ->
-              match Assignment.antecedent a l.variable with
-              | Some _ -> true
-              | None -> false)
+          (List.find_exn literals ~f:(fun l ->
+               match Assignment.antecedent a l.variable with
+               | Some _ -> true
+               | None -> false)
+          [@coverage off])
+          (* Conflict clause has no unassigned literals *)
         in
         let antecedent =
           Option.value_exn (Assignment.antecedent a literal.variable)
         in
         conflict_analysis_once (resolve c antecedent literal.variable) a
   in
-  if a.dl <= 0 then failwith "Invalid decision level"
+  if a.dl <= 0 then failwith "Invalid decision level" [@coverage off]
   else
     let clause = conflict_analysis_once c a in
     let decision_levels =
       List.dedup_and_sort ~compare:(fun x y -> Int.compare y x)
-      @@ List.map (Clause.literals clause) ~f:(fun l ->
-             match Assignment.dl a l.variable with
-             | Some dl -> dl
-             | None -> failwith "variable not in assignment")
+      @@ (List.map (Clause.literals clause) ~f:(fun l ->
+              match Assignment.dl a l.variable with
+              | Some dl -> dl
+              | None -> failwith "variable not in assignment")
+         [@coverage off])
     in
     match List.length decision_levels with
     | 0 | 1 -> (0, clause)
@@ -114,19 +119,16 @@ module Make (Heuristic : Heuristic.H) : S = struct
           let heuristic' = Heuristic.backtrack heuristic dl in
           learn_clause formula' assignment' heuristic'
     in
-    let rec cdcl_solve_once (formula : Formula.t) (assignment : Assignment.t)
+    let rec cdcl_solve_once (f : Formula.t) (a : Assignment.t)
         (heuristic : Heuristic.t) : [ `SAT of Assignment.t | `UNSAT ] =
-      match all_variables_assigned formula assignment with
-      | true -> `SAT assignment
+      match all_variables_assigned f a with
+      | true -> `SAT a
       | false ->
+          let assignment = { a with dl = a.dl + 1 } in
           let heuristic', variable, value =
             Heuristic.pick_branching_variable heuristic formula assignment
           in
-          let assignment' =
-            Assignment.assign
-              { assignment with dl = assignment.dl + 1 }
-              variable value None
-          in
+          let assignment' = Assignment.assign assignment variable value None in
           let formula', assignment'', heuristic'' =
             learn_clause formula assignment' heuristic'
           in
