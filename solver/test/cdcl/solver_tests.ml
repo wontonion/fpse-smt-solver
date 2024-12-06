@@ -185,7 +185,10 @@ let test_conflict_analysis _ =
     [ Cdcl.Literal.create 5 true; Cdcl.Literal.create 1 true ]
     (Cdcl.Clause.literals learned)
 
-let test_cdcl_solve _ =
+module RandomSolver = Cdcl.Solver.Make (Cdcl.Heuristic.Random)
+open Printf
+
+let test_cdcl_solve_1 _ =
   let c1 =
     Cdcl.Clause.create
       [
@@ -239,7 +242,7 @@ let test_cdcl_solve _ =
         Cdcl.Literal.create 5 false;
       ]
   in
-  let c7 =
+  let c8 =
     Cdcl.Clause.create
       [
         Cdcl.Literal.create 1 true;
@@ -250,12 +253,28 @@ let test_cdcl_solve _ =
         Cdcl.Literal.create 6 true;
       ]
   in
-  let f = Cdcl.Formula.create [ c1; c2; c3; c4; c5; c6; c7 ] in
-  let assignment = match Cdcl.Solver.cdcl_solve f with
-    | Some a -> a
-    | None -> failwith "Expected a solution"
+  let f = Cdcl.Formula.create [ c1; c2; c3; c4; c5; c6; c7; c8 ] in
+  let assignment =
+    match RandomSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
   in
+  printf "%s\n" (Cdcl.Assignment.string_of_t assignment);
   assert_equal true (Cdcl.Assignment.satisfy assignment f)
+
+let test_cdcl_solve_2 _ =
+  let c1 = Cdcl.Clause.create [ Cdcl.Literal.create 1 false ] in
+  let c2 =
+    Cdcl.Clause.create
+      [ Cdcl.Literal.create 1 true; Cdcl.Literal.create 2 false ]
+  in
+  let c3 =
+    Cdcl.Clause.create
+      [ Cdcl.Literal.create 2 true; Cdcl.Literal.create 3 false ]
+  in
+  let c4 = Cdcl.Clause.create [ Cdcl.Literal.create 3 true ] in
+  let f = Cdcl.Formula.create [ c1; c2; c3; c4 ] in
+  assert_equal `UNSAT (RandomSolver.cdcl_solve f)
 
 let series =
   "Solver tests"
@@ -266,5 +285,6 @@ let series =
          "Test unit_propagation 2" >:: test_unit_propagation_2;
          "Test resolve" >:: test_resolve;
          "Test conflict_analysis" >:: test_conflict_analysis;
-          "Test cdcl_solve" >:: test_cdcl_solve
+         "Test cdcl_solve 1" >:: test_cdcl_solve_1;
+         "Test cdcl_solve 2" >:: test_cdcl_solve_2;
        ]

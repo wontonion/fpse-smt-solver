@@ -33,3 +33,13 @@ let satisfy (a : t) (f : Formula.t) : bool =
           match value a l with
           | Some b -> b
           | None -> false))
+
+let string_of_t (a : t) : string =
+  Map.to_alist a.values
+  |> List.map ~f:(fun (v, { value; antecedent; dl }) ->
+      Printf.sprintf "v%d: %b, antecedent: %s, dl: %d" v value
+        (match antecedent with
+         | None -> "None"
+         | Some c -> Clause.string_of_t c)
+        dl)
+  |> String.concat ~sep:"\n"
