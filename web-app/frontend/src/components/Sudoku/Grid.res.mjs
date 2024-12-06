@@ -179,7 +179,7 @@ function Grid(props) {
                                   )
                                 }, rowIndex.toString());
                     })),
-              className: "grid gap-0"
+              className: "grid gap-0 border-2 border-black"
             });
 }
 

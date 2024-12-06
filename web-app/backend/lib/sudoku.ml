@@ -69,13 +69,13 @@ let rec solve_and_count (grid: grid) (max_solutions: int) : int =
         in
         try_numbers 1 0
 
-(* 添加一个辅助函数来填充完整的数独 *)
+(* Helper function to solve the grid *)
 let rec solve_grid (grid: grid) : grid option =
   match find_empty grid with
-  | None -> Some grid  (* 找到解决方案 *)
+  | None -> Some grid  (* Found solution *)
   | Some (row, col) ->
       let numbers = List.init 9 (fun i -> i + 1) in
-      (* 随机打乱1-9的顺序，增加随机性 *)
+      (* Shuffle the numbers to increase randomness *)
       let shuffled = List.sort (fun _ _ -> Random.int 3 - 1) numbers in
       let rec try_numbers = function
         | [] -> None
@@ -88,7 +88,7 @@ let rec solve_grid (grid: grid) : grid option =
       in
       try_numbers shuffled
 
-(* 改进的生成算法 *)
+(* Improved generation algorithm *)
 let generate_puzzle () : grid =
   Random.self_init ();
   

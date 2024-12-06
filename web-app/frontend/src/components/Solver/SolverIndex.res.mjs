@@ -20,8 +20,8 @@ function getSolverExample(tabName) {
         break;
     case "smt" :
         match = [
-          "Enter SMT-LIB2 formula",
-          "(declare-const x Int)\n(assert (> x 0))\n(check-sat)\n(get-model)"
+          "Enter SMT formula",
+          "placeholder for SMT formula example"
         ];
         break;
     default:
@@ -109,28 +109,40 @@ function SolverIndex(props) {
                             }),
                         JsxRuntime.jsxs("div", {
                               children: [
-                                JsxRuntime.jsx(Button.make, {
-                                      children: "Download Template",
-                                      onClick: (function (param) {
-                                          downloadTemplate(tabName);
-                                        })
+                                JsxRuntime.jsxs("div", {
+                                      children: [
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Download Template",
+                                              onClick: (function (param) {
+                                                  downloadTemplate(tabName);
+                                                })
+                                            }),
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Upload problem batch",
+                                              onClick: (function (param) {
+                                                  Belt_Option.forEach(Caml_option.nullable_to_opt(document.getElementById("fileInput")), (function (prim) {
+                                                          prim.click();
+                                                        }));
+                                                })
+                                            }),
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Clear",
+                                              onClick: (function (param) {
+                                                  clearTextarea(textareaRef);
+                                                })
+                                            })
+                                      ],
+                                      className: "flex gap-4"
                                     }),
                                 JsxRuntime.jsx(Button.make, {
-                                      children: "Upload problem batch",
+                                      children: "Solve",
+                                      className: "mt-6",
                                       onClick: (function (param) {
-                                          Belt_Option.forEach(Caml_option.nullable_to_opt(document.getElementById("fileInput")), (function (prim) {
-                                                  prim.click();
-                                                }));
-                                        })
-                                    }),
-                                JsxRuntime.jsx(Button.make, {
-                                      children: "Clear",
-                                      onClick: (function (param) {
-                                          clearTextarea(textareaRef);
+                                          
                                         })
                                     })
                               ],
-                              className: "flex mt-4 gap-4"
+                              className: "flex mt-4 gap-4 justify-between"
                             })
                       ]
                     }),
@@ -143,13 +155,6 @@ function SolverIndex(props) {
                         JsxRuntime.jsx("div", {
                               children: "Solution will appear here",
                               className: "border p-4 h-64 overflow-auto"
-                            }),
-                        JsxRuntime.jsx(Button.make, {
-                              children: "Solve",
-                              className: "mt-6",
-                              onClick: (function (param) {
-                                  
-                                })
                             })
                       ]
                     })
