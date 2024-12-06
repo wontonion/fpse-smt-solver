@@ -57,6 +57,12 @@ let test_satisfy _ =
   let a' = Cdcl.Assignment.assign a 3 true None in
   assert_equal true (Cdcl.Assignment.satisfy a' f)
 
+let test_string_of_t _ =
+  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
+  assert_equal "v1: true" (Cdcl.Assignment.string_of_t a);
+  let a = Cdcl.Assignment.assign a 2 false None in
+  assert_equal "v1: true\nv2: false" (Cdcl.Assignment.string_of_t a)
+
 let series =
   "Assignment tests"
   >::: [
@@ -66,4 +72,5 @@ let series =
          "Test assign" >:: test_assign;
          "Test unassign" >:: test_unassign;
          "Test satisfy" >:: test_satisfy;
+          "Test string_of_t" >:: test_string_of_t;
        ]

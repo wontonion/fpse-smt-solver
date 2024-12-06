@@ -3,4 +3,4 @@
  (modules literal clause formula assignment solver heuristic)
  (libraries core)
  (preprocess
-  (pps ppx_deriving.show ppx_jane)))
+  (pps ppx_deriving.show ppx_jane bisect_ppx)))
