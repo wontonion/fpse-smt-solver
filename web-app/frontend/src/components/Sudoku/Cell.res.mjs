@@ -17,17 +17,20 @@ function Cell(props) {
   var size = props.size;
   var cell = props.cell;
   var getCellClassName = function () {
+    var baseStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center relative";
     var borderStyle = isRightBorder ? (
         isBottomBorder ? " border-r-2 border-b-2 border-r-gray-800 border-b-gray-800" : " border-r-2 border-r-gray-800"
       ) : (
         isBottomBorder ? " border-b-2 border-b-gray-800" : ""
       );
+    if (cell.isInitial) {
+      return baseStyle + borderStyle + " bg-gray-500 text-white";
+    }
     var match = cell.isValid;
     var match$1 = cell.value !== "";
     var validityStyle = match || !match$1 ? "" : (
         hasBlockConflict ? " bg-red-200" : " bg-red-100"
       );
-    var initialStyle = cell.isInitial ? " bg-gray-500 text-white" : "";
     var completionStyle;
     var exit = 0;
     var exit$1 = 0;
@@ -81,7 +84,7 @@ function Cell(props) {
           isBlockComplete || isColComplete ? " bg-green-100 opacity-50" : ""
         );
     }
-    return "w-10 h-10 border border-gray-300 flex items-center justify-center relative" + borderStyle + validityStyle + initialStyle + completionStyle;
+    return baseStyle + borderStyle + validityStyle + completionStyle;
   };
   return JsxRuntime.jsx("div", {
               children: JsxRuntime.jsx("input", {

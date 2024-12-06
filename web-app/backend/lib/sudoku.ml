@@ -50,28 +50,32 @@ let find_empty (grid: grid) : (int * int) option =
   in
   find_in_row 0 0
 
-(* Solve sudoku recursively *)
-let rec solve_and_count (grid: grid) (count: int ref) (max_solutions: int) : unit =
-  if !count >= max_solutions then ()
+(* Solve sudoku recursively and return the number of solutions found *)
+let rec solve_and_count (grid: grid) (max_solutions: int) : int =
+  if max_solutions = 0 then 0
   else match find_empty grid with
     | None -> 
-        incr count;
-        Printf.printf "Found solution %d\n" !count
+        Printf.printf "Found solution\n";
+        1
     | Some (row, col) ->
-        for num = 1 to 9 do
-          if is_valid grid row col num then begin
+        let rec try_numbers num acc =
+          if num > 9 || acc >= max_solutions then acc
+          else if is_valid grid row col num then
             let new_grid = update_grid grid row col num in
-            solve_and_count new_grid count max_solutions
-          end
-        done
+            let solutions = solve_and_count new_grid (max_solutions - acc) in
+            try_numbers (num + 1) (acc + solutions)
+          else
+            try_numbers (num + 1) acc
+        in
+        try_numbers 1 0
 
-(* 添加一个辅助函数来填充完整的数独 *)
+(* Helper function to solve the grid *)
 let rec solve_grid (grid: grid) : grid option =
   match find_empty grid with
-  | None -> Some grid  (* 找到解决方案 *)
+  | None -> Some grid  (* Found solution *)
   | Some (row, col) ->
       let numbers = List.init 9 (fun i -> i + 1) in
-      (* 随机打乱1-9的顺序，增加随机性 *)
+      (* Shuffle the numbers to increase randomness *)
       let shuffled = List.sort (fun _ _ -> Random.int 3 - 1) numbers in
       let rec try_numbers = function
         | [] -> None
@@ -84,7 +88,7 @@ let rec solve_grid (grid: grid) : grid option =
       in
       try_numbers shuffled
 
-(* 改进的生成算法 *)
+(* Improved generation algorithm *)
 let generate_puzzle () : grid =
   Random.self_init ();
   
@@ -110,10 +114,9 @@ let generate_puzzle () : grid =
         else begin
           Printf.printf "Trying to remove at (%d,%d)\n" row col;
           let new_grid = update_grid grid row col 0 in
-          let count = ref 0 in
-          solve_and_count new_grid count 2;
-          Printf.printf "Position (%d,%d) has %d solutions\n" row col !count;
-          if !count = 1 then
+          let solutions = solve_and_count new_grid 2 in
+          Printf.printf "Position (%d,%d) has %d solutions\n" row col solutions;
+          if solutions = 1 then
             remove_numbers new_grid rest (removed + 1)
           else
             remove_numbers grid rest removed

@@ -1,4 +1,4 @@
-open Cell
+open Types
 
 // get the unique numbers of row or col
 let getUniqueNumbers = (numbers: array<string>) => {
@@ -18,7 +18,7 @@ let isAllFilled = (numbers: array<string>) => {
 @react.component
 let make = (
   ~size: int,
-  ~values: array<array<cellState>>,
+  ~values: array<array<Types.cellState>>,
   ~onCellChange: ((int, int, string)) => unit
 ) => {
   let subGridSize = switch size {
@@ -48,7 +48,7 @@ let make = (
 
   // check whether the block is complete
   let isBlockComplete = (blockIndex, grid) => {
-    let blockSize = subGridSize * subGridSize
+    let blockSize = subGridSize * subGridSize // 9 for 9x9, 4 for 4x4, 6 for 6x6
     let startRow = blockIndex / subGridSize
     let startCol = mod(blockIndex, subGridSize)
     let numbers = []
@@ -115,7 +115,7 @@ let make = (
     rowValid && colValid && blockValid
   }
 
-  <div className="grid gap-0">
+  <div className="grid gap-0 border-2 border-black">
     {values
     ->Belt.Array.mapWithIndex((rowIndex, row) => {
       let hasRowError = hasRowConflict(rowIndex, values)
@@ -141,7 +141,7 @@ let make = (
 
           <Cell
             key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`}
-            cell
+            cell={cell}
             size
             rowIndex
             colIndex

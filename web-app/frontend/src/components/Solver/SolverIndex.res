@@ -67,8 +67,8 @@ let getSolverExample = tabName => {
       "p cnf 3 2\n1 2 -3 0\n-2 3 0"
     )
   | "smt" => (
-      "Enter SMT-LIB2 formula",
-      "(declare-const x Int)\n(assert (> x 0))\n(check-sat)\n(get-model)"
+      "Enter SMT formula",
+      "placeholder for SMT formula example"
     )
   | _ => ("", "")
   }
@@ -150,16 +150,19 @@ let make = (~tabName: string) => {
         id="fileInput"
         onChange={handleFileUpload}
       />
-      <div className="flex mt-4 gap-4">
-        <Button onClick={_ => downloadTemplate(tabName)}>
-          {React.string("Download Template")}
-        </Button>
+      <div className="flex mt-4 gap-4 justify-between">
+        <div className="flex gap-4">
+          <Button onClick={_ => downloadTemplate(tabName)}>
+            {React.string("Download Template")}
+          </Button>
         <Button onClick={_ => getElementById("fileInput")->Js.Nullable.toOption->Belt.Option.forEach(click)}>
           {React.string("Upload problem batch")}
         </Button>
         <Button onClick={_ => clearTextarea(textareaRef)}>
           {React.string("Clear")}
         </Button>
+        </div>
+        <Button className="mt-6" onClick={_ => ()}> {React.string("Solve")} </Button>
       </div>
     </div>
     <div>
@@ -167,7 +170,7 @@ let make = (~tabName: string) => {
       <div className="border p-4 h-64 overflow-auto">
         {React.string("Solution will appear here")}
       </div>
-      <Button className="mt-6" onClick={_ => ()}> {React.string("Solve")} </Button>
+      
     </div>
   </div>
 }

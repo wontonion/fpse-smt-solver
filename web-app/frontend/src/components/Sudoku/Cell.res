@@ -1,9 +1,4 @@
-type cellState = {
-  value: string,
-  isInitial: bool,
-  isValid: bool,
-  notes: array<string>, // this is designed for future use of notes
-}
+open Types
 
 @react.component
 let make = (
@@ -29,20 +24,24 @@ let make = (
     | (false, true) => " border-b-2 border-b-gray-800"
     | (false, false) => ""
     }
-    let validityStyle = switch (cell.isValid, cell.value !== "", hasBlockConflict) {
-    | (false, true, true) => " bg-red-200"
-    | (false, true, false) => " bg-red-100"
-    | _ => ""
-    }
-    let initialStyle = cell.isInitial ? " bg-gray-500 text-white" : ""
-    let completionStyle = switch (isRowComplete, isColComplete, isBlockComplete, hasRowError, hasColError, hasBlockConflict) {
-    | (_, _, _, true, _, _) | (_, _, _, _, true, _) | (_, _, _, _, _, true) => " bg-red-100 opacity-50"
-    | (true, true, true, false, false, false) => " bg-green-200 opacity-50"
-    | (true, _, _, false, false, false) | (_, true, _, false, false, false) | (_, _, true, false, false, false) => " bg-green-100 opacity-50"
-    | _ => ""
-    }
 
-    baseStyle ++ borderStyle ++ validityStyle ++ initialStyle ++ completionStyle
+    if (cell.isInitial) {
+      baseStyle ++ borderStyle ++ " bg-gray-500 text-white"
+    } else {
+      let validityStyle = switch (cell.isValid, cell.value !== "", hasBlockConflict) {
+      | (false, true, true) => " bg-red-200"
+      | (false, true, false) => " bg-red-100"
+      | _ => ""
+      }
+      let completionStyle = switch (isRowComplete, isColComplete, isBlockComplete, hasRowError, hasColError, hasBlockConflict) {
+      | (_, _, _, true, _, _) | (_, _, _, _, true, _) | (_, _, _, _, _, true) => " bg-red-100 opacity-50"
+      | (true, true, true, false, false, false) => " bg-green-200 opacity-50"
+      | (true, _, _, false, false, false) | (_, true, _, false, false, false) | (_, _, true, false, false, false) => " bg-green-100 opacity-50"
+      | _ => ""
+      }
+
+      baseStyle ++ borderStyle ++ validityStyle ++ completionStyle
+    }
   }
 
   <div className={getCellClassName()}>

@@ -34,3 +34,6 @@ let generate_sudoku_handler =
         } in
         json_response (Types.response_to_yojson Types.solution_to_yojson error_response)
   )
+
+
+
