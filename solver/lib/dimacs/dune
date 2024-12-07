@@ -1,0 +1,6 @@
+(library
+ (name dimacs)
+ (modules utils parser)
+ (libraries core cdcl)
+ (preprocess
+  (pps ppx_deriving.show ppx_jane bisect_ppx)))

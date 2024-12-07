@@ -1,4 +1,4 @@
 (test
  (name tests)
  (modules tests)
- (libraries core ounit2 cdcl_tests cdcl))
+ (libraries core ounit2 cdcl_tests dimacs_tests))

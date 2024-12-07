@@ -1,0 +1,4 @@
+(library
+ (name dimacs_tests)
+ (modules dimacs_tests parser_tests)
+ (libraries core ounit2 cdcl dimacs))
