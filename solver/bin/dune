@@ -1,4 +1,6 @@
 (executable
  (public_name solver)
  (name main)
- (libraries cdcl dimacs))
+ (libraries cdcl dimacs landmarks)
+ (preprocess
+  (pps landmarks-ppx --auto)))
