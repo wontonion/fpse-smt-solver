@@ -12,7 +12,7 @@ let parse_formula (words : string list) (n_vars : int) (n_clauses : int) :
           | _ -> failwith "Invalid variable in clause"
         in
         parse_single_clause (lit :: ls) ws n_vars
-    | [] -> failwith "Should not happen" [@coverage off]
+    | [] -> failwith "Invalid clause: missing terminating zero"
   in
   let rec parse_clauses (ls : Cdcl.Clause.t list) (words : string list)
       (n_vars : int) (n_clauses : int) : Cdcl.Clause.t list =

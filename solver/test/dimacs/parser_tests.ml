@@ -50,6 +50,14 @@ let test_invalid_parameter _ =
   assert_raises (Failure "Invalid number of clauses") (fun () ->
       Dimacs.Parser.parse input)
 
+let test_invalid_clause _ =
+  let input = "p cnf 3 2\n 1" in
+  assert_raises (Failure "Invalid clause: missing terminating zero") (fun () ->
+      Dimacs.Parser.parse input);
+  let input = "p cnf d c\n a" in
+  assert_raises (Failure "int_of_string") (fun () ->
+      Dimacs.Parser.parse input)
+
 let series =
   "Parser tests"
   >::: [
@@ -58,4 +66,5 @@ let series =
          "Test wrong number of clauses" >:: test_wrong_number_of_clauses;
          "Test invalid header" >:: test_invalid_header;
          "Test invalid parameter" >:: test_invalid_parameter;
+         "Test invalid clause" >:: test_invalid_clause;
        ]
