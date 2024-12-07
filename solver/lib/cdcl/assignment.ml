@@ -36,5 +36,6 @@ let satisfy (a : t) (f : Formula.t) : bool =
 
 let string_of_t (a : t) : string =
   Map.to_alist a.values
-  |> List.map ~f:(fun (v, { value; _ }) -> Printf.sprintf "v%d: %b" v value)
-  |> String.concat ~sep:"\n"
+  |> List.map ~f:(fun (v, { value; _ }) ->
+         Printf.sprintf "%d" @@ if value then v else -v)
+  |> String.concat ~sep:" "

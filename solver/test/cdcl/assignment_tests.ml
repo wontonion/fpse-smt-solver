@@ -59,9 +59,9 @@ let test_satisfy _ =
 
 let test_string_of_t _ =
   let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal "v1: true" (Cdcl.Assignment.string_of_t a);
+  assert_equal "1" (Cdcl.Assignment.string_of_t a);
   let a = Cdcl.Assignment.assign a 2 false None in
-  assert_equal "v1: true\nv2: false" (Cdcl.Assignment.string_of_t a)
+  assert_equal "1 -2" (Cdcl.Assignment.string_of_t a)
 
 let series =
   "Assignment tests"
