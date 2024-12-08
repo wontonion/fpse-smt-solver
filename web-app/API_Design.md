@@ -17,7 +17,11 @@
 # Sudoku API Design
 
 ## 1. generateSudoku
+```url
+/api/sudoku/generate
+```
 ```json
+// response
 {
     "method": "GET",
     "problem_type": "sudoku",
@@ -38,7 +42,11 @@
     - is_valid: whether the cell is valid, if false, the value is invalid   
     
 ## 2. solveSudoku
+```url
+/api/sudoku/solve
+```
 ```json
+// request
 {
     "method": "POST",
     "problem_type": "sudoku",
@@ -50,10 +58,59 @@
         ]
     }
 }
+// response
+{
+    "method": "POST",
+    "problem_type": "sudoku",
+    "status": "success" | "error",
+    "message": "sudoku solved",
+    "data": {
+        "size": 9,
+        "grid": [
+            ...
+        ]
+    }
+}
 ```
 
 # SAT/SMT API Design
 
-## 1. upload (batch upload problem)
-## 2. solveSAT
-## 3. solveSMT
+## 1. requestSAT/requestSMT
+```url
+/api/sat/solve
+/api/smt/solve
+```
+```json
+// request
+{
+    "method": "POST",
+    "problem_type": "SAT" | "SMT",
+    "message": "Requesting SAT/SMT...",
+    "data": [
+        {
+            "problem": "problem"
+            "solution": ""
+        },
+        ...
+    ]
+}
+// response
+{
+    "method": "POST",
+    "problem_type": "SAT" | "SMT",
+    "status": "success" | "error",
+    "message": "SAT/SMT requested",
+    "data": [
+        {
+            "problem": "problem",
+            "solution": "solution"
+        },
+           {
+            "problem": "problem",
+            "solution": "solution"
+        },
+        ...
+    ]
+}
+```
+- problem: the problem to be solved, the format depends on the problem type
