@@ -185,8 +185,8 @@ let test_conflict_analysis _ =
     [ Cdcl.Literal.create 5 true; Cdcl.Literal.create 1 true ]
     (Cdcl.Clause.literals learned)
 
-module TrueFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.TrueFirst)
-module FalseFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.FalseFirst)
+module TrueFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.OrderedTrueFirst)
+module FalseFirstSolver = Cdcl.Solver.Make (Cdcl.Heuristic.OrderedFalseFirst)
 module RandomSolver = Cdcl.Solver.Make (Cdcl.Heuristic.Random)
 
 let test_cdcl_solve_1 _ =
