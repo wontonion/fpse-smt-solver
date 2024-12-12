@@ -7,6 +7,8 @@ let[@landmark] main () =
   match RandomSolver.cdcl_solve formula with
   | `UNSAT -> print_endline "UNSATISFIABLE"
   | `SAT assignment ->
+      if not @@ Cdcl.Assignment.satisfy assignment formula then
+        failwith "Should not happen! Assignment does not satisfy formula";
       print_endline "SATISFIABLE";
       print_endline (Cdcl.Assignment.string_of_t assignment)
 
