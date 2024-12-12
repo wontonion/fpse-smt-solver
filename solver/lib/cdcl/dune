@@ -1,5 +1,6 @@
 (library
  (name cdcl)
+ (public_name solver.cdcl)
  (modules literal clause formula assignment solver heuristic)
  (libraries core landmarks)
  (preprocess
