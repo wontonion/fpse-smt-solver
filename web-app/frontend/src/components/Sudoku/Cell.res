@@ -18,6 +18,8 @@ let make = (
 ) => {
   let getCellClassName = () => {
     let baseStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center relative"
+
+    // make block border thicker
     let borderStyle = switch (isRightBorder, isBottomBorder) {
     | (true, true) => " border-r-2 border-b-2 border-r-gray-800 border-b-gray-800"
     | (true, false) => " border-r-2 border-r-gray-800"
