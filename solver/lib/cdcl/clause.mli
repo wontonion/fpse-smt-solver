@@ -1,6 +1,12 @@
 open Core
 
-type t
+type t [@@deriving sexp]
+
+type comparator_witness
+(** A witness type for the comparator *)
+
+val comparator : (t, comparator_witness) Comparator.t
+(** A comparator for literals *)
 
 val create : Literal.t list -> t
 (** [create l] creates a clause from a list of literals *)
