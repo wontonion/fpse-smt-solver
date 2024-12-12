@@ -1,7 +1,11 @@
 open Core
 
 module T = struct
+  [@@@coverage off]
+
   type t = Literal.t list [@@deriving sexp, compare, equal]
+
+  [@@@coverage on]
 end
 
 include T
