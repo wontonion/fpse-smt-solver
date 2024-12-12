@@ -10,6 +10,7 @@
 - [ ] Clean up code and remove unused functions, make code more functional
 
 ### Backend
+- [ ] Apply the ***Two Watched Literals*** optimization to SAT solver
 - [ ] Finish API handlers for Sudoku and SAT/SMT solver
 - [ ] Implement smaller grid size Sudoku generation and solving
 - [ ] SAT/SMT problems input parsing and sanitization

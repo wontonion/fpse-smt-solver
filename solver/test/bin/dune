@@ -1,0 +1,4 @@
+(library
+ (name bin_tests)
+ (modules bin_tests exec_tests)
+ (libraries core ounit2))

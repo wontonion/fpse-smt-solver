@@ -8,6 +8,6 @@ module type H = sig
     (** [backtrack h dl] backtracks the heuristic [h] to decision level [dl] *)
   end
 
-module TrueFirst : H
-module FalseFirst : H
+module OrderedTrueFirst : H
+module OrderedFalseFirst : H
 module Random : H

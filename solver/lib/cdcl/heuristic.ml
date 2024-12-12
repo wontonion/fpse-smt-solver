@@ -8,7 +8,7 @@ module type H = sig
   val backtrack : t -> int -> t
 end
 
-module TrueFirst : H = struct
+module OrderedTrueFirst : H = struct
   type t = unit
 
   let empty = ()
@@ -30,7 +30,7 @@ module TrueFirst : H = struct
   let backtrack _ _ = ()
 end
 
-module FalseFirst : H = struct
+module OrderedFalseFirst : H = struct
   type t = unit
 
   let empty = ()
@@ -57,19 +57,20 @@ module Random : H = struct
 
   let empty = ()
 
-  let next_variable (f : Formula.t) (a : Assignment.t) =
-    let rec loop (vars : int list) : int =
+  let unassigned_vars (f : Formula.t) (a : Assignment.t) =
+    let rec loop (ls : int list) (vars : int list) : int list =
       match vars with
-      | [] -> failwith "no unassigned variables" [@coverage off]
+      | [] -> ls
       | v :: vs -> (
           match Assignment.value a (Literal.create v false) with
-          | Some _ -> loop vs
-          | None -> v)
+          | Some _ -> loop ls vs
+          | None -> loop (v :: ls) vs)
     in
-    loop (Set.to_list (Formula.variables f))
+    loop [] (Set.to_list (Formula.variables f))
 
   let pick_branching_variable _ (f : Formula.t) (a : Assignment.t) =
-    ((), next_variable f a, Random.bool ())
+    let vars = unassigned_vars f a in
+    ((), List.random_element_exn vars, Random.bool ())
 
   let backtrack _ _ = ()
 end

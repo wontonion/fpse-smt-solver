@@ -1,7 +1,14 @@
-type var = int
-type t = { variable : var; negation : bool }
+open Core
 
-val create : var -> bool -> t
+type t = { variable : int; negation : bool } [@@deriving sexp]
+
+type comparator_witness
+(** A witness type for the comparator *)
+
+val comparator : (t, comparator_witness) Comparator.t
+(** A comparator for literals *)
+
+val create : int -> bool -> t
 (** [create v n] creates a literal from a variable [v] and a negation [n] *)
 
 val string_of_t : t -> string
@@ -13,7 +20,7 @@ val neg : t -> t
 val equal : t -> t -> bool
 (** [equal l1 l2] returns [true] if [l1] and [l2] are equal, [false] otherwise *)
 
-val variable : t -> var
+val variable : t -> int
 (** [variable l] returns the variable of literal [l] *)
 
 val compare : t -> t -> int

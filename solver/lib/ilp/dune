@@ -1,0 +1,6 @@
+(library
+ (name ilp)
+ (modules bitvec)
+ (libraries core cdcl landmarks)
+ (preprocess
+  (pps ppx_deriving.show ppx_jane bisect_ppx landmarks-ppx --auto)))

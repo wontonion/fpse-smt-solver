@@ -2,9 +2,81 @@ open Core
 
 type status = SATISFIED | UNSATISFIED | UNIT | UNRESOLVED
 
+type solver_state = {
+  formula : Formula.t;
+  assignment : Assignment.t;
+  lit2clauses : Clause.t list Map.M(Literal).t;
+  clause2lits : Literal.t list Map.M(Clause).t;
+  to_propagate : Literal.t list;
+}
+
 module type S = sig
   val cdcl_solve : Formula.t -> [ `SAT of Assignment.t | `UNSAT ]
 end
+
+let init_watches (f : Formula.t) : solver_state =
+  let lit2clauses, clause2lits =
+    List.fold (Formula.clauses f)
+      ~init:(Map.empty (module Literal), Map.empty (module Clause))
+      ~f:(fun (lit2clauses, clause2lits) c ->
+        let literals = Clause.literals c in
+        match List.length literals with
+        | 0 -> failwith "Should not happen" [@coverage off]
+        | 1 ->
+            let lit = List.hd_exn literals in
+            ( Map.add_multi lit2clauses ~key:lit ~data:c,
+              Map.add_multi clause2lits ~key:c ~data:lit )
+        | _ ->
+            let lit1 = List.hd_exn literals in
+            let lit2 = List.nth_exn literals 1 in
+            ( lit2clauses
+              |> Map.add_multi ~key:lit1 ~data:c
+              |> Map.add_multi ~key:lit2 ~data:c,
+              clause2lits
+              |> Map.add_multi ~key:c ~data:lit1
+              |> Map.add_multi ~key:c ~data:lit2 ))
+  in
+  {
+    formula = f;
+    assignment = Assignment.empty;
+    lit2clauses;
+    clause2lits;
+    to_propagate = [];
+  }
+
+let add_learnt_clause (state : solver_state) (c : Clause.t) : solver_state =
+  let rec add_learnt_clause_helper (state : solver_state) (clause : Clause.t)
+      (lits : Literal.t list) : solver_state =
+    match lits with
+    | [] -> state
+    | lit :: lits -> (
+        match
+          List.length
+          @@ (Map.find state.clause2lits clause |> Option.value ~default:[])
+        with
+        | 0 | 1 ->
+            let clause2lits =
+              Map.add_multi state.clause2lits ~key:clause ~data:lit
+            in
+            let lit2clauses =
+              Map.add_multi state.lit2clauses ~key:lit ~data:clause
+            in
+            add_learnt_clause_helper
+              { state with clause2lits; lit2clauses }
+              clause lits
+        | _ -> state)
+  in
+  let formula = Formula.add_clause state.formula c in
+  let state = { state with formula } in
+  let lits =
+    List.sort (Clause.literals c) ~compare:(fun l1 l2 ->
+        Int.compare
+          (Assignment.dl state.assignment l1.variable
+          |> Option.value_exn |> Int.neg)
+          (Assignment.dl state.assignment l2.variable
+          |> Option.value_exn |> Int.neg))
+  in
+  add_learnt_clause_helper state c lits
 
 let all_variables_assigned (f : Formula.t) (a : Assignment.t) : bool =
   List.for_all
@@ -35,29 +107,96 @@ let clause_status (c : Clause.t) (a : Assignment.t) : status =
       UNSATISFIED
   | _ -> UNRESOLVED
 
-let unit_propagation (f : Formula.t) (a : Assignment.t) :
-    Assignment.t * [ `NoConflict | `Conflict of Clause.t ] =
-  let rec unit_propagation_once (f : Formula.t) (a : Assignment.t) :
-      Assignment.t * [ `NoConflict | `Conflict of Clause.t ] =
-    List.fold_until (Formula.clauses f) ~init:(a, `NoConflict, true)
-      ~f:(fun (a, conflict, finish) c ->
-        match clause_status c a with
-        | SATISFIED | UNRESOLVED -> Continue (a, conflict, finish)
-        | UNSATISFIED -> Stop (a, `Conflict c, finish)
-        | UNIT ->
-            let l =
-              List.find_exn (Clause.literals c) ~f:(fun l ->
-                  Option.is_none @@ Assignment.value a l)
+let rec unit_propagation (state : solver_state) :
+    solver_state * [ `NoConflict | `Conflict of Clause.t ] =
+  let try_rewatch (state : solver_state) (watching_lit : Literal.t)
+      (watching_clause : Clause.t) : bool * solver_state =
+    let rec try_rewatch_once (state : solver_state) (watching_lit : Literal.t)
+        (watching_clause : Clause.t) (clause_lits : Literal.t list) :
+        bool * solver_state =
+      match clause_lits with
+      | [] -> (false, state)
+      | lit :: clause_lits ->
+          if
+            List.mem
+              (Map.find state.clause2lits watching_clause
+              |> Option.value ~default:[])
+              lit ~equal:Literal.equal
+          then try_rewatch_once state watching_lit watching_clause clause_lits
+          else if
+            Assignment.value state.assignment lit
+            |> Option.value ~default:true |> not
+          then try_rewatch_once state watching_lit watching_clause clause_lits
+          else
+            let ls =
+              lit
+              :: (Map.find_exn state.clause2lits watching_clause
+                 |> List.filter ~f:(fun l -> not (Literal.equal l watching_lit))
+                 )
             in
-            Continue
-              ( Assignment.assign a l.variable (not l.negation) (Some c),
-                conflict,
-                false ))
-      ~finish:Fn.id
-    |> fun (a, conflict, finish) ->
-    if finish then (a, conflict) else unit_propagation_once f a
+            let clause2lits =
+              Map.set state.clause2lits ~key:watching_clause ~data:ls
+            in
+            let ls =
+              Map.find_exn state.lit2clauses watching_lit
+              |> List.filter ~f:(fun c -> not (Clause.equal c watching_clause))
+            in
+            let lit2clauses =
+              Map.set state.lit2clauses ~key:watching_lit ~data:ls
+              |> Map.add_multi ~key:lit ~data:watching_clause
+            in
+            (true, { state with clause2lits; lit2clauses })
+    in
+    try_rewatch_once state watching_lit watching_clause
+    @@ Clause.literals watching_clause
   in
-  unit_propagation_once f a
+  let rec process_watching_clause (state : solver_state)
+      (watching_lit : Literal.t) (watching_clauses : Clause.t list) :
+      solver_state * [ `NoConflict | `Conflict of Clause.t ] =
+    match watching_clauses with
+    | [] -> unit_propagation state
+    | watching_clause :: watching_clauses -> (
+        let rewatched, state = try_rewatch state watching_lit watching_clause in
+        if rewatched then
+          process_watching_clause state watching_lit watching_clauses
+        else
+          let watching_lits = Map.find_exn state.clause2lits watching_clause in
+          match List.length watching_lits with
+          | 1 -> (state, `Conflict watching_clause)
+          | _ ->
+              let watching_lits_0 = List.hd_exn watching_lits in
+              let watching_lits_1 = List.nth_exn watching_lits 1 in
+              let other =
+                if Literal.equal watching_lit watching_lits_0 then
+                  watching_lits_1
+                else watching_lits_0
+              in
+              if Assignment.value state.assignment other |> Option.is_none then
+                let assignment =
+                  Assignment.assign state.assignment other.variable
+                    (not other.negation) (Some watching_clause)
+                in
+                let to_propagate = other :: state.to_propagate in
+                let state = { state with assignment; to_propagate } in
+                process_watching_clause state watching_lit watching_clauses
+              else if
+                Assignment.value state.assignment other |> Option.value_exn
+              then process_watching_clause state watching_lit watching_clauses
+              else (state, `Conflict watching_clause))
+  in
+  match List.length state.to_propagate with
+  | 0 -> (state, `NoConflict)
+  | _ ->
+      let to_propagate, watching_lit =
+        List.split_n state.to_propagate @@ (List.length state.to_propagate - 1)
+      in
+      let watching_lit = Literal.neg @@ List.hd_exn watching_lit in
+      let watching_clauses =
+        Map.find state.lit2clauses watching_lit |> Option.value ~default:[]
+      in
+      process_watching_clause
+        { state with to_propagate }
+        watching_lit watching_clauses
 
 let resolve (c1 : Clause.t) (c2 : Clause.t) (v : int) : Clause.t =
   let lits1 = List.filter (Clause.literals c1) ~f:(fun l -> l.variable <> v) in
@@ -107,36 +246,80 @@ let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
 
 module Make (Heuristic : Heuristic.H) : S = struct
   let cdcl_solve (formula : Formula.t) : [ `SAT of Assignment.t | `UNSAT ] =
-    let rec learn_clause (f : Formula.t) (a : Assignment.t)
-        (heuristic : Heuristic.t) : Formula.t * Assignment.t * Heuristic.t =
-      let assignment, conflict = unit_propagation f a in
+    let rec learn_clause (state : solver_state) (heuristic : Heuristic.t) :
+        solver_state * Heuristic.t =
+      let state, conflict = unit_propagation state in
       match conflict with
-      | `NoConflict -> (f, assignment, heuristic)
+      | `NoConflict -> (state, heuristic)
       | `Conflict clause ->
-          let dl, learnt = conflict_analysis clause assignment in
-          let formula' = Formula.add_clause f learnt in
-          let assignment' = backtrack assignment dl in
+          let dl, learnt = conflict_analysis clause state.assignment in
+          let state' = add_learnt_clause state learnt in
+          let assignment' = backtrack state.assignment dl in
           let heuristic' = Heuristic.backtrack heuristic dl in
-          learn_clause formula' assignment' heuristic'
+
+          let literal =
+            List.find_exn (Clause.literals learnt) ~f:(fun l ->
+                match Assignment.dl assignment' l.variable with
+                | Some _ -> false
+                | None -> true)
+          in
+          let assignment'' =
+            Assignment.assign assignment' literal.variable
+              (not literal.negation) (Some learnt)
+          in
+          learn_clause
+            {
+              state' with
+              assignment = assignment'';
+              to_propagate = [ literal ];
+            }
+            heuristic'
     in
-    let rec cdcl_solve_once (f : Formula.t) (a : Assignment.t)
-        (heuristic : Heuristic.t) : [ `SAT of Assignment.t | `UNSAT ] =
-      match all_variables_assigned f a with
-      | true -> `SAT a
+    let rec cdcl_solve_once (state : solver_state) (heuristic : Heuristic.t) :
+        [ `SAT of Assignment.t | `UNSAT ] =
+      match all_variables_assigned state.formula state.assignment with
+      | true -> `SAT state.assignment
       | false ->
-          let assignment = { a with dl = a.dl + 1 } in
+          let assignment =
+            { state.assignment with dl = state.assignment.dl + 1 }
+          in
           let heuristic', variable, value =
             Heuristic.pick_branching_variable heuristic formula assignment
           in
           let assignment' = Assignment.assign assignment variable value None in
-          let formula', assignment'', heuristic'' =
-            learn_clause formula assignment' heuristic'
+          let state', heuristic'' =
+            learn_clause
+              {
+                state with
+                assignment = assignment';
+                to_propagate = [ Literal.create variable @@ not value ];
+              }
+              heuristic'
           in
-          cdcl_solve_once formula' assignment'' heuristic''
+          cdcl_solve_once state' heuristic''
     in
-    let a = Assignment.empty in
-    let assignment, conflict = unit_propagation formula a in
+    let state = init_watches formula in
+    let unit_clauses =
+      List.filter (Formula.clauses formula) ~f:(fun c ->
+          match List.length (Clause.literals c) with 1 -> true | _ -> false)
+    in
+    let state =
+      List.fold unit_clauses ~init:state ~f:(fun state clause ->
+          let lit = List.hd_exn (Clause.literals clause) in
+          if Assignment.value state.assignment lit |> Option.is_some then state
+          else
+            let assignment =
+              Assignment.assign state.assignment lit.variable (not lit.negation)
+                (Some clause)
+            in
+            {
+              state with
+              assignment;
+              to_propagate = state.to_propagate |> List.append [ lit ];
+            })
+    in
+    let state, conflict = unit_propagation state in
     match conflict with
     | `Conflict _ -> `UNSAT
-    | `NoConflict -> cdcl_solve_once formula assignment Heuristic.empty
+    | `NoConflict -> cdcl_solve_once state Heuristic.empty
 end
