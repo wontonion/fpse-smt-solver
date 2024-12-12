@@ -36,21 +36,17 @@ let test_exec (args : string) (expected : string) (ctxt : test_ctxt) : unit =
 let test_example =
   test_exec (test_dir ^ "files/example.cnf") "SATISFIABLE\n1 2 -3\n"
 
+let test_unsat = test_exec (test_dir ^ "files/unsat.cnf") "UNSATISFIABLE\n"
+
 let test_sudoku =
   test_exec
     (test_dir ^ "files/sudoku.cnf")
     (In_channel.read_all (test_dir ^ "files/sudoku.cnf.sat"))
 
-(* let test_comments_counts =
-     test_exec
-       (test_dir ^ "comments_test/")
-       "(((keyword let)(count 8))((keyword in)(count 2))((keyword match)(count 1))((keyword rec)(count 1))((keyword with)(count 1)))"
-
-   let test_strings_counts =
-     test_exec
-       (test_dir ^ "strings_test/")
-       "(((keyword let)(count 2))((keyword in)(count 1)))" *)
-
 let series =
   "Executable tests"
-  >::: [ "Example" >:: test_example; "Sudoku" >:: test_sudoku ]
+  >::: [
+         "Example" >:: test_example;
+         "Unsat" >:: test_unsat;
+         "Sudoku" >:: test_sudoku;
+       ]

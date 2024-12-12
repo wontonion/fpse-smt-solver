@@ -3,4 +3,4 @@
  (name main)
  (libraries cdcl dimacs landmarks)
  (preprocess
-  (pps landmarks-ppx --auto)))
+  (pps bisect_ppx landmarks-ppx --auto)))
