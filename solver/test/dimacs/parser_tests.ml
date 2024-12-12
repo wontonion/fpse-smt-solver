@@ -1,22 +1,24 @@
 open OUnit2
+open Cdcl
+open Cdcl.Variable
+
+let v1 = Var 1
+let v2 = Var 2
+let v3 = Var 3
+let l1 = Literal.create v1 Positive
+let l1' = Literal.create v1 Negative
+let l2 = Literal.create v2 Positive
+let l2' = Literal.create v2 Negative
+let l3 = Literal.create v3 Positive
+let l3' = Literal.create v3 Negative
 
 let test_example _ =
   let input = "p cnf 3 2\n1 2 -3 0\n-2 3 0" in
-  let c1 =
-    Cdcl.Clause.create
-      [
-        Cdcl.Literal.create 1 false;
-        Cdcl.Literal.create 2 false;
-        Cdcl.Literal.create 3 true;
-      ]
-  in
-  let c2 =
-    Cdcl.Clause.create
-      [ Cdcl.Literal.create 2 true; Cdcl.Literal.create 3 false ]
-  in
+  let c1 = Clause.create [ l1; l2; l3' ] in
+  let c2 = Clause.create [ l2'; l3 ] in
   let expected = [ c1; c2 ] in
   let actual = Dimacs.Parser.parse input in
-  assert_equal expected @@ Cdcl.Formula.clauses actual
+  assert_equal expected @@ Formula.clauses actual
 
 let test_invalid_variable _ =
   let input = "p cnf 3 1\n1 2 -4 0" in
@@ -55,8 +57,7 @@ let test_invalid_clause _ =
   assert_raises (Failure "Invalid clause: missing terminating zero") (fun () ->
       Dimacs.Parser.parse input);
   let input = "p cnf d c\n a" in
-  assert_raises (Failure "int_of_string") (fun () ->
-      Dimacs.Parser.parse input)
+  assert_raises (Failure "int_of_string") (fun () -> Dimacs.Parser.parse input)
 
 let series =
   "Parser tests"

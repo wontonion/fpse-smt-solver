@@ -1,67 +1,68 @@
 open OUnit2
+open Cdcl
+open Cdcl.Variable
 
 [@@@warning "-26"]
 
+let v1 = Var 1
+let v2 = Var 2
+let v3 = Var 3
+let l1 = Literal.create v1 Positive
+let l1' = Literal.create v1 Negative
+let l2 = Literal.create v2 Positive
+let l2' = Literal.create v2 Negative
+let l3 = Literal.create v3 Positive
+let l3' = Literal.create v3 Negative
+
 let test_value _ =
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal (Some true)
-    (Cdcl.Assignment.value a @@ Cdcl.Literal.create 1 false);
-  assert_equal (Some false)
-    (Cdcl.Assignment.value a @@ Cdcl.Literal.create 1 true);
-  assert_equal None (Cdcl.Assignment.value a @@ Cdcl.Literal.create 2 false);
-  assert_equal None (Cdcl.Assignment.value a @@ Cdcl.Literal.create 2 true)
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal (Some true) (Assignment.value_of_literal a l1);
+  assert_equal (Some false) (Assignment.value_of_literal a l1');
+  assert_equal None (Assignment.value_of_literal a l2);
+  assert_equal None (Assignment.value_of_literal a l2')
 
 let test_antecedent _ =
-  let c = Cdcl.Clause.create [ Cdcl.Literal.create 1 false ] in
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true (Some c) in
-  assert_equal (Some c) (Cdcl.Assignment.antecedent a 1);
-  assert_equal None (Cdcl.Assignment.antecedent a 2)
+  let c = Clause.create [ l1 ] in
+  let a = Assignment.assign Assignment.empty v1 true (Some c) in
+  assert_equal (Some c) (Assignment.antecedent a v1);
+  assert_equal None (Assignment.antecedent a v2)
 
 let test_dl _ =
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal (Some 0) (Cdcl.Assignment.dl a 1);
-  assert_equal None (Cdcl.Assignment.dl a 2)
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal (Some 0) (Assignment.dl a v1);
+  assert_equal None (Assignment.dl a v2)
 
 let test_assign _ =
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal (Some true)
-    (Cdcl.Assignment.value a @@ Cdcl.Literal.create 1 false);
-  let a' = Cdcl.Assignment.assign a 1 false None in
-  assert_equal (Some false)
-    (Cdcl.Assignment.value a' @@ Cdcl.Literal.create 1 false)
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal (Some true) (Assignment.value_of_literal a l1);
+  let a' = Assignment.assign a v1 false None in
+  assert_equal (Some false) (Assignment.value_of_literal a' l1)
 
 let test_unassign _ =
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal (Some true)
-    (Cdcl.Assignment.value a @@ Cdcl.Literal.create 1 false);
-  let a' = Cdcl.Assignment.unassign a 1 in
-  assert_equal None (Cdcl.Assignment.value a' @@ Cdcl.Literal.create 1 false)
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal (Some true) (Assignment.value_of_literal a l1);
+  let a' = Assignment.unassign a v1 in
+  assert_equal None (Assignment.value_of_literal a' l1)
 
 let test_satisfy _ =
-  let l1 = Cdcl.Literal.create 1 false in
-  let l1' = Cdcl.Literal.create 1 true in
-  let l2 = Cdcl.Literal.create 2 false in
-  let l2' = Cdcl.Literal.create 2 true in
-  let l3 = Cdcl.Literal.create 3 false in
-  let l3' = Cdcl.Literal.create 3 true in
-  let c0 = Cdcl.Clause.create [ l1; l2 ] in
-  let c1 = Cdcl.Clause.create [ l1; l2'; l3 ] in
-  let c2 = Cdcl.Clause.create [ l1; l3 ] in
-  let f = Cdcl.Formula.create [ c0; c1; c2 ] in
-  assert_equal false (Cdcl.Assignment.satisfy Cdcl.Assignment.empty f);
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal true (Cdcl.Assignment.satisfy a f);
+  let c0 = Clause.create [ l1; l2 ] in
+  let c1 = Clause.create [ l1; l2'; l3 ] in
+  let c2 = Clause.create [ l1; l3 ] in
+  let f = Formula.create [ c0; c1; c2 ] in
+  assert_equal false (Assignment.satisfy Assignment.empty f);
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal true (Assignment.satisfy a f);
 
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 2 true None in
-  assert_equal false (Cdcl.Assignment.satisfy a f);
-  let a' = Cdcl.Assignment.assign a 3 true None in
-  assert_equal true (Cdcl.Assignment.satisfy a' f)
+  let a = Assignment.assign Assignment.empty v2 true None in
+  assert_equal false (Assignment.satisfy a f);
+  let a' = Assignment.assign a v3 true None in
+  assert_equal true (Assignment.satisfy a' f)
 
 let test_string_of_t _ =
-  let a = Cdcl.Assignment.assign Cdcl.Assignment.empty 1 true None in
-  assert_equal "1" (Cdcl.Assignment.string_of_t a);
-  let a = Cdcl.Assignment.assign a 2 false None in
-  assert_equal "1 -2" (Cdcl.Assignment.string_of_t a)
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal "1" (Assignment.string_of_t a);
+  let a = Assignment.assign a v2 false None in
+  assert_equal "1 -2" (Assignment.string_of_t a)
 
 let series =
   "Assignment tests"
@@ -72,5 +73,5 @@ let series =
          "Test assign" >:: test_assign;
          "Test unassign" >:: test_unassign;
          "Test satisfy" >:: test_satisfy;
-          "Test string_of_t" >:: test_string_of_t;
+         "Test string_of_t" >:: test_string_of_t;
        ]

@@ -17,7 +17,7 @@ val string_of_t : t -> string
 val literals : t -> Literal.t list
 (** [literals c] returns the list of literals of clause [c] *)
 
-val variables : t -> Int.Set.t
+val variables : t -> Core.Set.M(Variable).t
 (** [variables c] returns the set of variables in clause [c] *)
 
 val equal : t -> t -> bool

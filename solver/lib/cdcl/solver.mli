@@ -36,7 +36,7 @@ val unit_propagation :
   solver_state -> solver_state * [ `NoConflict | `Conflict of Clause.t ]
 (** [unit_propagation s] performs unit propagation on state [s] *)
 
-val resolve : Clause.t -> Clause.t -> int -> Clause.t
+val resolve : Clause.t -> Clause.t -> Variable.t -> Clause.t
 (** [resolve c1 c2 v] resolves clauses [c1] and [c2] on variable [v] *)
 
 val conflict_analysis : Clause.t -> Assignment.t -> int * Clause.t

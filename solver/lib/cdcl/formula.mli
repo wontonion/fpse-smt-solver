@@ -11,7 +11,7 @@ val string_of_t : t -> string
 val clauses : t -> Clause.t list
 (** [clauses f] returns the list of clauses of formula [f] *)
 
-val variables : t -> Int.Set.t
+val variables : t -> Set.M(Variable).t
 (** [variables f] returns the set of variables in formula [f] *)
 
 val add_clause : t -> Clause.t -> t
