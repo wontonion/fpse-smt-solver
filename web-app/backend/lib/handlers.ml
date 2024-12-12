@@ -35,5 +35,8 @@ let generate_sudoku_handler =
         json_response (Types.response_to_yojson Types.solution_to_yojson error_response)
   )
 
+let solve_sudoku_handler =
+    let _ = Cdcl.Literal.create 1 true in
+    Dimacs.Parser.parse "p cnf 3 1\n1 0\n"
 
 

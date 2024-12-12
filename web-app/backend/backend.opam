@@ -18,6 +18,7 @@ depends: [
   "ppx_jane"
   "yojson"
   "ounit2"
+  "solver"
   "odoc" {with-doc}
 ]
 build: [
