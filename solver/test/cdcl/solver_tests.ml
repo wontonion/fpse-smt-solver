@@ -451,12 +451,12 @@ let test_cdcl_solve_3 _ =
   in
   let f = Cdcl.Formula.create [ c ] in
 
-  (* let assignment =
-       match TrueFirstSolver.cdcl_solve f with
-       | `SAT a -> a
-       | `UNSAT -> failwith "Expected a solution"
-     in
-     assert_equal true (Cdcl.Assignment.satisfy assignment f); *)
+  let assignment =
+    match TrueFirstSolver.cdcl_solve f with
+    | `SAT a -> a
+    | `UNSAT -> failwith "Expected a solution"
+  in
+  assert_equal true (Cdcl.Assignment.satisfy assignment f);
   let assignment =
     match FalseFirstSolver.cdcl_solve f with
     | `SAT a -> a

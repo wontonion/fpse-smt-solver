@@ -1,4 +1,9 @@
+(install
+ (files
+  (glob_files files/*))
+ (section share))
+
 (test
  (name tests)
  (modules tests)
- (libraries core ounit2 cdcl_tests dimacs_tests))
+ (libraries core ounit2 cdcl_tests dimacs_tests bin_tests))
