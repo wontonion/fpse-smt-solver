@@ -38,11 +38,12 @@ type cellState = {
   value: string,
   isInitial: bool,
   isValid: bool,
-  notes: array<string>,
+  // notes: array<string>,
 }
 
 type sudokuGridResponseData = {
   size: int,
+  // TODO must be array?
   grid: array<array<cellState>>,
 }
 
