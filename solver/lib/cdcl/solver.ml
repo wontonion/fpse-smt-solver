@@ -257,52 +257,45 @@ module Make (Heuristic : Heuristic.H) : S = struct
       | `NoConflict -> (state, heuristic)
       | `Conflict clause ->
           let dl, learnt = conflict_analysis clause state.assignment in
-          let state' = add_learnt_clause state learnt in
           let assignment' = backtrack state.assignment dl in
-          let heuristic' = Heuristic.backtrack heuristic dl in
-
           let literal =
             List.find_exn (Clause.literals learnt) ~f:(fun l ->
-                match Assignment.dl assignment' l.variable with
-                | Some _ -> false
-                | None -> true)
+                not @@ Assignment.is_assigned assignment' l.variable)
           in
-          let assignment'' =
+          let assignment =
             Assignment.assign assignment' literal.variable
               (Literal.polarity_to_bool literal.polarity)
               (Some learnt)
           in
           learn_clause
             {
-              state' with
-              assignment = assignment'';
+              (add_learnt_clause state learnt) with
+              assignment;
               to_propagate = [ literal ];
             }
-            heuristic'
+            (Heuristic.backtrack heuristic dl)
     in
     let rec cdcl_solve_once (state : solver_state) (heuristic : Heuristic.t) :
         [ `SAT of Assignment.t | `UNSAT ] =
       match all_variables_assigned state.formula state.assignment with
       | true -> `SAT state.assignment
       | false ->
-          let assignment =
+          let assignment' =
             { state.assignment with dl = state.assignment.dl + 1 }
           in
-          let heuristic', variable, value =
-            Heuristic.pick_branching_variable heuristic formula assignment
+          let heuristic, variable, value =
+            Heuristic.pick_branching_variable heuristic formula assignment'
           in
-          let assignment' = Assignment.assign assignment variable value None in
-          let state', heuristic'' =
-            learn_clause
-              {
-                state with
-                assignment = assignment';
-                to_propagate =
-                  [ Literal.create variable (Literal.bool_to_polarity value) ];
-              }
-              heuristic'
-          in
-          cdcl_solve_once state' heuristic''
+          let assignment = Assignment.assign assignment' variable value None in
+          learn_clause
+            {
+              state with
+              assignment;
+              to_propagate =
+                [ Literal.create variable (Literal.bool_to_polarity value) ];
+            }
+            heuristic
+          |> Tuple2.uncurry cdcl_solve_once
     in
     let state = init_watches formula in
     let unit_clauses =
