@@ -52,3 +52,6 @@ let string_of_t (a : t) : string =
          let sign = if value then "" else "-" in
          Printf.sprintf "%s%s" sign (Variable.string_of_t v))
   |> String.concat ~sep:" "
+
+let to_list (a : t) : bool list =
+  Map.to_alist a.values |> List.map ~f:(fun (_, { value; _ }) -> value)
