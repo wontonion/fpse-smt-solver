@@ -15,6 +15,13 @@ let isAllFilled = (numbers: array<string>) => {
   Belt.Array.every(numbers, value => value !== "")
 }
 
+// 在现有的类型定义和函数之后，添加这个新的辅助函数
+let getBlockIndex = (rowIndex, colIndex, subGridSize) => {
+  let blockRow = rowIndex / subGridSize
+  let blockCol = colIndex / subGridSize
+  blockRow * subGridSize + blockCol
+}
+
 @react.component
 let make = (
   ~size: int,
@@ -46,22 +53,25 @@ let make = (
     isUniqueNumbers(numbers) && isAllFilled(numbers)
   }
 
-  // check whether the block is complete
+  // 修改现有的 isBlockComplete 函数
   let isBlockComplete = (blockIndex, grid) => {
-    let blockSize = subGridSize * subGridSize // 9 for 9x9, 4 for 4x4, 6 for 6x6
-    let startRow = blockIndex / subGridSize
-    let startCol = mod(blockIndex, subGridSize)
+    let blockRow = blockIndex / subGridSize
+    let blockCol = mod(blockIndex, subGridSize)
+    let startRow = blockRow * subGridSize
+    let startCol = blockCol * subGridSize
     let numbers = []
+    
     for rowOffset in 0 to subGridSize - 1 {
       for colOffset in 0 to subGridSize - 1 {
-        let row = startRow * subGridSize + rowOffset
-        let col = startCol * subGridSize + colOffset
+        let row = startRow + rowOffset
+        let col = startCol + colOffset
         switch Belt.Array.get(grid, row)->Option.flatMap(row => Belt.Array.get(row, col)) {
         | Some(cell) => Belt.Array.push(numbers, cell.value)
         | None => ()
         }
       }
     }
+    
     isUniqueNumbers(numbers) && isAllFilled(numbers)
   }
 
@@ -86,21 +96,25 @@ let make = (
     numbers->Belt.Array.length > getUniqueNumbers(numbers)
   }
 
-  // check whether the block has conflict
+  // 修改现有的 hasBlockConflict 函数
   let hasBlockConflict = (blockIndex, grid) => {
-    let startRow = blockIndex / subGridSize
-    let startCol = mod(blockIndex, subGridSize)
+    let blockRow = blockIndex / subGridSize
+    let blockCol = mod(blockIndex, subGridSize)
+    let startRow = blockRow * subGridSize
+    let startCol = blockCol * subGridSize
     let numbers = []
+    
     for rowOffset in 0 to subGridSize - 1 {
       for colOffset in 0 to subGridSize - 1 {
-        let row = startRow * subGridSize + rowOffset
-        let col = startCol * subGridSize + colOffset
+        let row = startRow + rowOffset
+        let col = startCol + colOffset
         switch Belt.Array.get(grid, row)->Option.flatMap(row => Belt.Array.get(row, col)) {
         | Some(cell) if cell.value !== "" => Belt.Array.push(numbers, cell.value)
         | _ => ()
         }
       }
     }
+    
     numbers->Belt.Array.length > getUniqueNumbers(numbers)
   }
 
@@ -109,7 +123,7 @@ let make = (
     let rowValid = !hasRowConflict(row, grid) && isRowComplete(row, grid)
     let colValid = !hasColConflict(col, grid) && isColComplete(col, grid)
     
-    let blockIndex = (row / subGridSize) * subGridSize + (col / subGridSize)
+    let blockIndex = getBlockIndex(row, col, subGridSize)
     let blockValid = !hasBlockConflict(blockIndex, grid) && isBlockComplete(blockIndex, grid)
 
     rowValid && colValid && blockValid
@@ -123,11 +137,7 @@ let make = (
       
       <div 
         key={rowIndex->Int.toString} 
-        className={`flex ${switch (hasRowError, rowComplete) {
-        | (true, _) => "bg-red-100 opacity-85"
-        | (false, true) => "bg-green-100 opacity-80"
-        | _ => ""
-        }}`}>
+        className={`flex`}>
         {row
         ->Belt.Array.mapWithIndex((colIndex, cell) => {
           let isRightBorder = mod(colIndex + 1, subGridSize) == 0 && colIndex != size - 1
@@ -135,9 +145,16 @@ let make = (
           let hasColError = hasColConflict(colIndex, values)
           let colComplete = isColComplete(colIndex, values)
 
-          let blockIndex = (rowIndex / subGridSize) * subGridSize + (colIndex / subGridSize)
+          let blockIndex = getBlockIndex(rowIndex, colIndex, subGridSize)
           let blockConflict = hasBlockConflict(blockIndex, values)
           let blockComplete = isBlockComplete(blockIndex, values)
+
+          let cellBackgroundClass = switch (hasRowError, hasColError, blockConflict, rowComplete, colComplete, blockComplete) {
+          | (_, _, true, _, _, _) => "bg-red-200/50"
+          | (true, _, _, _, _, _) | (_, true, _, _, _, _) => "bg-red-100/50"
+          | (false, false, false, _, _, true) => "bg-green-100/50"
+          | _ => ""
+          }
 
           <Cell
             key={`${rowIndex->Int.toString}-${colIndex->Int.toString}`}
@@ -153,6 +170,7 @@ let make = (
             isColComplete=colComplete
             hasBlockConflict=blockConflict
             isBlockComplete=blockComplete
+            className=cellBackgroundClass
             onCellChange={((row, col, value)) => {
               let isValid = validateCell(row, col, value, values)
               onCellChange((row, col, value))

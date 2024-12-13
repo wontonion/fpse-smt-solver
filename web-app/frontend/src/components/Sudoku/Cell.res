@@ -14,6 +14,7 @@ let make = (
   ~isColComplete: bool,
   ~hasBlockConflict: bool,
   ~isBlockComplete: bool,
+  ~className: string="",
   ~onCellChange: ((int, int, string)) => unit,
 ) => {
   let getCellClassName = () => {
@@ -28,31 +29,19 @@ let make = (
     }
 
     if (cell.isInitial) {
-      baseStyle ++ borderStyle ++ " bg-gray-500 text-white"
+      baseStyle ++ borderStyle ++ " !bg-gray-500"
     } else {
-      let validityStyle = switch (cell.isValid, cell.value !== "", hasBlockConflict) {
-      | (false, true, true) => " bg-red-200"
-      | (false, true, false) => " bg-red-100"
-      | _ => ""
-      }
-      let completionStyle = switch (isRowComplete, isColComplete, isBlockComplete, hasRowError, hasColError, hasBlockConflict) {
-      | (_, _, _, true, _, _) | (_, _, _, _, true, _) | (_, _, _, _, _, true) => " bg-red-100 opacity-50"
-      | (true, true, true, false, false, false) => " bg-green-200 opacity-50"
-      | (true, _, _, false, false, false) | (_, true, _, false, false, false) | (_, _, true, false, false, false) => " bg-green-100 opacity-50"
-      | _ => ""
-      }
-
-      baseStyle ++ borderStyle ++ validityStyle ++ completionStyle
+      baseStyle ++ borderStyle
     }
   }
 
-  <div className={getCellClassName()}>
+  <div className={`${getCellClassName()} ${className}`}>
     <input
       type_="text"
       className={`w-full h-full text-center focus:outline-none bg-transparent
-        ${(hasRowError || hasColError) ? "text-red-600 font-bold" :
-          (isRowComplete || isColComplete) ? "text-green-600 font-bold" : ""}
-        ${cell.isInitial ? "bg-gray-100 font-bold" : "bg-white"}`}
+        ${(hasRowError || hasColError || hasBlockConflict) ? "text-red-600 font-bold" :
+          (isRowComplete || isColComplete || isBlockComplete) ? "text-green-600 font-bold" :
+          cell.isInitial ? "text-white font-bold" : ""}`}
       maxLength=1
       value={cell.value}
       disabled={cell.isInitial}

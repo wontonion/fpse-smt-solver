@@ -21,6 +21,12 @@ function isAllFilled(numbers) {
               }));
 }
 
+function getBlockIndex(rowIndex, colIndex, subGridSize) {
+  var blockRow = Caml_int32.div(rowIndex, subGridSize);
+  var blockCol = Caml_int32.div(colIndex, subGridSize);
+  return Math.imul(blockRow, subGridSize) + blockCol | 0;
+}
+
 function Grid(props) {
   var onCellChange = props.onCellChange;
   var values = props.values;
@@ -58,13 +64,15 @@ function Grid(props) {
     }
   };
   var isBlockComplete = function (blockIndex, grid) {
-    var startRow = Caml_int32.div(blockIndex, subGridSize);
-    var startCol = Caml_int32.mod_(blockIndex, subGridSize);
+    var blockRow = Caml_int32.div(blockIndex, subGridSize);
+    var blockCol = Caml_int32.mod_(blockIndex, subGridSize);
+    var startRow = Math.imul(blockRow, subGridSize);
+    var startCol = Math.imul(blockCol, subGridSize);
     var numbers = [];
     for(var rowOffset = 0; rowOffset < subGridSize; ++rowOffset){
       for(var colOffset = 0; colOffset < subGridSize; ++colOffset){
-        var row = Math.imul(startRow, subGridSize) + rowOffset | 0;
-        var col = Math.imul(startCol, subGridSize) + colOffset | 0;
+        var row = startRow + rowOffset | 0;
+        var col = startCol + colOffset | 0;
         var cell = Core__Option.flatMap(Belt_Array.get(grid, row), (function(col){
             return function (row) {
               return Belt_Array.get(row, col);
@@ -102,13 +110,15 @@ function Grid(props) {
     return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
   };
   var hasBlockConflict = function (blockIndex, grid) {
-    var startRow = Caml_int32.div(blockIndex, subGridSize);
-    var startCol = Caml_int32.mod_(blockIndex, subGridSize);
+    var blockRow = Caml_int32.div(blockIndex, subGridSize);
+    var blockCol = Caml_int32.mod_(blockIndex, subGridSize);
+    var startRow = Math.imul(blockRow, subGridSize);
+    var startCol = Math.imul(blockCol, subGridSize);
     var numbers = [];
     for(var rowOffset = 0; rowOffset < subGridSize; ++rowOffset){
       for(var colOffset = 0; colOffset < subGridSize; ++colOffset){
-        var row = Math.imul(startRow, subGridSize) + rowOffset | 0;
-        var col = Math.imul(startCol, subGridSize) + colOffset | 0;
+        var row = startRow + rowOffset | 0;
+        var col = startCol + colOffset | 0;
         var cell = Core__Option.flatMap(Belt_Array.get(grid, row), (function(col){
             return function (row) {
               return Belt_Array.get(row, col);
@@ -125,7 +135,7 @@ function Grid(props) {
   var validateCell = function (row, col, value, grid) {
     var rowValid = !hasRowConflict(row, grid) && isRowComplete(row, grid);
     var colValid = !hasColConflict(col, grid) && isColComplete(col, grid);
-    var blockIndex = Math.imul(Caml_int32.div(row, subGridSize), subGridSize) + Caml_int32.div(col, subGridSize) | 0;
+    var blockIndex = getBlockIndex(row, col, subGridSize);
     var blockValid = !hasBlockConflict(blockIndex, grid) && isBlockComplete(blockIndex, grid);
     if (rowValid && colValid) {
       return blockValid;
@@ -143,9 +153,14 @@ function Grid(props) {
                                           var isBottomBorder = Caml_int32.mod_(rowIndex + 1 | 0, subGridSize) === 0 && rowIndex !== (size - 1 | 0);
                                           var hasColError = hasColConflict(colIndex, values);
                                           var colComplete = isColComplete(colIndex, values);
-                                          var blockIndex = Math.imul(Caml_int32.div(rowIndex, subGridSize), subGridSize) + Caml_int32.div(colIndex, subGridSize) | 0;
+                                          var blockIndex = getBlockIndex(rowIndex, colIndex, subGridSize);
                                           var blockConflict = hasBlockConflict(blockIndex, values);
                                           var blockComplete = isBlockComplete(blockIndex, values);
+                                          var cellBackgroundClass = blockConflict ? "bg-red-200/50" : (
+                                              hasColError || hasRowError ? "bg-red-100/50" : (
+                                                  blockComplete ? "bg-green-100/50" : ""
+                                                )
+                                            );
                                           return JsxRuntime.jsx(Cell.make, {
                                                       cell: cell,
                                                       size: size,
@@ -159,6 +174,7 @@ function Grid(props) {
                                                       isColComplete: colComplete,
                                                       hasBlockConflict: blockConflict,
                                                       isBlockComplete: blockComplete,
+                                                      className: cellBackgroundClass,
                                                       onCellChange: (function (param) {
                                                           var value = param[2];
                                                           var col = param[1];
@@ -172,11 +188,7 @@ function Grid(props) {
                                                         })
                                                     }, rowIndex.toString() + "-" + colIndex.toString());
                                         })),
-                                  className: "flex " + (
-                                    hasRowError ? "bg-red-100 opacity-85" : (
-                                        rowComplete ? "bg-green-100 opacity-80" : ""
-                                      )
-                                  )
+                                  className: "flex"
                                 }, rowIndex.toString());
                     })),
               className: "grid gap-0 border-2 border-black"
@@ -189,6 +201,7 @@ export {
   getUniqueNumbers ,
   isUniqueNumbers ,
   isAllFilled ,
+  getBlockIndex ,
   make ,
 }
 /* Cell Not a pure module */

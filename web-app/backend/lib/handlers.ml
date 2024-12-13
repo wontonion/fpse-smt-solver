@@ -196,7 +196,7 @@ let solve_formula_handler =
         let formula_type = member "type" json |> to_string in
         let formula_content = member "content" json |> to_string in
         
-        (* TODO: Implement actual solving logic for each formula type *)
+        (* TODO Jemmy: Implement actual solving logic for each formula type *)
         let result = match formula_type with
         | "sat" -> 
             "TODO: Implement SAT solver\nReceived formula:\n" ^ formula_content
