@@ -26,8 +26,8 @@ services:
   
   backend:
     build: 
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: web-app/backend/Dockerfile
     expose:
       - "8080"
     volumes:

@@ -11,8 +11,7 @@ function createEmptyGrid(size) {
                 return Belt_Array.make(size, {
                             value: "",
                             isInitial: false,
-                            isValid: true,
-                            notes: []
+                            isValid: true
                           });
               }));
 }
@@ -27,8 +26,7 @@ function processGridResponse(json) {
                               return {
                                       value: Belt_Option.getWithDefault(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(cellObj, "value"))), ""),
                                       isInitial: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_initial"))), false),
-                                      isValid: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_valid"))), true),
-                                      notes: []
+                                      isValid: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_valid"))), true)
                                     };
                             }));
               }));
@@ -46,9 +44,55 @@ function sudokuGenerate() {
             });
 }
 
+function sudokuSolve(gridValues) {
+  var requestBody_size = gridValues.length;
+  var jsonRequestBody = Js_dict.fromArray([
+        [
+          "size",
+          requestBody_size
+        ],
+        [
+          "grid",
+          Belt_Array.map(gridValues, (function (row) {
+                  return Belt_Array.map(row, (function (cell) {
+                                return Js_dict.fromArray([
+                                            [
+                                              "value",
+                                              cell.value
+                                            ],
+                                            [
+                                              "isInitial",
+                                              cell.isInitial
+                                            ],
+                                            [
+                                              "isValid",
+                                              cell.isValid
+                                            ]
+                                          ]);
+                              }));
+                }))
+        ]
+      ]);
+  return fetch("/api/sudoku/solve", {
+                method: "POST",
+                headers: Object.fromEntries([[
+                        "Content-Type",
+                        "application/json"
+                      ]]),
+                body: JSON.stringify(jsonRequestBody)
+              }).then(function (response) {
+              if (response.ok) {
+                return response.json();
+              } else {
+                return Promise.reject(Js_exn.raiseError("Network response was not ok"));
+              }
+            });
+}
+
 export {
   createEmptyGrid ,
   processGridResponse ,
   sudokuGenerate ,
+  sudokuSolve ,
 }
 /* No side effect */
