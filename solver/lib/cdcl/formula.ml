@@ -1,11 +1,12 @@
 open Core
 
-type t = Clause.t list * Int.Set.t
+type t = Clause.t list * Set.M(Variable).t
 
 let create (ls : Clause.t list) : t =
   let variables =
-    List.fold_left ls ~init:Int.Set.empty ~f:(fun acc l ->
-        Set.union acc (Clause.variables l))
+    List.fold_left ls
+      ~init:(Core.Set.empty (module Variable))
+      ~f:(fun acc l -> Set.union acc (Clause.variables l))
   in
   (ls, variables)
 
@@ -14,7 +15,7 @@ let string_of_t ((ls, _) : t) : string =
   |> String.concat ~sep:" & "
 
 let clauses ((ls, _) : t) : Clause.t list = ls
-let variables ((_, vs) : t) : Int.Set.t = vs
+let variables ((_, vs) : t) : Set.M(Variable).t = vs
 
 let add_clause ((ls, vs) : t) (c : Clause.t) : t =
   (c :: ls, Set.union vs (Clause.variables c))

@@ -79,12 +79,7 @@ let add_learnt_clause (state : solver_state) (c : Clause.t) : solver_state =
   add_learnt_clause_helper state c lits
 
 let all_variables_assigned (f : Formula.t) (a : Assignment.t) : bool =
-  List.for_all
-    (Set.to_list (Formula.variables f))
-    ~f:(fun v ->
-      match Assignment.value a (Literal.create v false) with
-      | Some _ -> true
-      | None -> false)
+  List.for_all (Set.to_list (Formula.variables f)) ~f:(Assignment.is_assigned a)
 
 let backtrack (a : Assignment.t) (dl : int) : Assignment.t =
   { values = Map.filter ~f:(fun (d : Assignment.d) -> d.dl <= dl) a.values; dl }
@@ -93,7 +88,7 @@ let clause_status (c : Clause.t) (a : Assignment.t) : status =
   let res =
     List.fold_until (Clause.literals c) ~init:(0, 0, 0)
       ~f:(fun (num_true, num_false, num_unassigned) l ->
-        match Assignment.value a l with
+        match Assignment.value_of_literal a l with
         | Some b ->
             if b then Stop (num_true + 1, num_false, num_unassigned)
             else Continue (num_true, num_false + 1, num_unassigned)
@@ -124,7 +119,7 @@ let rec unit_propagation (state : solver_state) :
               lit ~equal:Literal.equal
           then try_rewatch_once state watching_lit watching_clause clause_lits
           else if
-            Assignment.value state.assignment lit
+            Assignment.value_of_literal state.assignment lit
             |> Option.value ~default:true |> not
           then try_rewatch_once state watching_lit watching_clause clause_lits
           else
@@ -171,16 +166,19 @@ let rec unit_propagation (state : solver_state) :
                   watching_lits_1
                 else watching_lits_0
               in
-              if Assignment.value state.assignment other |> Option.is_none then
+              if not @@ Assignment.is_assigned state.assignment other.variable
+              then
                 let assignment =
                   Assignment.assign state.assignment other.variable
-                    (not other.negation) (Some watching_clause)
+                    (Literal.polarity_to_bool other.polarity)
+                    (Some watching_clause)
                 in
                 let to_propagate = other :: state.to_propagate in
                 let state = { state with assignment; to_propagate } in
                 process_watching_clause state watching_lit watching_clauses
               else if
-                Assignment.value state.assignment other |> Option.value_exn
+                Assignment.value_of_literal state.assignment other
+                |> Option.value_exn
               then process_watching_clause state watching_lit watching_clauses
               else (state, `Conflict watching_clause))
   in
@@ -198,9 +196,15 @@ let rec unit_propagation (state : solver_state) :
         { state with to_propagate }
         watching_lit watching_clauses
 
-let resolve (c1 : Clause.t) (c2 : Clause.t) (v : int) : Clause.t =
-  let lits1 = List.filter (Clause.literals c1) ~f:(fun l -> l.variable <> v) in
-  let lits2 = List.filter (Clause.literals c2) ~f:(fun l -> l.variable <> v) in
+let resolve (c1 : Clause.t) (c2 : Clause.t) (v : Variable.t) : Clause.t =
+  let lits1 =
+    List.filter (Clause.literals c1) ~f:(fun l ->
+        not @@ Variable.equal l.variable v)
+  in
+  let lits2 =
+    List.filter (Clause.literals c2) ~f:(fun l ->
+        not @@ Variable.equal l.variable v)
+  in
   Clause.create (lits1 @ lits2)
 
 let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
@@ -265,7 +269,8 @@ module Make (Heuristic : Heuristic.H) : S = struct
           in
           let assignment'' =
             Assignment.assign assignment' literal.variable
-              (not literal.negation) (Some learnt)
+              (Literal.polarity_to_bool literal.polarity)
+              (Some learnt)
           in
           learn_clause
             {
@@ -292,7 +297,8 @@ module Make (Heuristic : Heuristic.H) : S = struct
               {
                 state with
                 assignment = assignment';
-                to_propagate = [ Literal.create variable @@ not value ];
+                to_propagate =
+                  [ Literal.create variable (Literal.bool_to_polarity value) ];
               }
               heuristic'
           in
@@ -306,10 +312,12 @@ module Make (Heuristic : Heuristic.H) : S = struct
     let state =
       List.fold unit_clauses ~init:state ~f:(fun state clause ->
           let lit = List.hd_exn (Clause.literals clause) in
-          if Assignment.value state.assignment lit |> Option.is_some then state
+          if Assignment.value_of_literal state.assignment lit |> Option.is_some
+          then state
           else
             let assignment =
-              Assignment.assign state.assignment lit.variable (not lit.negation)
+              Assignment.assign state.assignment lit.variable
+                (Literal.polarity_to_bool lit.polarity)
                 (Some clause)
             in
             {

@@ -4,7 +4,10 @@ module type H = sig
   type t
 
   val empty : t
-  val pick_branching_variable : t -> Formula.t -> Assignment.t -> t * int * bool
+
+  val pick_branching_variable :
+    t -> Formula.t -> Assignment.t -> t * Variable.t * bool
+
   val backtrack : t -> int -> t
 end
 
@@ -14,13 +17,10 @@ module OrderedTrueFirst : H = struct
   let empty = ()
 
   let next_variable (f : Formula.t) (a : Assignment.t) =
-    let rec loop (vars : int list) : int =
+    let rec loop (vars : Variable.t list) : Variable.t =
       match vars with
       | [] -> failwith "no unassigned variables" [@coverage off]
-      | v :: vs -> (
-          match Assignment.value a (Literal.create v false) with
-          | Some _ -> loop vs
-          | None -> v)
+      | v :: vs -> if Assignment.is_assigned a v then loop vs else v
     in
     loop (Set.to_list (Formula.variables f))
 
@@ -36,13 +36,10 @@ module OrderedFalseFirst : H = struct
   let empty = ()
 
   let next_variable (f : Formula.t) (a : Assignment.t) =
-    let rec loop (vars : int list) : int =
+    let rec loop (vars : Variable.t list) : Variable.t =
       match vars with
       | [] -> failwith "no unassigned variables" [@coverage off]
-      | v :: vs -> (
-          match Assignment.value a (Literal.create v false) with
-          | Some _ -> loop vs
-          | None -> v)
+      | v :: vs -> if Assignment.is_assigned a v then loop vs else v
     in
     loop (Set.to_list (Formula.variables f))
 
@@ -58,13 +55,12 @@ module Random : H = struct
   let empty = ()
 
   let unassigned_vars (f : Formula.t) (a : Assignment.t) =
-    let rec loop (ls : int list) (vars : int list) : int list =
+    let rec loop (ls : Variable.t list) (vars : Variable.t list) :
+        Variable.t list =
       match vars with
       | [] -> ls
-      | v :: vs -> (
-          match Assignment.value a (Literal.create v false) with
-          | Some _ -> loop ls vs
-          | None -> loop (v :: ls) vs)
+      | v :: vs ->
+          if Assignment.is_assigned a v then loop ls vs else loop (v :: ls) vs
     in
     loop [] (Set.to_list (Formula.variables f))
 
