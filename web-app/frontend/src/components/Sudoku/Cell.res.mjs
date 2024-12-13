@@ -92,6 +92,8 @@ function Cell(props) {
                       hasRowError || hasColError ? "text-red-600 font-bold" : (
                           isRowComplete || isColComplete ? "text-green-600 font-bold" : ""
                         )
+                    ) + "\n        " + (
+                      cell.isInitial ? "bg-gray-100 font-bold" : "bg-white"
                     ),
                     disabled: cell.isInitial,
                     maxLength: 1,
@@ -99,24 +101,9 @@ function Cell(props) {
                     value: cell.value,
                     onChange: (function ($$event) {
                         var newValue = $$event.target.value;
-                        var validNumberPattern;
-                        var exit = 0;
-                        switch (size) {
-                          case 4 :
-                              validNumberPattern = /^[1-4]$/;
-                              break;
-                          case 6 :
-                              validNumberPattern = /^[1-6]$/;
-                              break;
-                          case 9 :
-                              validNumberPattern = /^[1-9]$/;
-                              break;
-                          default:
-                            exit = 1;
-                        }
-                        if (exit === 1) {
-                          validNumberPattern = /^$/;
-                        }
+                        var validNumberPattern = size !== 4 ? (
+                            size !== 9 ? /^$/ : /^[1-9]$/
+                          ) : /^[1-4]$/;
                         if (newValue === "" || validNumberPattern.test(newValue)) {
                           return onCellChange([
                                       rowIndex,

@@ -97,6 +97,36 @@ function SudokuIndex(props) {
             return Promise.resolve();
           }));
   };
+  var handleSetAsInitial = function () {
+    setGridValues(function (prev) {
+          return Belt_Array.map(prev, (function (row) {
+                        return Belt_Array.map(row, (function (cell) {
+                                      if (cell.value !== "") {
+                                        return {
+                                                value: cell.value,
+                                                isInitial: true,
+                                                isValid: cell.isValid
+                                              };
+                                      } else {
+                                        return cell;
+                                      }
+                                    }));
+                      }));
+        });
+  };
+  var handleResetInitial = function () {
+    setGridValues(function (prev) {
+          return Belt_Array.map(prev, (function (row) {
+                        return Belt_Array.map(row, (function (cell) {
+                                      return {
+                                              value: cell.value,
+                                              isInitial: false,
+                                              isValid: cell.isValid
+                                            };
+                                    }));
+                      }));
+        });
+  };
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsxs("div", {
@@ -173,6 +203,38 @@ function SudokuIndex(props) {
                                       onClick: (function (param) {
                                           handleClearGrid();
                                         })
+                                    }),
+                                JsxRuntime.jsxs("div", {
+                                      children: [
+                                        JsxRuntime.jsx("h3", {
+                                              children: "Custom Puzzle",
+                                              className: "text-lg font-medium mb-2"
+                                            }),
+                                        JsxRuntime.jsxs("div", {
+                                              children: [
+                                                JsxRuntime.jsx(Button.make, {
+                                                      children: "Set Current Numbers as Initial",
+                                                      className: "bg-indigo-600 hover:bg-indigo-700",
+                                                      onClick: (function (param) {
+                                                          handleSetAsInitial();
+                                                        })
+                                                    }),
+                                                JsxRuntime.jsx(Button.make, {
+                                                      children: "Reset Initial Status",
+                                                      className: "bg-gray-600 hover:bg-gray-700",
+                                                      onClick: (function (param) {
+                                                          handleResetInitial();
+                                                        })
+                                                    })
+                                              ],
+                                              className: "space-y-2"
+                                            }),
+                                        JsxRuntime.jsx("p", {
+                                              children: "Input your puzzle and click 'Set as Initial' before solving",
+                                              className: "text-sm text-gray-600 mt-2"
+                                            })
+                                      ],
+                                      className: "border-t pt-4 mt-4"
                                     })
                               ],
                               className: "space-y-4 flex justify-start flex-col"

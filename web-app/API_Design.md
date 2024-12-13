@@ -86,13 +86,7 @@
     "method": "POST",
     "problem_type": "SAT" | "SMT",
     "message": "Requesting SAT/SMT...",
-    "data": [
-        {
-            "problem": "problem"
-            "solution": ""
-        },
-        ...
-    ]
+    "data": string
 }
 // response
 {
@@ -100,17 +94,7 @@
     "problem_type": "SAT" | "SMT",
     "status": "success" | "error",
     "message": "SAT/SMT requested",
-    "data": [
-        {
-            "problem": "problem",
-            "solution": "solution"
-        },
-           {
-            "problem": "problem",
-            "solution": "solution"
-        },
-        ...
-    ]
+    "data": string
 }
 ```
 - problem: the problem to be solved, the format depends on the problem type
