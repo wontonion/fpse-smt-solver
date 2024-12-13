@@ -1,4 +1,5 @@
 open Types
+open Lwt.Syntax
 
 (** Build a standard JSON response for Sudoku problems *)
 let build_sudoku_response ?(status="success") ~message ?data () =
@@ -34,3 +35,21 @@ let build_error_response ~message ~problem_type () =
     | SAT | SMT -> build_solution_response ~status:"error" ~message ()
   in
   error_message
+
+(** Run a task with timeout
+    @param timeout Timeout in seconds
+    @param f The function that returns a Lwt promise
+    @return Lwt promise containing either the result or timeout error
+*)
+let with_timeout ~timeout f =
+  let* result = 
+    Lwt.pick [
+      (let* () = Lwt_unix.sleep (float_of_int timeout) in
+       Lwt.return (Error "Task timed out"));
+      (let* x = f () in 
+       Lwt.return (Ok x))
+    ]
+  in
+  Lwt.return result
+
+  
