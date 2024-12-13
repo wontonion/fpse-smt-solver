@@ -2,7 +2,8 @@ open SudokuUtils
 
 @react.component
 let make = () => {
-  let (gridSize, setGridSize) = React.useState(() => 9)
+  let (blockSize, setBlockSize) = React.useState(() => 3)
+  let (gridSize, setGridSize) = React.useState(() => blockSize * blockSize)
   let (gridValues, setGridValues) = React.useState(() => createEmptyGrid(gridSize))
 
   // Reset grid when size changes
@@ -35,7 +36,7 @@ let make = () => {
 
   let handleGenerateGrid = () => {
     open Promise
-    sudokuGenerate()
+    sudokuGenerate(~blockSize)
     ->then(json => {
       let newGrid = processGridResponse(json)
       setGridValues(_ => newGrid)
@@ -81,14 +82,15 @@ let make = () => {
         <div className="flex items-center gap-2 ml-2">
           <select
             className="border border-gray-300 rounded px-2 py-1"
-            value={gridSize->Int.toString}
+            value={blockSize->Int.toString}
             onChange={event => {
-              let newSize = ReactEvent.Form.target(event)["value"]->Int.fromString->Option.getOr(9)
-              setGridSize(_ => newSize)
+              let newBlockSize = ReactEvent.Form.target(event)["value"]->Int.fromString->Option.getOr(3)
+              setBlockSize(_ => newBlockSize)
+              setGridSize(_ => newBlockSize * newBlockSize)
+              setGridValues(_ => createEmptyGrid(newBlockSize * newBlockSize))
             }}>
-            <option value="4"> {React.string("4x4")} </option>
-            <option value="6"> {React.string("6x6")} </option>
-            <option value="9"> {React.string("9x9")} </option>
+            <option value="2"> {React.string("4x4 (2x2 blocks)")} </option>
+            <option value="3"> {React.string("9x9 (3x3 blocks)")} </option>
           </select>
         </div>
       </div>

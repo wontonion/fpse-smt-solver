@@ -12,15 +12,20 @@ import * as JsxRuntime from "react/jsx-runtime";
 
 function SudokuIndex(props) {
   var match = React.useState(function () {
-        return 9;
+        return 3;
       });
-  var setGridSize = match[1];
-  var gridSize = match[0];
+  var setBlockSize = match[1];
+  var blockSize = match[0];
   var match$1 = React.useState(function () {
+        return Math.imul(blockSize, blockSize);
+      });
+  var setGridSize = match$1[1];
+  var gridSize = match$1[0];
+  var match$2 = React.useState(function () {
         return SudokuUtils.createEmptyGrid(gridSize);
       });
-  var setGridValues = match$1[1];
-  var gridValues = match$1[0];
+  var setGridValues = match$2[1];
+  var gridValues = match$2[0];
   React.useEffect((function () {
           setGridValues(function (param) {
                 return SudokuUtils.createEmptyGrid(gridSize);
@@ -56,7 +61,7 @@ function SudokuIndex(props) {
         });
   };
   var handleGenerateGrid = function () {
-    Core__Promise.$$catch(SudokuUtils.sudokuGenerate().then(function (json) {
+    Core__Promise.$$catch(SudokuUtils.sudokuGenerate(blockSize).then(function (json) {
               var newGrid = SudokuUtils.processGridResponse(json);
               setGridValues(function (param) {
                     return newGrid;
@@ -105,24 +110,26 @@ function SudokuIndex(props) {
                                       children: JsxRuntime.jsxs("select", {
                                             children: [
                                               JsxRuntime.jsx("option", {
-                                                    children: "4x4",
-                                                    value: "4"
+                                                    children: "4x4 (2x2 blocks)",
+                                                    value: "2"
                                                   }),
                                               JsxRuntime.jsx("option", {
-                                                    children: "6x6",
-                                                    value: "6"
-                                                  }),
-                                              JsxRuntime.jsx("option", {
-                                                    children: "9x9",
-                                                    value: "9"
+                                                    children: "9x9 (3x3 blocks)",
+                                                    value: "3"
                                                   })
                                             ],
                                             className: "border border-gray-300 rounded px-2 py-1",
-                                            value: gridSize.toString(),
+                                            value: blockSize.toString(),
                                             onChange: (function ($$event) {
-                                                var newSize = Core__Option.getOr(Core__Int.fromString($$event.target.value, undefined), 9);
+                                                var newBlockSize = Core__Option.getOr(Core__Int.fromString($$event.target.value, undefined), 3);
+                                                setBlockSize(function (param) {
+                                                      return newBlockSize;
+                                                    });
                                                 setGridSize(function (param) {
-                                                      return newSize;
+                                                      return Math.imul(newBlockSize, newBlockSize);
+                                                    });
+                                                setGridValues(function (param) {
+                                                      return SudokuUtils.createEmptyGrid(Math.imul(newBlockSize, newBlockSize));
                                                     });
                                               })
                                           }),

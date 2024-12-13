@@ -24,9 +24,15 @@ let hello_handler =
       json_response (Types.response_to_yojson Types.solution_to_yojson response))
 
 let generate_sudoku_handler =
-  Dream.get "/api/sudoku/generate" (fun _ ->
+  Dream.get "/api/sudoku/generate" (fun request ->
       try
-        let grid = Sudoku.generate_puzzle_with_timeout ~timeout:2.0 () in
+        (* 从查询参数中获取 blockSize，默认为 3 *)
+        let block_size = 
+          match Dream.query request "blockSize" with
+          | Some size -> int_of_string size
+          | None -> 3
+        in
+        let grid = Sudoku.generate_puzzle_with_timeout ~timeout:2.0 ~block_size () in
         let sudoku_data = Sudoku.convert_to_sudoku_data grid in
         Utils.build_sudoku_response
           ~message:"Sudoku puzzle generated successfully" ~data:sudoku_data ()
