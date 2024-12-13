@@ -7,8 +7,14 @@ import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
 import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as SudokuUtils from "../../utils/SudokuUtils.res.mjs";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
+import * as ToastService from "../../services/ToastService.res.mjs";
 import * as Core__Promise from "@rescript/core/src/Core__Promise.res.mjs";
+import * as ReactToastify from "../../bindings/ReactToastify.res.mjs";
+import * as ReactToastify$1 from "react-toastify";
 import * as JsxRuntime from "react/jsx-runtime";
+
+import "react-toastify/dist/ReactToastify.css"
+;
 
 function SudokuIndex(props) {
   var match = React.useState(function () {
@@ -97,22 +103,69 @@ function SudokuIndex(props) {
             return Promise.resolve();
           }));
   };
+  var hasAnyValidationError = function (grid) {
+    var size = grid.length;
+    var blockSize;
+    switch (size) {
+      case 4 :
+      case 6 :
+          blockSize = 2;
+          break;
+      default:
+        blockSize = 3;
+    }
+    var hasRowError = Belt_Array.reduceWithIndex(grid, false, (function (acc, param, rowIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasRowConflict(rowIndex, grid);
+            }
+          }));
+    var hasColError = Belt_Array.reduce(Belt_Array.makeBy(size, (function (i) {
+                return i;
+              })), false, (function (acc, colIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasColConflict(colIndex, grid);
+            }
+          }));
+    var numBlocks = Math.imul(blockSize, blockSize);
+    var hasBlockError = Belt_Array.reduce(Belt_Array.makeBy(numBlocks, (function (i) {
+                return i;
+              })), false, (function (acc, blockIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasBlockConflict(blockIndex, grid);
+            }
+          }));
+    if (hasRowError || hasColError) {
+      return true;
+    } else {
+      return hasBlockError;
+    }
+  };
   var handleSetAsInitial = function () {
-    setGridValues(function (prev) {
-          return Belt_Array.map(prev, (function (row) {
-                        return Belt_Array.map(row, (function (cell) {
-                                      if (cell.value !== "") {
-                                        return {
-                                                value: cell.value,
-                                                isInitial: true,
-                                                isValid: cell.isValid
-                                              };
-                                      } else {
-                                        return cell;
-                                      }
-                                    }));
-                      }));
-        });
+    if (hasAnyValidationError(gridValues)) {
+      return ToastService.error("Cannot set as initial: There are validation errors in the grid");
+    } else {
+      return setGridValues(function (prev) {
+                  return Belt_Array.map(prev, (function (row) {
+                                return Belt_Array.map(row, (function (cell) {
+                                              if (cell.value !== "") {
+                                                return {
+                                                        value: cell.value,
+                                                        isInitial: true,
+                                                        isValid: cell.isValid
+                                                      };
+                                              } else {
+                                                return cell;
+                                              }
+                                            }));
+                              }));
+                });
+    }
   };
   var handleResetInitial = function () {
     setGridValues(function (prev) {
@@ -129,120 +182,136 @@ function SudokuIndex(props) {
   };
   return JsxRuntime.jsxs("div", {
               children: [
-                JsxRuntime.jsxs("div", {
-                      children: [
-                        JsxRuntime.jsxs("div", {
-                              children: [
-                                JsxRuntime.jsx("h2", {
-                                      children: "Sudoku Grid"
-                                    }),
-                                JsxRuntime.jsx("div", {
-                                      children: JsxRuntime.jsxs("select", {
-                                            children: [
-                                              JsxRuntime.jsx("option", {
-                                                    children: "4x4 (2x2 blocks)",
-                                                    value: "2"
-                                                  }),
-                                              JsxRuntime.jsx("option", {
-                                                    children: "9x9 (3x3 blocks)",
-                                                    value: "3"
-                                                  })
-                                            ],
-                                            className: "border border-gray-300 rounded px-2 py-1",
-                                            value: blockSize.toString(),
-                                            onChange: (function ($$event) {
-                                                var newBlockSize = Core__Option.getOr(Core__Int.fromString($$event.target.value, undefined), 3);
-                                                setBlockSize(function (param) {
-                                                      return newBlockSize;
-                                                    });
-                                                setGridSize(function (param) {
-                                                      return Math.imul(newBlockSize, newBlockSize);
-                                                    });
-                                                setGridValues(function (param) {
-                                                      return SudokuUtils.createEmptyGrid(Math.imul(newBlockSize, newBlockSize));
-                                                    });
-                                              })
-                                          }),
-                                      className: "flex items-center gap-2 ml-2"
-                                    })
-                              ],
-                              className: "text-xl font-semibold mb-4 justify-start flex items-center"
-                            }),
-                        JsxRuntime.jsx("div", {
-                              children: JsxRuntime.jsx(Grid.make, {
-                                    size: gridSize,
-                                    values: gridValues,
-                                    onCellChange: handleCellChange
-                                  }),
-                              className: "border-2 border-gray-300 p-4 justify-center flex "
-                            })
-                      ]
+                JsxRuntime.jsx(ReactToastify$1.ToastContainer, {
+                      position: ReactToastify.positionToString("topRight"),
+                      autoClose: 5000,
+                      hideProgressBar: false,
+                      newestOnTop: true,
+                      closeOnClick: true,
+                      rtl: false,
+                      pauseOnFocusLoss: true,
+                      draggable: true,
+                      pauseOnHover: true,
+                      theme: "light"
                     }),
                 JsxRuntime.jsxs("div", {
                       children: [
-                        JsxRuntime.jsx("h2", {
-                              children: "Controls",
-                              className: "text-xl font-semibold mb-4"
+                        JsxRuntime.jsxs("div", {
+                              children: [
+                                JsxRuntime.jsxs("div", {
+                                      children: [
+                                        JsxRuntime.jsx("h2", {
+                                              children: "Sudoku Grid"
+                                            }),
+                                        JsxRuntime.jsx("div", {
+                                              children: JsxRuntime.jsxs("select", {
+                                                    children: [
+                                                      JsxRuntime.jsx("option", {
+                                                            children: "4x4 (2x2 blocks)",
+                                                            value: "2"
+                                                          }),
+                                                      JsxRuntime.jsx("option", {
+                                                            children: "9x9 (3x3 blocks)",
+                                                            value: "3"
+                                                          })
+                                                    ],
+                                                    className: "border border-gray-300 rounded px-2 py-1",
+                                                    value: blockSize.toString(),
+                                                    onChange: (function ($$event) {
+                                                        var newBlockSize = Core__Option.getOr(Core__Int.fromString($$event.target.value, undefined), 3);
+                                                        setBlockSize(function (param) {
+                                                              return newBlockSize;
+                                                            });
+                                                        setGridSize(function (param) {
+                                                              return Math.imul(newBlockSize, newBlockSize);
+                                                            });
+                                                        setGridValues(function (param) {
+                                                              return SudokuUtils.createEmptyGrid(Math.imul(newBlockSize, newBlockSize));
+                                                            });
+                                                      })
+                                                  }),
+                                              className: "flex items-center gap-2 ml-2"
+                                            })
+                                      ],
+                                      className: "text-xl font-semibold mb-4 justify-start flex items-center"
+                                    }),
+                                JsxRuntime.jsx("div", {
+                                      children: JsxRuntime.jsx(Grid.make, {
+                                            size: gridSize,
+                                            values: gridValues,
+                                            onCellChange: handleCellChange
+                                          }),
+                                      className: "border-2 border-gray-300 p-4 justify-center flex "
+                                    })
+                              ]
                             }),
                         JsxRuntime.jsxs("div", {
                               children: [
-                                JsxRuntime.jsx(Button.make, {
-                                      children: "Solve Puzzle",
-                                      onClick: (function (param) {
-                                          handleSolveGrid();
-                                        })
-                                    }),
-                                JsxRuntime.jsx(Button.make, {
-                                      children: "Generate New Puzzle",
-                                      onClick: (function (param) {
-                                          handleGenerateGrid();
-                                        })
-                                    }),
-                                JsxRuntime.jsx(Button.make, {
-                                      children: "Clear Grid",
-                                      onClick: (function (param) {
-                                          handleClearGrid();
-                                        })
+                                JsxRuntime.jsx("h2", {
+                                      children: "Controls",
+                                      className: "text-xl font-semibold mb-4"
                                     }),
                                 JsxRuntime.jsxs("div", {
                                       children: [
-                                        JsxRuntime.jsx("h3", {
-                                              children: "Custom Puzzle",
-                                              className: "text-lg font-medium mb-2"
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Solve Puzzle",
+                                              onClick: (function (param) {
+                                                  handleSolveGrid();
+                                                })
+                                            }),
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Generate New Puzzle",
+                                              onClick: (function (param) {
+                                                  handleGenerateGrid();
+                                                })
+                                            }),
+                                        JsxRuntime.jsx(Button.make, {
+                                              children: "Clear Grid",
+                                              onClick: (function (param) {
+                                                  handleClearGrid();
+                                                })
                                             }),
                                         JsxRuntime.jsxs("div", {
                                               children: [
-                                                JsxRuntime.jsx(Button.make, {
-                                                      children: "Set Current Numbers as Initial",
-                                                      className: "bg-indigo-600 hover:bg-indigo-700",
-                                                      onClick: (function (param) {
-                                                          handleSetAsInitial();
-                                                        })
+                                                JsxRuntime.jsx("h3", {
+                                                      children: "Custom Puzzle",
+                                                      className: "text-lg font-medium mb-2"
                                                     }),
-                                                JsxRuntime.jsx(Button.make, {
-                                                      children: "Reset Initial Status",
-                                                      className: "bg-gray-600 hover:bg-gray-700",
-                                                      onClick: (function (param) {
-                                                          handleResetInitial();
-                                                        })
+                                                JsxRuntime.jsxs("div", {
+                                                      children: [
+                                                        JsxRuntime.jsx(Button.make, {
+                                                              children: "Set Current Numbers as Initial",
+                                                              className: "bg-indigo-600 hover:bg-indigo-700",
+                                                              onClick: (function (param) {
+                                                                  handleSetAsInitial();
+                                                                })
+                                                            }),
+                                                        JsxRuntime.jsx(Button.make, {
+                                                              children: "Reset Initial Status",
+                                                              className: "bg-gray-600 hover:bg-gray-700",
+                                                              onClick: (function (param) {
+                                                                  handleResetInitial();
+                                                                })
+                                                            })
+                                                      ],
+                                                      className: "space-y-2"
+                                                    }),
+                                                JsxRuntime.jsx("p", {
+                                                      children: "Input your puzzle and click 'Set as Initial' before solving",
+                                                      className: "text-sm text-gray-600 mt-2"
                                                     })
                                               ],
-                                              className: "space-y-2"
-                                            }),
-                                        JsxRuntime.jsx("p", {
-                                              children: "Input your puzzle and click 'Set as Initial' before solving",
-                                              className: "text-sm text-gray-600 mt-2"
+                                              className: "border-t pt-4 mt-4"
                                             })
                                       ],
-                                      className: "border-t pt-4 mt-4"
+                                      className: "space-y-4 flex justify-start flex-col"
                                     })
-                              ],
-                              className: "space-y-4 flex justify-start flex-col"
+                              ]
                             })
-                      ]
+                      ],
+                      className: "grid grid-cols-2 gap-6"
                     })
-              ],
-              className: "grid grid-cols-2 gap-6"
+              ]
             });
 }
 
@@ -251,4 +320,4 @@ var make = SudokuIndex;
 export {
   make ,
 }
-/* Grid Not a pure module */
+/*  Not a pure module */

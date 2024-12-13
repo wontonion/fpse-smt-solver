@@ -7,6 +7,7 @@ import * as Js_json from "rescript/lib/es6/js_json.js";
 import * as Belt_Option from "rescript/lib/es6/belt_Option.js";
 import * as SolverIndex from "./components/Solver/SolverIndex.res.mjs";
 import * as SudokuIndex from "./components/Sudoku/SudokuIndex.res.mjs";
+import * as ToastContext from "./components/Toast/ToastContext.res.mjs";
 import * as Core__Promise from "@rescript/core/src/Core__Promise.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 
@@ -64,75 +65,77 @@ function App(props) {
     default:
       tmp = null;
   }
-  return JsxRuntime.jsxs("div", {
-              children: [
-                JsxRuntime.jsx("h1", {
-                      children: "Logic Solver Playground🛝",
-                      className: "text-3xl font-semibold mb-6"
-                    }),
-                JsxRuntime.jsxs("div", {
-                      children: [
-                        JsxRuntime.jsx("button", {
-                              children: "Test Backend Connection",
-                              className: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
-                              onClick: (function (param) {
-                                  testBackendConnection();
-                                })
-                            }),
-                        backendMessage !== "" ? JsxRuntime.jsx("div", {
-                                children: JsxRuntime.jsx("pre", {
-                                      children: backendMessage,
-                                      className: "whitespace-pre-wrap"
-                                    }),
-                                className: "mt-2 p-2 bg-gray-100 rounded"
-                              }) : null
-                      ],
-                      className: "mb-4"
-                    }),
-                JsxRuntime.jsxs("div", {
-                      children: [
-                        JsxRuntime.jsx("button", {
-                              children: "Sudoku Solver",
-                              className: "py-2 px-4 " + (
-                                activeTab === "sudoku" ? "border-b-2 border-blue-500 font-semibold" : ""
-                              ),
-                              onClick: (function (param) {
-                                  setActiveTab(function (param) {
-                                        return "sudoku";
-                                      });
-                                })
-                            }),
-                        JsxRuntime.jsx("button", {
-                              children: "SAT Solver",
-                              className: "py-2 px-4 " + (
-                                activeTab === "sat" ? "border-b-2 border-blue-500 font-semibold" : ""
-                              ),
-                              onClick: (function (param) {
-                                  setActiveTab(function (param) {
-                                        return "sat";
-                                      });
-                                })
-                            }),
-                        JsxRuntime.jsx("button", {
-                              children: "SMT Solver",
-                              className: "py-2 px-4 " + (
-                                activeTab === "smt" ? "border-b-2 border-blue-500 font-semibold" : ""
-                              ),
-                              onClick: (function (param) {
-                                  setActiveTab(function (param) {
-                                        return "smt";
-                                      });
-                                })
-                            })
-                      ],
-                      className: "flex space-x-4 mb-6 border-b"
-                    }),
-                JsxRuntime.jsx("div", {
-                      children: tmp,
-                      className: "mt-4"
-                    })
-              ],
-              className: "p-6"
+  return JsxRuntime.jsx(ToastContext.make, {
+              children: JsxRuntime.jsxs("div", {
+                    children: [
+                      JsxRuntime.jsx("h1", {
+                            children: "Logic Solver Playground🛝",
+                            className: "text-3xl font-semibold mb-6"
+                          }),
+                      JsxRuntime.jsxs("div", {
+                            children: [
+                              JsxRuntime.jsx("button", {
+                                    children: "Test Backend Connection",
+                                    className: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
+                                    onClick: (function (param) {
+                                        testBackendConnection();
+                                      })
+                                  }),
+                              backendMessage !== "" ? JsxRuntime.jsx("div", {
+                                      children: JsxRuntime.jsx("pre", {
+                                            children: backendMessage,
+                                            className: "whitespace-pre-wrap"
+                                          }),
+                                      className: "mt-2 p-2 bg-gray-100 rounded"
+                                    }) : null
+                            ],
+                            className: "mb-4"
+                          }),
+                      JsxRuntime.jsxs("div", {
+                            children: [
+                              JsxRuntime.jsx("button", {
+                                    children: "Sudoku Solver",
+                                    className: "py-2 px-4 " + (
+                                      activeTab === "sudoku" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                    ),
+                                    onClick: (function (param) {
+                                        setActiveTab(function (param) {
+                                              return "sudoku";
+                                            });
+                                      })
+                                  }),
+                              JsxRuntime.jsx("button", {
+                                    children: "SAT Solver",
+                                    className: "py-2 px-4 " + (
+                                      activeTab === "sat" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                    ),
+                                    onClick: (function (param) {
+                                        setActiveTab(function (param) {
+                                              return "sat";
+                                            });
+                                      })
+                                  }),
+                              JsxRuntime.jsx("button", {
+                                    children: "SMT Solver",
+                                    className: "py-2 px-4 " + (
+                                      activeTab === "smt" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                    ),
+                                    onClick: (function (param) {
+                                        setActiveTab(function (param) {
+                                              return "smt";
+                                            });
+                                      })
+                                  })
+                            ],
+                            className: "flex space-x-4 mb-6 border-b"
+                          }),
+                      JsxRuntime.jsx("div", {
+                            children: tmp,
+                            className: "mt-4"
+                          })
+                    ],
+                    className: "p-6"
+                  })
             });
 }
 

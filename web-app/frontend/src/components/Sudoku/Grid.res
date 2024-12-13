@@ -22,6 +22,55 @@ let getBlockIndex = (rowIndex, colIndex, subGridSize) => {
   blockRow * subGridSize + blockCol
 }
 
+// check whether the row has conflict
+let hasRowConflict = (rowIndex, grid) => {
+  let row = Belt.Array.get(grid, rowIndex)->Option.getOr([])
+  let numbers = row
+    ->Belt.Array.keep(cell => cell.value !== "")
+    ->Belt.Array.map(cell => cell.value)
+  
+  numbers->Belt.Array.length > getUniqueNumbers(numbers)
+}
+
+// check whether the col has conflict
+let hasColConflict = (colIndex, grid) => {
+  let numbers = Belt.Array.keepMap(grid, row => {
+    Belt.Array.get(row, colIndex)
+    ->Option.map(cell => cell.value)
+    ->Option.filter(value => value !== "")
+  })
+  
+  numbers->Belt.Array.length > getUniqueNumbers(numbers)
+}
+
+// check whether the block has conflict
+let hasBlockConflict = (blockIndex, grid) => {
+  let subGridSize = switch Belt.Array.length(grid) {
+  | 9 => 3
+  | 6 => 2
+  | 4 => 2
+  | _ => 3
+  }
+  let blockRow = blockIndex / subGridSize
+  let blockCol = mod(blockIndex, subGridSize)
+  let startRow = blockRow * subGridSize
+  let startCol = blockCol * subGridSize
+  let numbers = []
+  
+  for rowOffset in 0 to subGridSize - 1 {
+    for colOffset in 0 to subGridSize - 1 {
+      let row = startRow + rowOffset
+      let col = startCol + colOffset
+      switch Belt.Array.get(grid, row)->Option.flatMap(row => Belt.Array.get(row, col)) {
+      | Some(cell) if cell.value !== "" => Belt.Array.push(numbers, cell.value)
+      | _ => ()
+      }
+    }
+  }
+  
+  numbers->Belt.Array.length > getUniqueNumbers(numbers)
+}
+
 @react.component
 let make = (
   ~size: int,
@@ -73,49 +122,6 @@ let make = (
     }
     
     isUniqueNumbers(numbers) && isAllFilled(numbers)
-  }
-
-  // check whether the row has conflict
-  let hasRowConflict = (rowIndex, grid) => {
-    let row = Belt.Array.get(grid, rowIndex)->Option.getOr([])
-    let numbers = row
-      ->Belt.Array.keep(cell => cell.value !== "")
-      ->Belt.Array.map(cell => cell.value)
-    
-    numbers->Belt.Array.length > getUniqueNumbers(numbers)
-  }
-
-  // check whether the col has conflict
-  let hasColConflict = (colIndex, grid) => {
-    let numbers = Belt.Array.keepMap(grid, row => {
-      Belt.Array.get(row, colIndex)
-      ->Option.map(cell => cell.value)
-      ->Option.filter(value => value !== "")
-    })
-    
-    numbers->Belt.Array.length > getUniqueNumbers(numbers)
-  }
-
-  // 修改现有的 hasBlockConflict 函数
-  let hasBlockConflict = (blockIndex, grid) => {
-    let blockRow = blockIndex / subGridSize
-    let blockCol = mod(blockIndex, subGridSize)
-    let startRow = blockRow * subGridSize
-    let startCol = blockCol * subGridSize
-    let numbers = []
-    
-    for rowOffset in 0 to subGridSize - 1 {
-      for colOffset in 0 to subGridSize - 1 {
-        let row = startRow + rowOffset
-        let col = startCol + colOffset
-        switch Belt.Array.get(grid, row)->Option.flatMap(row => Belt.Array.get(row, col)) {
-        | Some(cell) if cell.value !== "" => Belt.Array.push(numbers, cell.value)
-        | _ => ()
-        }
-      }
-    }
-    
-    numbers->Belt.Array.length > getUniqueNumbers(numbers)
   }
 
   // check whether the cell is valid

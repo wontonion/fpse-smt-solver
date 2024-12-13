@@ -79,3 +79,15 @@ type solverResponse = {
   message: string,
   data: option<solverSolutionData>,
 }
+
+// 添加Toast相关类型
+type toastType = [#success | #error | #info]
+type toast = {
+  id: string,
+  message: string,
+  toastType: toastType,
+}
+
+type toastAction = 
+  | AddToast(toast)
+  | RemoveToast(string)

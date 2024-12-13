@@ -27,6 +27,61 @@ function getBlockIndex(rowIndex, colIndex, subGridSize) {
   return Math.imul(blockRow, subGridSize) + blockCol | 0;
 }
 
+function hasRowConflict(rowIndex, grid) {
+  var row = Core__Option.getOr(Belt_Array.get(grid, rowIndex), []);
+  var numbers = Belt_Array.map(Belt_Array.keep(row, (function (cell) {
+              return cell.value !== "";
+            })), (function (cell) {
+          return cell.value;
+        }));
+  return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
+}
+
+function hasColConflict(colIndex, grid) {
+  var numbers = Belt_Array.keepMap(grid, (function (row) {
+          return Core__Option.filter(Core__Option.map(Belt_Array.get(row, colIndex), (function (cell) {
+                            return cell.value;
+                          })), (function (value) {
+                        return value !== "";
+                      }));
+        }));
+  return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
+}
+
+function hasBlockConflict(blockIndex, grid) {
+  var match = grid.length;
+  var subGridSize;
+  switch (match) {
+    case 4 :
+    case 6 :
+        subGridSize = 2;
+        break;
+    default:
+      subGridSize = 3;
+  }
+  var blockRow = Caml_int32.div(blockIndex, subGridSize);
+  var blockCol = Caml_int32.mod_(blockIndex, subGridSize);
+  var startRow = Math.imul(blockRow, subGridSize);
+  var startCol = Math.imul(blockCol, subGridSize);
+  var numbers = [];
+  for(var rowOffset = 0; rowOffset < subGridSize; ++rowOffset){
+    for(var colOffset = 0; colOffset < subGridSize; ++colOffset){
+      var row = startRow + rowOffset | 0;
+      var col = startCol + colOffset | 0;
+      var cell = Core__Option.flatMap(Belt_Array.get(grid, row), (function(col){
+          return function (row) {
+            return Belt_Array.get(row, col);
+          }
+          }(col)));
+      if (cell !== undefined && cell.value !== "") {
+        numbers.push(cell.value);
+      }
+      
+    }
+  }
+  return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
+}
+
 function Grid(props) {
   var onCellChange = props.onCellChange;
   var values = props.values;
@@ -89,48 +144,6 @@ function Grid(props) {
     } else {
       return false;
     }
-  };
-  var hasRowConflict = function (rowIndex, grid) {
-    var row = Core__Option.getOr(Belt_Array.get(grid, rowIndex), []);
-    var numbers = Belt_Array.map(Belt_Array.keep(row, (function (cell) {
-                return cell.value !== "";
-              })), (function (cell) {
-            return cell.value;
-          }));
-    return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
-  };
-  var hasColConflict = function (colIndex, grid) {
-    var numbers = Belt_Array.keepMap(grid, (function (row) {
-            return Core__Option.filter(Core__Option.map(Belt_Array.get(row, colIndex), (function (cell) {
-                              return cell.value;
-                            })), (function (value) {
-                          return value !== "";
-                        }));
-          }));
-    return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
-  };
-  var hasBlockConflict = function (blockIndex, grid) {
-    var blockRow = Caml_int32.div(blockIndex, subGridSize);
-    var blockCol = Caml_int32.mod_(blockIndex, subGridSize);
-    var startRow = Math.imul(blockRow, subGridSize);
-    var startCol = Math.imul(blockCol, subGridSize);
-    var numbers = [];
-    for(var rowOffset = 0; rowOffset < subGridSize; ++rowOffset){
-      for(var colOffset = 0; colOffset < subGridSize; ++colOffset){
-        var row = startRow + rowOffset | 0;
-        var col = startCol + colOffset | 0;
-        var cell = Core__Option.flatMap(Belt_Array.get(grid, row), (function(col){
-            return function (row) {
-              return Belt_Array.get(row, col);
-            }
-            }(col)));
-        if (cell !== undefined && cell.value !== "") {
-          numbers.push(cell.value);
-        }
-        
-      }
-    }
-    return numbers.length > Belt_SetString.size(Belt_SetString.fromArray(numbers));
   };
   var validateCell = function (row, col, value, grid) {
     var rowValid = !hasRowConflict(row, grid) && isRowComplete(row, grid);
@@ -202,6 +215,9 @@ export {
   isUniqueNumbers ,
   isAllFilled ,
   getBlockIndex ,
+  hasRowConflict ,
+  hasColConflict ,
+  hasBlockConflict ,
   make ,
 }
 /* Cell Not a pure module */

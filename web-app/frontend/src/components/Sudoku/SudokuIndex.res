@@ -1,4 +1,7 @@
 open SudokuUtils
+open ReactToastify
+// Import the CSS at the top level
+%%raw(`import "react-toastify/dist/ReactToastify.css"`)
 
 @react.component
 let make = () => {
@@ -75,18 +78,50 @@ let make = () => {
     ->ignore
   }
 
+  let hasAnyValidationError = grid => {
+    let size = Belt.Array.length(grid)
+    let blockSize = switch size {
+    | 9 => 3
+    | 6 => 2
+    | 4 => 2
+    | _ => 3
+    }
+
+    // Check all rows
+    let hasRowError = Belt.Array.reduceWithIndex(grid, false, (acc, _, rowIndex) => {
+      acc || Grid.hasRowConflict(rowIndex, grid)
+    })
+
+    // Check all columns
+    let hasColError = Belt.Array.makeBy(size, i => i)->Belt.Array.reduce(false, (acc, colIndex) => {
+      acc || Grid.hasColConflict(colIndex, grid)
+    })
+
+    // Check all blocks
+    let numBlocks = blockSize * blockSize
+    let hasBlockError = Belt.Array.makeBy(numBlocks, i => i)->Belt.Array.reduce(false, (acc, blockIndex) => {
+      acc || Grid.hasBlockConflict(blockIndex, grid)
+    })
+
+    hasRowError || hasColError || hasBlockError
+  }
+
   let handleSetAsInitial = () => {
-    setGridValues(prev => {
-      Belt.Array.map(prev, row => {
-        Belt.Array.map(row, cell => {
-          if cell.value !== "" {
-            {...cell, isInitial: true}
-          } else {
-            cell
-          }
+    if hasAnyValidationError(gridValues) {
+      ToastService.error("Cannot set as initial: There are validation errors in the grid")
+    } else {
+      setGridValues(prev => {
+        Belt.Array.map(prev, row => {
+          Belt.Array.map(row, cell => {
+            if cell.value !== "" {
+              {...cell, isInitial: true}
+            } else {
+              cell
+            }
+          })
         })
       })
-    })
+    }
   }
 
   let handleResetInitial = () => {
@@ -99,64 +134,80 @@ let make = () => {
     })
   }
 
-  <div className="grid grid-cols-2 gap-6">
-    <div>
-      <div className="text-xl font-semibold mb-4 justify-start flex items-center">
-        <h2> {React.string("Sudoku Grid")} </h2>
-        <div className="flex items-center gap-2 ml-2">
-          <select
-            className="border border-gray-300 rounded px-2 py-1"
-            value={blockSize->Int.toString}
-            onChange={event => {
-              let newBlockSize = ReactEvent.Form.target(event)["value"]->Int.fromString->Option.getOr(3)
-              setBlockSize(_ => newBlockSize)
-              setGridSize(_ => newBlockSize * newBlockSize)
-              setGridValues(_ => createEmptyGrid(newBlockSize * newBlockSize))
-            }}>
-            <option value="2"> {React.string("4x4 (2x2 blocks)")} </option>
-            <option value="3"> {React.string("9x9 (3x3 blocks)")} </option>
-          </select>
+  <div>
+    <ReactToastify.toastContainer
+      {...makeToastContainerProps({
+        "position": positionToString(#topRight),
+        "autoClose": 5000,
+        "hideProgressBar": false,
+        "newestOnTop": true,
+        "closeOnClick": true,
+        "rtl": false,
+        "pauseOnFocusLoss": true,
+        "draggable": true,
+        "pauseOnHover": true,
+        "theme": "light"
+      })}
+    />
+    <div className="grid grid-cols-2 gap-6">
+      <div>
+        <div className="text-xl font-semibold mb-4 justify-start flex items-center">
+          <h2> {React.string("Sudoku Grid")} </h2>
+          <div className="flex items-center gap-2 ml-2">
+            <select
+              className="border border-gray-300 rounded px-2 py-1"
+              value={blockSize->Int.toString}
+              onChange={event => {
+                let newBlockSize = ReactEvent.Form.target(event)["value"]->Int.fromString->Option.getOr(3)
+                setBlockSize(_ => newBlockSize)
+                setGridSize(_ => newBlockSize * newBlockSize)
+                setGridValues(_ => createEmptyGrid(newBlockSize * newBlockSize))
+              }}>
+              <option value="2"> {React.string("4x4 (2x2 blocks)")} </option>
+              <option value="3"> {React.string("9x9 (3x3 blocks)")} </option>
+            </select>
+          </div>
+        </div>
+        <div className="border-2 border-gray-300 p-4 justify-center flex ">
+          <Grid size={gridSize} values={gridValues} onCellChange={handleCellChange} />
         </div>
       </div>
-      <div className="border-2 border-gray-300 p-4 justify-center flex ">
-        <Grid size={gridSize} values={gridValues} onCellChange={handleCellChange} />
-      </div>
-    </div>
-    <div>
-      <h2 className="text-xl font-semibold mb-4"> {React.string("Controls")} </h2>
-      <div className="space-y-4 flex justify-start flex-col">
-        <Button onClick={_ => handleSolveGrid()}>
-          {React.string("Solve Puzzle")}
-        </Button>
-        
-        <Button onClick={_ => handleGenerateGrid()}>
-          {React.string("Generate New Puzzle")}
-        </Button>
-        
-        <Button onClick={_ => handleClearGrid()}>
-          {React.string("Clear Grid")}
-        </Button>
+      <div>
+        <h2 className="text-xl font-semibold mb-4"> {React.string("Controls")} </h2>
+        <div className="space-y-4 flex justify-start flex-col">
+          <Button onClick={_ => handleSolveGrid()}>
+            {React.string("Solve Puzzle")}
+          </Button>
+          
+          <Button onClick={_ => handleGenerateGrid()}>
+            {React.string("Generate New Puzzle")}
+          </Button>
+          
+          <Button onClick={_ => handleClearGrid()}>
+            {React.string("Clear Grid")}
+          </Button>
 
-        <div className="border-t pt-4 mt-4">
-          <h3 className="text-lg font-medium mb-2"> 
-            {React.string("Custom Puzzle")} 
-          </h3>
-          <div className="space-y-2">
-            <Button 
-              onClick={_ => handleSetAsInitial()}
-              className="bg-indigo-600 hover:bg-indigo-700">
-              {React.string("Set Current Numbers as Initial")}
-            </Button>
-            
-            <Button 
-              onClick={_ => handleResetInitial()}
-              className="bg-gray-600 hover:bg-gray-700">
-              {React.string("Reset Initial Status")}
-            </Button>
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-2"> 
+              {React.string("Custom Puzzle")} 
+            </h3>
+            <div className="space-y-2">
+              <Button 
+                onClick={_ => handleSetAsInitial()}
+                className="bg-indigo-600 hover:bg-indigo-700">
+                {React.string("Set Current Numbers as Initial")}
+              </Button>
+              
+              <Button 
+                onClick={_ => handleResetInitial()}
+                className="bg-gray-600 hover:bg-gray-700">
+                {React.string("Reset Initial Status")}
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">
+              {React.string("Input your puzzle and click 'Set as Initial' before solving")}
+            </p>
           </div>
-          <p className="text-sm text-gray-600 mt-2">
-            {React.string("Input your puzzle and click 'Set as Initial' before solving")}
-          </p>
         </div>
       </div>
     </div>
