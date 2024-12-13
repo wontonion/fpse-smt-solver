@@ -23,3 +23,32 @@ let logResponse = (api: Types.responseApi) => {
   Js.Console.log2(api.message ++ "\n" ++ status ++ "\n", Js.Json.stringify(api.data))
 }
 
+let generateId = () => {
+  Js.Date.now()->Js.Float.toString
+}
+
+type toastApi = {
+  success: string => unit,
+  error: string => unit,
+  info: string => unit,
+}
+
+let useToast = () => {
+  let context = React.useContext(ToastContext.context)
+  let showToast = (message, toastType) => {
+    context.dispatch(
+      Types.AddToast({
+        id: generateId(),
+        message: message,
+        toastType: toastType,
+      }),
+    )
+  }
+
+  ({
+    success: message => showToast(message, #success),
+    error: message => showToast(message, #error),
+    info: message => showToast(message, #info),
+  }: toastApi)
+}
+
