@@ -14,12 +14,17 @@ let l2' = Literal.create v2 Negative
 let l3 = Literal.create v3 Positive
 let l3' = Literal.create v3 Negative
 
-let test_value _ =
+let test_value_of_literal _ =
   let a = Assignment.assign Assignment.empty v1 true None in
   assert_equal (Some true) (Assignment.value_of_literal a l1);
   assert_equal (Some false) (Assignment.value_of_literal a l1');
   assert_equal None (Assignment.value_of_literal a l2);
   assert_equal None (Assignment.value_of_literal a l2')
+
+let test_value_of_variable _ =
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal (Some true) (Assignment.value_of_variable a v1);
+  assert_equal None (Assignment.value_of_variable a v2)
 
 let test_antecedent _ =
   let c = Clause.create [ l1 ] in
@@ -67,7 +72,8 @@ let test_string_of_t _ =
 let series =
   "Assignment tests"
   >::: [
-         "Test value" >:: test_value;
+         "Test value_of_literal" >:: test_value_of_literal;
+         "Test value_of_variable" >:: test_value_of_variable;
          "Test antecedent" >:: test_antecedent;
          "Test dl" >:: test_dl;
          "Test assign" >:: test_assign;

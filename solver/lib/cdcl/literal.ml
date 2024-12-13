@@ -1,10 +1,14 @@
 open Core
 
 module T = struct
+  [@@@coverage off]
+
   type polarity = Positive | Negative [@@deriving sexp, equal, compare]
 
   type t = { polarity : polarity; variable : Variable.t }
   [@@deriving sexp, equal]
+
+  [@@@coverage on]
 
   let compare (l1 : t) (l2 : t) : int =
     let v1 = match l1.variable with Variable.Var i -> i in
