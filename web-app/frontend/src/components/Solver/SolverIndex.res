@@ -102,9 +102,13 @@ let clearTextarea = (textareaRef: textareaRef) => {
   })
 }
 
+open SolverUtils
+
 @react.component
 let make = (~tabName: string) => {
   let textareaRef: textareaRef = React.useRef(Js.Nullable.null)
+  let (solution, setSolution) = React.useState(() => "Solution will appear here")
+  let (isLoading, setIsLoading) = React.useState(() => false)
   
   let handleFileUpload = e => {
     let fileInput = (e->ReactEvent.Form.target :> fileInput)
@@ -130,6 +134,31 @@ let make = (~tabName: string) => {
       })
       
       readAsText(reader, file)
+    }
+  }
+
+  let handleSolve = _ => {
+    switch textareaRef.current->Js.Nullable.toOption {
+    | Some(textarea) => {
+        let textArea = textarea->domElementToTextArea
+        let content = textArea->getValue
+        if content->String.length > 0 {
+          setIsLoading(_ => true)
+          setSolution(_ => "Solving...")
+          
+          postFormula(tabName->String.toLowerCase, content)
+          ->Promise.then(result => {
+            switch result {
+            | Ok(solution) => setSolution(_ => solution)
+            | Error(err) => setSolution(_ => "Error: " ++ err)
+            }
+            setIsLoading(_ => false)
+            Promise.resolve()
+          })
+          ->ignore
+        }
+      }
+    | None => ()
     }
   }
 
@@ -162,15 +191,18 @@ let make = (~tabName: string) => {
           {React.string("Clear")}
         </Button>
         </div>
-        <Button className="mt-6" onClick={_ => ()}> {React.string("Solve")} </Button>
+        <Button 
+          disabled=isLoading
+          onClick={handleSolve}> 
+          {React.string(isLoading ? "Solving..." : "Solve")} 
+        </Button>
       </div>
     </div>
     <div>
       <h2 className="text-xl font-semibold mb-4"> {React.string("Solution")} </h2>
-      <div className="border p-4 h-64 overflow-auto">
-        {React.string("Solution will appear here")}
-      </div>
-      
+      <pre className="border p-4 h-64 overflow-auto font-mono whitespace-pre-wrap">
+        {React.string(solution)}
+      </pre>
     </div>
   </div>
 }

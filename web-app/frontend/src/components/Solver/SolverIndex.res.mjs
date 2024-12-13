@@ -4,6 +4,7 @@ import * as React from "react";
 import * as Button from "../Button/Button.res.mjs";
 import * as Belt_Option from "rescript/lib/es6/belt_Option.js";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
+import * as SolverUtils from "../../utils/SolverUtils.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
 import * as Caml_js_exceptions from "rescript/lib/es6/caml_js_exceptions.js";
 
@@ -65,6 +66,15 @@ function clearTextarea(textareaRef) {
 function SolverIndex(props) {
   var tabName = props.tabName;
   var textareaRef = React.useRef(null);
+  var match = React.useState(function () {
+        return "Solution will appear here";
+      });
+  var setSolution = match[1];
+  var match$1 = React.useState(function () {
+        return false;
+      });
+  var setIsLoading = match$1[1];
+  var isLoading = match$1[0];
   var handleFileUpload = function (e) {
     var fileInput = e.target;
     var files = fileInput.files;
@@ -86,6 +96,40 @@ function SolverIndex(props) {
         
       });
     reader.readAsText(file);
+  };
+  var handleSolve = function (param) {
+    var textarea = textareaRef.current;
+    if (textarea == null) {
+      return ;
+    }
+    var content = textarea.value;
+    if (content.length > 0) {
+      setIsLoading(function (param) {
+            return true;
+          });
+      setSolution(function (param) {
+            return "Solving...";
+          });
+      SolverUtils.postFormula(tabName.toLowerCase(), content).then(function (result) {
+            if (result.TAG === "Ok") {
+              var solution = result._0;
+              setSolution(function (param) {
+                    return solution;
+                  });
+            } else {
+              var err = result._0;
+              setSolution(function (param) {
+                    return "Error: " + err;
+                  });
+            }
+            setIsLoading(function (param) {
+                  return false;
+                });
+            return Promise.resolve();
+          });
+      return ;
+    }
+    
   };
   return JsxRuntime.jsxs("div", {
               children: [
@@ -135,11 +179,9 @@ function SolverIndex(props) {
                                       className: "flex gap-4"
                                     }),
                                 JsxRuntime.jsx(Button.make, {
-                                      children: "Solve",
-                                      className: "mt-6",
-                                      onClick: (function (param) {
-                                          
-                                        })
+                                      children: Caml_option.some(isLoading ? "Solving..." : "Solve"),
+                                      disabled: isLoading,
+                                      onClick: handleSolve
                                     })
                               ],
                               className: "flex mt-4 gap-4 justify-between"
@@ -152,9 +194,9 @@ function SolverIndex(props) {
                               children: "Solution",
                               className: "text-xl font-semibold mb-4"
                             }),
-                        JsxRuntime.jsx("div", {
-                              children: "Solution will appear here",
-                              className: "border p-4 h-64 overflow-auto"
+                        JsxRuntime.jsx("pre", {
+                              children: match[0],
+                              className: "border p-4 h-64 overflow-auto font-mono whitespace-pre-wrap"
                             })
                       ]
                     })
