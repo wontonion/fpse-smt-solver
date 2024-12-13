@@ -42,6 +42,8 @@ RUN eval $(opam env) && \
     core \
     ppx_jane \
     landmarks \
+    landmarks-ppx \
+    bisect_ppx \
     yojson \
     ppx_deriving_yojson \
     ounit2 \                        
@@ -56,16 +58,33 @@ WORKDIR /app/backend
 
 # Copy application files
 COPY --chown=opam:opam . .
+# Copy solver files
+COPY --chown=opam:opam ../solver /app/solver
+# Copy dune-workspace
+# COPY --chown=opam:opam ../dune-workspace /app/dune-workspace
 
-# Build the project
-RUN eval $(opam env) && \
-    dune build
+
+# # build solver 
+# RUN eval $(opam env) && \
+#     cd /app/solver && \
+#     dune build
+
+# # Build backend
+# RUN eval $(opam env) && \
+#     cd /app/backend && \
+#     dune build
+
+# Build backend
+# RUN eval $(opam env) && \
+#     cd /app && \
+#     touch dune-workspace && \
+#     dune build
 
 EXPOSE 8080
 
 # Create startup script
 USER root
-RUN echo '#!/bin/bash\neval $(opam env)\nexec dune exec backend' > /start.sh && \
+RUN echo '#!/bin/bash\neval $(opam env)\ncd /app && touch dune-workspace && dune build\ncd /app/backend && exec dune exec backend' > /start.sh && \
     chmod +x /start.sh
 
 USER opam

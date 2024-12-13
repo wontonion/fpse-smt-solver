@@ -20,6 +20,7 @@ function SudokuIndex(props) {
         return SudokuUtils.createEmptyGrid(gridSize);
       });
   var setGridValues = match$1[1];
+  var gridValues = match$1[0];
   React.useEffect((function () {
           setGridValues(function (param) {
                 return SudokuUtils.createEmptyGrid(gridSize);
@@ -37,8 +38,7 @@ function SudokuIndex(props) {
                                           return {
                                                   value: value,
                                                   isInitial: cell.isInitial,
-                                                  isValid: true,
-                                                  notes: cell.notes
+                                                  isValid: true
                                                 };
                                         } else {
                                           return cell;
@@ -64,6 +64,31 @@ function SudokuIndex(props) {
               return Promise.resolve();
             }), (function (error) {
             console.error("Error generating grid:", error);
+            return Promise.resolve();
+          }));
+  };
+  var handleSolveGrid = function () {
+    var gridForSolving = Belt_Array.map(gridValues, (function (row) {
+            return Belt_Array.map(row, (function (cell) {
+                          if (cell.isInitial) {
+                            return cell;
+                          } else {
+                            return {
+                                    value: "",
+                                    isInitial: cell.isInitial,
+                                    isValid: cell.isValid
+                                  };
+                          }
+                        }));
+          }));
+    Core__Promise.$$catch(SudokuUtils.sudokuSolve(gridForSolving).then(function (json) {
+              var solvedGrid = SudokuUtils.processGridResponse(json);
+              setGridValues(function (param) {
+                    return solvedGrid;
+                  });
+              return Promise.resolve();
+            }), (function (error) {
+            console.error("Error solving grid:", error);
             return Promise.resolve();
           }));
   };
@@ -109,7 +134,7 @@ function SudokuIndex(props) {
                         JsxRuntime.jsx("div", {
                               children: JsxRuntime.jsx(Grid.make, {
                                     size: gridSize,
-                                    values: match$1[0],
+                                    values: gridValues,
                                     onCellChange: handleCellChange
                                   }),
                               className: "border-2 border-gray-300 p-4 justify-center flex "
@@ -127,7 +152,7 @@ function SudokuIndex(props) {
                                 JsxRuntime.jsx(Button.make, {
                                       children: "Solve Puzzle",
                                       onClick: (function (param) {
-                                          
+                                          handleSolveGrid();
                                         })
                                     }),
                                 JsxRuntime.jsx(Button.make, {

@@ -168,3 +168,5 @@ let generate_puzzle_with_timeout ?(timeout=2.0) () : grid =
       with _ -> try_generate ()
   in
   try_generate ()
+
+

@@ -48,6 +48,32 @@ let make = () => {
     ->ignore
   }
 
+  let handleSolveGrid = () => {
+    // 创建一个新的grid，只保留isInitial为true的数字，其他设为空
+    let gridForSolving = Belt.Array.map(gridValues, row => {
+      Belt.Array.map(row, cell => {
+        if cell.isInitial {
+          cell
+        } else {
+          {...cell, value: ""}
+        }
+      })
+    })
+
+    open Promise
+    sudokuSolve(gridForSolving)
+    ->then(json => {
+      let solvedGrid = processGridResponse(json)
+      setGridValues(_ => solvedGrid)
+      Promise.resolve()
+    })
+    ->catch(error => {
+      Js.Console.error2("Error solving grid:", error)
+      Promise.resolve()
+    })
+    ->ignore
+  }
+
   <div className="grid grid-cols-2 gap-6">
     <div>
       <div className="text-xl font-semibold mb-4 justify-start flex items-center">
@@ -73,8 +99,7 @@ let make = () => {
     <div>
       <h2 className="text-xl font-semibold mb-4"> {React.string("Controls")} </h2>
       <div className="space-y-4 flex justify-start flex-col">
-        // TODO: add solve puzzle
-        <Button onClick={_ => ()}>
+        <Button onClick={_ => handleSolveGrid()}>
           {React.string("Solve Puzzle")}
         </Button>
         
