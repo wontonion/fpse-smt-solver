@@ -140,7 +140,6 @@ let solve_sudoku_handler =
       try
         let json = Yojson.Safe.from_string body in
         let data = convert_frontend_grid json in
-        (* Convert grid to int list list, keeping ONLY initial values *)
         let int_grid =
           List.map
             (fun row ->
@@ -150,42 +149,46 @@ let solve_sudoku_handler =
                     match cell.Types.value with
                     | "" -> 0
                     | s -> ( try int_of_string s with _ -> 0)
-                  else 0 (* Clear non-initial values *))
+                  else 0)
                 row)
             data.grid
         in
 
-        let solved_grid =
-          match solve_sudoku int_grid data.size with
-          | Ok grid -> grid
-          | Error msg -> failwith msg (* TODO: Handle error properly *)
-        in
-
-        (* Merge solved result with original isInitial flags *)
-        let merged_grid =
-          List.map2
-            (fun solved_row orig_row ->
+        match solve_sudoku int_grid data.size with
+        | Ok grid ->
+            let merged_grid =
               List.map2
-                (fun solved_val orig_cell ->
-                  {
-                    Types.value = string_of_int solved_val;
-                    Types.is_initial = orig_cell.Types.is_initial;
-                    Types.is_valid = true;
-                  })
-                solved_row orig_row)
-            solved_grid data.grid
-        in
-
-        let response =
-          {
-            Types.status = "success";
-            Types.message = "Sudoku processed";
-            Types.data =
-              Some { Types.size = data.size; Types.grid = merged_grid };
-          }
-        in
-        json_response
-          (Types.response_to_yojson Types.sudoku_data_to_yojson response)
+                (fun solved_row orig_row ->
+                  List.map2
+                    (fun solved_val orig_cell ->
+                      {
+                        Types.value = string_of_int solved_val;
+                        Types.is_initial = orig_cell.Types.is_initial;
+                        Types.is_valid = true;
+                      })
+                    solved_row orig_row)
+                grid data.grid
+            in
+            let response =
+              {
+                Types.status = "success";
+                Types.message = "Sudoku solved successfully";
+                Types.data =
+                  Some { Types.size = data.size; Types.grid = merged_grid };
+              }
+            in
+            json_response
+              (Types.response_to_yojson Types.sudoku_data_to_yojson response)
+        | Error msg ->
+            let error_response =
+              {
+                Types.status = "error";
+                Types.message = "Failed to solve sudoku: " ^ msg;
+                Types.data = None;
+              }
+            in
+            json_response
+              (Types.response_to_yojson Types.sudoku_data_to_yojson error_response)
       with e ->
         let error_response =
           {
