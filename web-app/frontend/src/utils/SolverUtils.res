@@ -1,4 +1,3 @@
-open Types
 open Utils
 
 let postFormula = async (type_, content) => {
