@@ -1,3 +1,6 @@
+open Cdcl
+open Cdcl.Variable
+
 let json_response data =
   let json_string = Yojson.Safe.to_string data in
   Dream.json json_string
@@ -56,6 +59,67 @@ let convert_frontend_grid json =
   in
   { Types.size; Types.grid }
 
+let sudoku_formula_3x3 =
+  let open Core.In_channel in
+  Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf"
+
+let sudoku_formula_2x2 =
+  let open Core.In_channel in
+  Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf"
+
+module RandomSolver = Solver.Make (Heuristic.Random)
+
+let solve_sudoku (int_grid : int list list) (size : int) : int list list =
+  let rec bool_to_value (size : int) (ls : bool list) : int list =
+    match ls with
+    | [] -> []
+    | _ ->
+        let open Core in
+        let vs, ls = List.split_n ls size in
+        let value, _ =
+          List.fold_left vs ~init:(0, 1) ~f:(fun (res, num) x ->
+              if x then (num, num + 1) else (res, num + 1))
+        in
+        value :: bool_to_value size ls
+  in
+  let split_into_sublists (size : int) (lst : int list) : int list list =
+    let rec aux (acc : int list list) (current : int list) (lst : int list) :
+        int list list =
+      match lst with
+      | [] -> List.rev (List.rev current :: acc) (* Add the last collected sublist *)
+      | x :: xs ->
+          if List.length current < size then
+            aux acc (x :: current) xs (* Add element to current sublist *)
+          else aux (List.rev current :: acc) [ x ] xs (* Start a new sublist *)
+    in
+    aux [] [] lst
+  in
+  let grids = List.flatten int_grid in
+  let formula =
+    match size with
+    | 4 when List.length grids = 16 -> sudoku_formula_2x2
+    | 9 when List.length grids = 81 -> sudoku_formula_3x3
+    | _ -> failwith "Invalid grid size"
+  in
+  let formula, _ =
+    List.fold_left
+      (fun (f, idx) x ->
+        if x = 0 then (f, idx + 1)
+        else
+          let lit = Literal.create (Var ((idx * size) + x)) Positive in
+          (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
+      (formula, 0) grids
+  in
+  let _ = Formula.string_of_t formula in
+  let ls =
+    bool_to_value size
+    @@
+    match RandomSolver.cdcl_solve formula with
+    | `SAT assignment -> assignment |> Assignment.to_list
+    | `UNSAT -> failwith "UNSAT"
+  in
+  split_into_sublists size ls
+
 let solve_sudoku_handler =
   Dream.post "/api/sudoku/solve" (fun request ->
       let%lwt body = Dream.body request in
@@ -77,8 +141,7 @@ let solve_sudoku_handler =
             data.grid
         in
 
-        (* TODO: Call actual solve function here *)
-        let solved_grid = int_grid in
+        let solved_grid = solve_sudoku int_grid data.size in
 
         (* Using initial grid for now *)
 

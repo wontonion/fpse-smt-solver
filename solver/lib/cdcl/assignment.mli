@@ -29,3 +29,6 @@ val satisfy : t -> Formula.t -> bool
 
 val string_of_t : t -> string
 (** [string_of_t a] returns a string representation of assignment [a] *)
+
+val to_list : t -> bool list
+(** [to_list a] returns a list of boolean values of all variables in assignment [a] *)
