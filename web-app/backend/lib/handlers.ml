@@ -27,12 +27,14 @@ let generate_sudoku_handler =
   Dream.get "/api/sudoku/generate" (fun request ->
       try
         (* 从查询参数中获取 blockSize，默认为 3 *)
-        let block_size = 
+        let block_size =
           match Dream.query request "blockSize" with
           | Some size -> int_of_string size
           | None -> 3
         in
-        let grid = Sudoku.generate_puzzle_with_timeout ~timeout:2.0 ~block_size () in
+        let grid =
+          Sudoku.generate_puzzle_with_timeout ~timeout:2.0 ~block_size ()
+        in
         let sudoku_data = Sudoku.convert_to_sudoku_data grid in
         Utils.build_sudoku_response
           ~message:"Sudoku puzzle generated successfully" ~data:sudoku_data ()
@@ -67,15 +69,16 @@ let convert_frontend_grid json =
 
 let sudoku_formula_3x3 =
   let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf"
+  Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
 
 let sudoku_formula_2x2 =
   let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf"
+  Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
 
 module RandomSolver = Solver.Make (Heuristic.Random)
 
-let solve_sudoku (int_grid : int list list) (size : int) : int list list =
+let solve_sudoku (int_grid : int list list) (size : int) :
+    (int list list, string) Result.t =
   let rec bool_to_value (size : int) (ls : bool list) : int list =
     match ls with
     | [] -> []
@@ -92,7 +95,9 @@ let solve_sudoku (int_grid : int list list) (size : int) : int list list =
     let rec aux (acc : int list list) (current : int list) (lst : int list) :
         int list list =
       match lst with
-      | [] -> List.rev (List.rev current :: acc) (* Add the last collected sublist *)
+      | [] ->
+          List.rev (List.rev current :: acc)
+          (* Add the last collected sublist *)
       | x :: xs ->
           if List.length current < size then
             aux acc (x :: current) xs (* Add element to current sublist *)
@@ -103,28 +108,31 @@ let solve_sudoku (int_grid : int list list) (size : int) : int list list =
   let grids = List.flatten int_grid in
   let formula =
     match size with
-    | 4 when List.length grids = 16 -> sudoku_formula_2x2
-    | 9 when List.length grids = 81 -> sudoku_formula_3x3
-    | _ -> failwith "Invalid grid size"
+    | 4 when List.length grids = 16 -> Ok sudoku_formula_2x2
+    | 9 when List.length grids = 81 -> Ok sudoku_formula_3x3
+    | _ -> Error "Invalid grid size"
   in
-  let formula, _ =
-    List.fold_left
-      (fun (f, idx) x ->
-        if x = 0 then (f, idx + 1)
-        else
-          let lit = Literal.create (Var ((idx * size) + x)) Positive in
-          (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
-      (formula, 0) grids
-  in
-  let _ = Formula.string_of_t formula in
-  let ls =
-    bool_to_value size
-    @@
-    match RandomSolver.cdcl_solve formula with
-    | `SAT assignment -> assignment |> Assignment.to_list
-    | `UNSAT -> failwith "UNSAT"
-  in
-  split_into_sublists size ls
+  if Result.is_error formula then Error (Result.get_error formula)
+  else
+    let formula, _ =
+      List.fold_left
+        (fun (f, idx) x ->
+          if x = 0 then (f, idx + 1)
+          else
+            let lit = Literal.create (Var ((idx * size) + x)) Positive in
+            (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
+        (Result.get_ok formula, 0)
+        grids
+    in
+    let assignment =
+      match RandomSolver.cdcl_solve formula with
+      | `SAT assignment -> Ok (Assignment.to_list assignment)
+      | `UNSAT -> Error "Unsatisfiable"
+    in
+    match assignment with
+    | Error msg -> Error msg
+    | Ok assignment ->
+        Ok (bool_to_value size assignment |> split_into_sublists size)
 
 let solve_sudoku_handler =
   Dream.post "/api/sudoku/solve" (fun request ->
@@ -147,9 +155,11 @@ let solve_sudoku_handler =
             data.grid
         in
 
-        let solved_grid = solve_sudoku int_grid data.size in
-
-        (* Using initial grid for now *)
+        let solved_grid =
+          match solve_sudoku int_grid data.size with
+          | Ok grid -> grid
+          | Error msg -> failwith msg (* TODO: Handle error properly *)
+        in
 
         (* Merge solved result with original isInitial flags *)
         let merged_grid =
@@ -187,6 +197,15 @@ let solve_sudoku_handler =
         json_response
           (Types.response_to_yojson Types.sudoku_data_to_yojson error_response))
 
+let solve_sat_formula (dimacs : string) : string =
+  match Dimacs.Parser.parse dimacs with
+  | Error msg -> msg
+  | Ok formula -> (
+      match RandomSolver.cdcl_solve formula with
+      | `SAT assignment ->
+          "SATISFIABLE\n" ^ Assignment.string_of_t assignment ^ "\n"
+      | `UNSAT -> "UNSATISFIABLE\n")
+
 let solve_formula_handler =
   Dream.post "/api/solver/solve" (fun request ->
       let%lwt body = Dream.body request in
@@ -195,30 +214,40 @@ let solve_formula_handler =
         let open Yojson.Safe.Util in
         let formula_type = member "type" json |> to_string in
         let formula_content = member "content" json |> to_string in
-        
+
         (* TODO Jemmy: Implement actual solving logic for each formula type *)
-        let result = match formula_type with
-        | "sat" -> 
-            "TODO: Implement SAT solver\nReceived formula:\n" ^ formula_content
-        | "smt" ->
-            "TODO: Implement SMT solver\nReceived formula:\n" ^ formula_content
-        | _ -> failwith "Unknown formula type"
+        let result =
+          match formula_type with
+          | "sat" -> solve_sat_formula formula_content
+          | "smt" ->
+              "TODO: Implement SMT solver\nReceived formula:\n"
+              ^ formula_content
+          | _ -> failwith "Unknown formula type"
         in
 
-        let response = {
-          Types.status = "success";
-          Types.message = "Formula received successfully";
-          Types.data = Some {
-            Types.problem_type = (if formula_type = "sat" then Types.SAT else Types.SMT);
-            Types.data = result;
-            Types.time_taken = 0.0;
+        let response =
+          {
+            Types.status = "success";
+            Types.message = "Formula received successfully";
+            Types.data =
+              Some
+                {
+                  Types.problem_type =
+                    (if formula_type = "sat" then Types.SAT else Types.SMT);
+                  Types.data = result;
+                  Types.time_taken = 0.0;
+                };
           }
-        } in
-        json_response (Types.response_to_yojson Types.solution_to_yojson response)
+        in
+        json_response
+          (Types.response_to_yojson Types.solution_to_yojson response)
       with e ->
-        let error_response = {
-          Types.status = "error";
-          Types.message = "Failed to process formula: " ^ Printexc.to_string e;
-          Types.data = None
-        } in
-        json_response (Types.response_to_yojson Types.solution_to_yojson error_response))
+        let error_response =
+          {
+            Types.status = "error";
+            Types.message = "Failed to process formula: " ^ Printexc.to_string e;
+            Types.data = None;
+          }
+        in
+        json_response
+          (Types.response_to_yojson Types.solution_to_yojson error_response))

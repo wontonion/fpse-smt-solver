@@ -1,1 +1,1 @@
-val parse : string -> Cdcl.Formula.t
+val parse : string -> (Cdcl.Formula.t, string) Result.t
