@@ -197,6 +197,15 @@ let solve_sudoku_handler =
         json_response
           (Types.response_to_yojson Types.sudoku_data_to_yojson error_response))
 
+let solve_sat_formula (dimacs : string) : string =
+  match Dimacs.Parser.parse dimacs with
+  | Error msg -> msg
+  | Ok formula -> (
+      match RandomSolver.cdcl_solve formula with
+      | `SAT assignment ->
+          "SATISFIABLE\n" ^ Assignment.string_of_t assignment ^ "\n"
+      | `UNSAT -> "UNSATISFIABLE\n")
+
 let solve_formula_handler =
   Dream.post "/api/solver/solve" (fun request ->
       let%lwt body = Dream.body request in
@@ -209,9 +218,7 @@ let solve_formula_handler =
         (* TODO Jemmy: Implement actual solving logic for each formula type *)
         let result =
           match formula_type with
-          | "sat" ->
-              "TODO: Implement SAT solver\nReceived formula:\n"
-              ^ formula_content
+          | "sat" -> solve_sat_formula formula_content
           | "smt" ->
               "TODO: Implement SMT solver\nReceived formula:\n"
               ^ formula_content
