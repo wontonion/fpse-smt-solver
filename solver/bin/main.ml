@@ -8,7 +8,9 @@ let[@landmark] main () =
     | [ _; input_file ] -> In_channel.read_all input_file
     | _ -> failwith "Invalid arguments\n" [@coverage off]
   in
-  let formula = Dimacs.Parser.parse input in
+  let formula =
+    match Dimacs.Parser.parse input with Error msg -> failwith msg | Ok f -> f
+  in
   match RandomSolver.cdcl_solve formula with
   | `UNSAT -> print_endline "UNSATISFIABLE"
   | `SAT assignment ->
