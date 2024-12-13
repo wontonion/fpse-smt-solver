@@ -24,9 +24,18 @@ let createEmptyGrid = size => {
 let processGridResponse = (json: Js.Json.t): array<array<Types.cellState>> => {
   let response = json->Js.Json.decodeObject->Belt.Option.getExn
   let data = response->Js.Dict.get("data")->Belt.Option.getExn
-  let grid = data->Js.Json.decodeObject->Belt.Option.getExn
-    ->Js.Dict.get("grid")->Belt.Option.getExn
-    ->Js.Json.decodeArray->Belt.Option.getExn
+  let gridObj = data->Js.Json.decodeObject->Belt.Option.getExn
+  let size = gridObj
+    ->Js.Dict.get("size")
+    ->Belt.Option.getExn
+    ->Js.Json.decodeNumber
+    ->Belt.Option.getExn
+    ->int_of_float
+  let grid = gridObj
+    ->Js.Dict.get("grid")
+    ->Belt.Option.getExn
+    ->Js.Json.decodeArray
+    ->Belt.Option.getExn
 
   grid->Belt.Array.map(row => {
     row->Js.Json.decodeArray->Belt.Option.getExn
@@ -54,8 +63,8 @@ let processGridResponse = (json: Js.Json.t): array<array<Types.cellState>> => {
 }
 
 // generate a sudoku grid
-let sudokuGenerate = () => {
-  fetch("/api/sudoku/generate", {method: "GET"})
+let sudokuGenerate = (~blockSize: int) => {
+  fetch(`/api/sudoku/generate?blockSize=${blockSize->Int.toString}`, {method: "GET"})
   ->Promise.then(response => {
     if ok(response) {
       response->json

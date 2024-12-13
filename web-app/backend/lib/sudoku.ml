@@ -3,8 +3,9 @@ open Types
 type grid = int list list
 
 (* create empty grid *)
-let create_empty_grid () : grid = 
-  List.init 9 (fun _ -> List.init 9 (fun _ -> 0))
+let create_empty_grid ~block_size () : grid = 
+  let size = block_size * block_size in
+  List.init size (fun _ -> List.init size (fun _ -> 0))
 
 (* Helper functions for list operations *)
 let get_row (grid: grid) (row: int) : int list =
@@ -13,12 +14,13 @@ let get_row (grid: grid) (row: int) : int list =
 let get_col (grid: grid) (col: int) : int list =
   List.map (fun row -> List.nth row col) grid
 
-let get_block (grid: grid) (row: int) (col: int) : int list =
-  let start_row = (row / 3) * 3 in
-  let start_col = (col / 3) * 3 in
-  List.init 9 (fun i ->
-    let r = start_row + (i / 3) in
-    let c = start_col + (i mod 3) in
+let get_block (grid: grid) (row: int) (col: int) ~block_size : int list =
+  let size = block_size * block_size in
+  let start_row = (row / block_size) * block_size in
+  let start_col = (col / block_size) * block_size in
+  List.init size (fun i ->
+    let r = start_row + (i / block_size) in
+    let c = start_col + (i mod block_size) in
     List.nth (List.nth grid r) c
   )
 
@@ -34,35 +36,35 @@ let update_grid (grid: grid) (row: int) (col: int) (value: int) : grid =
 let is_valid_in_list nums value =
   not (List.exists ((=) value) nums) || value = 0
 
-let is_valid (grid: grid) (row: int) (col: int) (num: int) : bool =
+let is_valid (grid: grid) (row: int) (col: int) (num: int) ~block_size : bool =
   let row_valid = is_valid_in_list (get_row grid row) num in
   let col_valid = is_valid_in_list (get_col grid col) num in
-  let block_valid = is_valid_in_list (get_block grid row col) num in
+  let block_valid = is_valid_in_list (get_block grid row col ~block_size) num in
   row_valid && col_valid && block_valid
 
 (* Find first empty position *)
-let find_empty (grid: grid) : (int * int) option =
+let find_empty (grid: grid) ~block_size : (int * int) option =
+  let size = block_size * block_size in
   let rec find_in_row row col =
-    if row >= 9 then None
-    else if col >= 9 then find_in_row (row + 1) 0
+    if row >= size then None
+    else if col >= size then find_in_row (row + 1) 0
     else if List.nth (List.nth grid row) col = 0 then Some (row, col)
     else find_in_row row (col + 1)
   in
   find_in_row 0 0
 
 (* Solve sudoku recursively and return the number of solutions found *)
-let rec solve_and_count (grid: grid) (max_solutions: int) : int =
+let rec solve_and_count (grid: grid) (max_solutions: int) ~block_size : int =
   if max_solutions = 0 then 0
-  else match find_empty grid with
-    | None -> 
-        Printf.printf "Found solution\n";
-        1
+  else match find_empty grid ~block_size with
+    | None -> 1
     | Some (row, col) ->
+        let size = block_size * block_size in
         let rec try_numbers num acc =
-          if num > 9 || acc >= max_solutions then acc
-          else if is_valid grid row col num then
+          if num > size || acc >= max_solutions then acc
+          else if is_valid grid row col num ~block_size then
             let new_grid = update_grid grid row col num in
-            let solutions = solve_and_count new_grid (max_solutions - acc) in
+            let solutions = solve_and_count new_grid (max_solutions - acc) ~block_size in
             try_numbers (num + 1) (acc + solutions)
           else
             try_numbers (num + 1) acc
@@ -70,18 +72,18 @@ let rec solve_and_count (grid: grid) (max_solutions: int) : int =
         try_numbers 1 0
 
 (* Helper function to solve the grid *)
-let rec solve_grid (grid: grid) : grid option =
-  match find_empty grid with
-  | None -> Some grid  (* Found solution *)
+let rec solve_grid (grid: grid) ~block_size : grid option =
+  match find_empty grid ~block_size with
+  | None -> Some grid
   | Some (row, col) ->
-      let numbers = List.init 9 (fun i -> i + 1) in
-      (* Shuffle the numbers to increase randomness *)
+      let size = block_size * block_size in
+      let numbers = List.init size (fun i -> i + 1) in
       let shuffled = List.sort (fun _ _ -> Random.int 3 - 1) numbers in
       let rec try_numbers = function
         | [] -> None
         | num :: rest ->
-            if is_valid grid row col num then
-              match solve_grid (update_grid grid row col num) with
+            if is_valid grid row col num ~block_size then
+              match solve_grid (update_grid grid row col num) ~block_size with
               | Some solution -> Some solution
               | None -> try_numbers rest
             else try_numbers rest
@@ -89,33 +91,34 @@ let rec solve_grid (grid: grid) : grid option =
       try_numbers shuffled
 
 (* Improved generation algorithm *)
-let generate_puzzle () : grid =
+let generate_puzzle ~block_size () : grid =
+  if not (List.mem block_size [2; 3]) then
+    failwith "Block size must be either 2 or 3";
+    
   Random.self_init ();
   
   let solved_grid = 
-    match solve_grid (create_empty_grid ()) with
+    match solve_grid (create_empty_grid ~block_size ()) ~block_size with
     | Some grid -> grid
     | None -> failwith "Failed to generate a complete grid"
   in
   
-  let positions = List.init 81 (fun i -> (i / 9, i mod 9)) in
+  let size = block_size * block_size in
+  let total_cells = size * size in
+  let positions = List.init total_cells (fun i -> (i / size, i mod size)) in
   let shuffled_positions = 
     List.sort (fun _ _ -> Random.int 3 - 1) positions in
   
+  let target_removed = total_cells / 2 in (* 移除大约一半的数字 *)
+  
   let rec remove_numbers grid positions removed =
     match positions with
-    | [] -> 
-        Printf.printf "No more positions to try, removed %d numbers\n" removed;
-        grid
+    | [] -> grid
     | (row, col) :: rest ->
-        if removed >= 50 then 
-          (Printf.printf "Target reached: removed %d numbers\n" removed;
-           grid)
+        if removed >= target_removed then grid
         else begin
-          Printf.printf "Trying to remove at (%d,%d)\n" row col;
           let new_grid = update_grid grid row col 0 in
-          let solutions = solve_and_count new_grid 2 in
-          Printf.printf "Position (%d,%d) has %d solutions\n" row col solutions;
+          let solutions = solve_and_count new_grid 2 ~block_size in
           if solutions = 1 then
             remove_numbers new_grid rest (removed + 1)
           else
@@ -143,6 +146,7 @@ let print_board (grid: grid) : unit =
 
 
 let convert_to_sudoku_data (grid: grid) : sudoku_data =
+  let size = List.length grid in (* 使用实际的网格大小 *)
   let convert_cell value =
     { value = if value = 0 then "" else string_of_int value;
       is_initial = value <> 0;
@@ -150,13 +154,13 @@ let convert_to_sudoku_data (grid: grid) : sudoku_data =
     }
   in
   {
-    size = 9;
+    size = size;
     grid = List.map (fun row ->
       List.map convert_cell row
     ) grid
   }
 
-let generate_puzzle_with_timeout ?(timeout=2.0) () : grid =
+let generate_puzzle_with_timeout ?(timeout=2.0) ~block_size () : grid =
   let start_time = Unix.gettimeofday () in
   
   let rec try_generate () =
@@ -164,7 +168,7 @@ let generate_puzzle_with_timeout ?(timeout=2.0) () : grid =
       raise (Failure "Timeout while generating puzzle")
     else
       try 
-        generate_puzzle ()
+        generate_puzzle ~block_size ()
       with _ -> try_generate ()
   in
   try_generate ()

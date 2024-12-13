@@ -2,33 +2,16 @@ open Types
 
 type grid = int list list
 
-val create_empty_grid : unit -> grid
-(** create an empty grid *)
-(** TODO accept different size(int) of grid *)
-
+val create_empty_grid : block_size:int -> unit -> grid
 val get_row : grid -> int -> int list
-(** get a row from the grid *)
-
 val get_col : grid -> int -> int list
-(** get a column from the grid *)
-
-val get_block : grid -> int -> int -> int list
-(** get a 3x3 block from the grid *)
-
+val get_block : grid -> int -> int -> block_size:int -> int list
 val update_grid : grid -> int -> int -> int -> grid
-(** update a value in the grid *)
-
-val is_valid : grid -> int -> int -> int -> bool
-(** check if the number is valid in the grid *)
-
-val generate_puzzle : unit -> grid
-(** generate a puzzle *)
-
-val print_board : grid -> unit 
-(** print the grid *)
-
+val is_valid : grid -> int -> int -> int -> block_size:int -> bool
+val find_empty : grid -> block_size:int -> (int * int) option
+val solve_and_count : grid -> int -> block_size:int -> int
+val solve_grid : grid -> block_size:int -> grid option
+val generate_puzzle : block_size:int -> unit -> grid
+val print_board : grid -> unit
 val convert_to_sudoku_data : grid -> sudoku_data
-(** convert the grid to sudoku_data *)
-
-val generate_puzzle_with_timeout : ?timeout:float -> unit -> grid
-(** generate a puzzle with a timeout *)
+val generate_puzzle_with_timeout : ?timeout:float -> block_size:int -> unit -> grid
