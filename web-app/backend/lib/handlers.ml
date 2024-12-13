@@ -10,7 +10,7 @@ let hello_handler =
       let sample_data =
         {
           Types.problem_type = Types.SAT;
-          Types.assignments = Some [ ("x1", "true"); ("x2", "false") ];
+          Types.data = "TODO: Implement SAT solver\nReceived formula:\n";
           Types.time_taken = 0.001;
         }
       in
@@ -186,3 +186,39 @@ let solve_sudoku_handler =
         in
         json_response
           (Types.response_to_yojson Types.sudoku_data_to_yojson error_response))
+
+let solve_formula_handler =
+  Dream.post "/api/solver/solve" (fun request ->
+      let%lwt body = Dream.body request in
+      try
+        let json = Yojson.Safe.from_string body in
+        let open Yojson.Safe.Util in
+        let formula_type = member "type" json |> to_string in
+        let formula_content = member "content" json |> to_string in
+        
+        (* TODO Jemmy: Implement actual solving logic for each formula type *)
+        let result = match formula_type with
+        | "sat" -> 
+            "TODO: Implement SAT solver\nReceived formula:\n" ^ formula_content
+        | "smt" ->
+            "TODO: Implement SMT solver\nReceived formula:\n" ^ formula_content
+        | _ -> failwith "Unknown formula type"
+        in
+
+        let response = {
+          Types.status = "success";
+          Types.message = "Formula received successfully";
+          Types.data = Some {
+            Types.problem_type = (if formula_type = "sat" then Types.SAT else Types.SMT);
+            Types.data = result;
+            Types.time_taken = 0.0;
+          }
+        } in
+        json_response (Types.response_to_yojson Types.solution_to_yojson response)
+      with e ->
+        let error_response = {
+          Types.status = "error";
+          Types.message = "Failed to process formula: " ^ Printexc.to_string e;
+          Types.data = None
+        } in
+        json_response (Types.response_to_yojson Types.solution_to_yojson error_response))

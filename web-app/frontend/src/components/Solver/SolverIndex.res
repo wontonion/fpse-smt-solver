@@ -93,19 +93,51 @@ let downloadTemplate = (tabName) => {
   }
 }
 
-let clearTextarea = (textareaRef: textareaRef) => {
-  textareaRef.current
-  ->Js.Nullable.toOption
-  ->Belt.Option.forEach(textarea => {
-    let textArea = textarea->domElementToTextArea
-    textArea->setValue("")
-  })
+module TabState = {
+  type t = {
+    content: string,
+    solution: string,
+  }
+  
+  let make = () => {
+    content: "",
+    solution: "Solution will appear here",
+  }
 }
 
 @react.component
 let make = (~tabName: string) => {
   let textareaRef: textareaRef = React.useRef(Js.Nullable.null)
+  let (isLoading, setIsLoading) = React.useState(() => false)
   
+  // Use Belt.Map.String instead of Map.String
+  let (tabStates, setTabStates) = React.useState(() => 
+    Belt.Map.String.fromArray([
+      ("sat", TabState.make()),
+      ("smt", TabState.make()),
+    ])
+  )
+  
+  let currentState = Belt.Map.String.get(tabStates, tabName->String.toLowerCase)
+    ->Belt.Option.getWithDefault(TabState.make())
+  
+  React.useEffect1(() => {
+    // Update textarea content when tab changes
+    textareaRef.current
+    ->Js.Nullable.toOption
+    ->Belt.Option.forEach(textarea => {
+      let textArea = textarea->domElementToTextArea
+      textArea->setValue(currentState.content)
+    })
+    None
+  }, [tabName])
+  
+  let updateTabState = (newState: TabState.t) => {
+    setTabStates(prev => 
+      Belt.Map.String.set(prev, tabName->String.toLowerCase, newState)
+    )
+  }
+
   let handleFileUpload = e => {
     let fileInput = (e->ReactEvent.Form.target :> fileInput)
     let files = fileInput["files"]
@@ -120,6 +152,7 @@ let make = (~tabName: string) => {
       
       setOnLoad(reader, event => {
         let content = event["target"]["result"]
+        updateTabState({...currentState, content: content})
         switch textareaRef.current->Js.Nullable.toOption {
         | Some(textarea) => {
             let textArea = textarea->domElementToTextArea
@@ -133,6 +166,42 @@ let make = (~tabName: string) => {
     }
   }
 
+  let handleSolve = _ => {
+    switch textareaRef.current->Js.Nullable.toOption {
+    | Some(textarea) => {
+        let textArea = textarea->domElementToTextArea
+        let content = textArea->getValue
+        if content->String.length > 0 {
+          setIsLoading(_ => true)
+          updateTabState({...currentState, solution: "Solving..."})
+          
+          SolverUtils.postFormula(tabName->String.toLowerCase, content)
+          ->Promise.then(result => {
+            switch result {
+            | Ok(solution) => updateTabState({...currentState, solution: solution})
+            | Error(err) => updateTabState({...currentState, solution: "Error: " ++ err})
+            }
+            setIsLoading(_ => false)
+            Promise.resolve()
+          })
+          ->ignore
+        }
+      }
+    | None => ()
+    }
+  }
+
+  let clearTextarea = () => {
+    let newState = {...currentState, content: "", solution: "Solution will appear here"}
+    updateTabState(newState)
+    textareaRef.current
+    ->Js.Nullable.toOption
+    ->Belt.Option.forEach(textarea => {
+      let textArea = textarea->domElementToTextArea
+      textArea->setValue("")
+    })
+  }
+
   <div className="grid grid-cols-2 gap-6">
     <div>
       <h2 className="text-xl font-semibold mb-4">
@@ -142,6 +211,11 @@ let make = (~tabName: string) => {
         ref={ReactDOM.Ref.domRef(textareaRef)}
         className="w-full h-64 p-2 border rounded font-mono whitespace-pre"
         placeholder={getSolverExample(tabName)}
+        value={currentState.content}
+        onChange={e => {
+          let newContent = ReactEvent.Form.target(e)["value"]
+          updateTabState({...currentState, content: newContent})
+        }}
       />
       <input
         type_="file"
@@ -155,22 +229,25 @@ let make = (~tabName: string) => {
           <Button onClick={_ => downloadTemplate(tabName)}>
             {React.string("Download Template")}
           </Button>
-        <Button onClick={_ => getElementById("fileInput")->Js.Nullable.toOption->Belt.Option.forEach(click)}>
-          {React.string("Upload problem batch")}
-        </Button>
-        <Button onClick={_ => clearTextarea(textareaRef)}>
-          {React.string("Clear")}
-        </Button>
+          <Button onClick={_ => getElementById("fileInput")->Js.Nullable.toOption->Belt.Option.forEach(click)}>
+            {React.string("Upload problem batch")}
+          </Button>
+          <Button onClick={_ => clearTextarea()}>
+            {React.string("Clear")}
+          </Button>
         </div>
-        <Button className="mt-6" onClick={_ => ()}> {React.string("Solve")} </Button>
+        <Button 
+          disabled=isLoading
+          onClick={handleSolve}> 
+          {React.string(isLoading ? "Solving..." : "Solve")} 
+        </Button>
       </div>
     </div>
     <div>
       <h2 className="text-xl font-semibold mb-4"> {React.string("Solution")} </h2>
-      <div className="border p-4 h-64 overflow-auto">
-        {React.string("Solution will appear here")}
-      </div>
-      
+      <pre className="border p-4 h-64 overflow-auto font-mono whitespace-pre-wrap">
+        {React.string(currentState.solution)}
+      </pre>
     </div>
   </div>
 }

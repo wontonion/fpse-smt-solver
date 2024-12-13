@@ -4,6 +4,8 @@ import * as React from "react";
 import * as Button from "../Button/Button.res.mjs";
 import * as Belt_Option from "rescript/lib/es6/belt_Option.js";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
+import * as SolverUtils from "../../utils/SolverUtils.res.mjs";
+import * as Belt_MapString from "rescript/lib/es6/belt_MapString.js";
 import * as JsxRuntime from "react/jsx-runtime";
 import * as Caml_js_exceptions from "rescript/lib/es6/caml_js_exceptions.js";
 
@@ -56,15 +58,58 @@ function downloadTemplate(tabName) {
   }
 }
 
-function clearTextarea(textareaRef) {
-  Belt_Option.forEach(Caml_option.nullable_to_opt(textareaRef.current), (function (textarea) {
-          textarea.value = "";
-        }));
+function make() {
+  return {
+          content: "",
+          solution: "Solution will appear here"
+        };
 }
+
+var TabState = {
+  make: make
+};
 
 function SolverIndex(props) {
   var tabName = props.tabName;
   var textareaRef = React.useRef(null);
+  var match = React.useState(function () {
+        return false;
+      });
+  var setIsLoading = match[1];
+  var isLoading = match[0];
+  var match$1 = React.useState(function () {
+        return Belt_MapString.fromArray([
+                    [
+                      "sat",
+                      {
+                        content: "",
+                        solution: "Solution will appear here"
+                      }
+                    ],
+                    [
+                      "smt",
+                      {
+                        content: "",
+                        solution: "Solution will appear here"
+                      }
+                    ]
+                  ]);
+      });
+  var setTabStates = match$1[1];
+  var currentState = Belt_Option.getWithDefault(Belt_MapString.get(match$1[0], tabName.toLowerCase()), {
+        content: "",
+        solution: "Solution will appear here"
+      });
+  React.useEffect((function () {
+          Belt_Option.forEach(Caml_option.nullable_to_opt(textareaRef.current), (function (textarea) {
+                  textarea.value = currentState.content;
+                }));
+        }), [tabName]);
+  var updateTabState = function (newState) {
+    setTabStates(function (prev) {
+          return Belt_MapString.set(prev, tabName.toLowerCase(), newState);
+        });
+  };
   var handleFileUpload = function (e) {
     var fileInput = e.target;
     var files = fileInput.files;
@@ -78,6 +123,10 @@ function SolverIndex(props) {
       });
     reader.onload = (function ($$event) {
         var content = $$event.target.result;
+        updateTabState({
+              content: content,
+              solution: currentState.solution
+            });
         var textarea = textareaRef.current;
         if (!(textarea == null)) {
           textarea.value = content;
@@ -86,6 +135,50 @@ function SolverIndex(props) {
         
       });
     reader.readAsText(file);
+  };
+  var handleSolve = function (param) {
+    var textarea = textareaRef.current;
+    if (textarea == null) {
+      return ;
+    }
+    var content = textarea.value;
+    if (content.length > 0) {
+      setIsLoading(function (param) {
+            return true;
+          });
+      updateTabState({
+            content: currentState.content,
+            solution: "Solving..."
+          });
+      SolverUtils.postFormula(tabName.toLowerCase(), content).then(function (result) {
+            if (result.TAG === "Ok") {
+              updateTabState({
+                    content: currentState.content,
+                    solution: result._0
+                  });
+            } else {
+              updateTabState({
+                    content: currentState.content,
+                    solution: "Error: " + result._0
+                  });
+            }
+            setIsLoading(function (param) {
+                  return false;
+                });
+            return Promise.resolve();
+          });
+      return ;
+    }
+    
+  };
+  var clearTextarea = function () {
+    updateTabState({
+          content: "",
+          solution: "Solution will appear here"
+        });
+    Belt_Option.forEach(Caml_option.nullable_to_opt(textareaRef.current), (function (textarea) {
+            textarea.value = "";
+          }));
   };
   return JsxRuntime.jsxs("div", {
               children: [
@@ -98,7 +191,15 @@ function SolverIndex(props) {
                         JsxRuntime.jsx("textarea", {
                               ref: Caml_option.some(textareaRef),
                               className: "w-full h-64 p-2 border rounded font-mono whitespace-pre",
-                              placeholder: getSolverExample(tabName)
+                              placeholder: getSolverExample(tabName),
+                              value: currentState.content,
+                              onChange: (function (e) {
+                                  var newContent = e.target.value;
+                                  updateTabState({
+                                        content: newContent,
+                                        solution: currentState.solution
+                                      });
+                                })
                             }),
                         JsxRuntime.jsx("input", {
                               className: "hidden",
@@ -128,18 +229,16 @@ function SolverIndex(props) {
                                         JsxRuntime.jsx(Button.make, {
                                               children: "Clear",
                                               onClick: (function (param) {
-                                                  clearTextarea(textareaRef);
+                                                  clearTextarea();
                                                 })
                                             })
                                       ],
                                       className: "flex gap-4"
                                     }),
                                 JsxRuntime.jsx(Button.make, {
-                                      children: "Solve",
-                                      className: "mt-6",
-                                      onClick: (function (param) {
-                                          
-                                        })
+                                      children: Caml_option.some(isLoading ? "Solving..." : "Solve"),
+                                      disabled: isLoading,
+                                      onClick: handleSolve
                                     })
                               ],
                               className: "flex mt-4 gap-4 justify-between"
@@ -152,9 +251,9 @@ function SolverIndex(props) {
                               children: "Solution",
                               className: "text-xl font-semibold mb-4"
                             }),
-                        JsxRuntime.jsx("div", {
-                              children: "Solution will appear here",
-                              className: "border p-4 h-64 overflow-auto"
+                        JsxRuntime.jsx("pre", {
+                              children: currentState.solution,
+                              className: "border p-4 h-64 overflow-auto font-mono whitespace-pre-wrap"
                             })
                       ]
                     })
@@ -163,13 +262,13 @@ function SolverIndex(props) {
             });
 }
 
-var make = SolverIndex;
+var make$1 = SolverIndex;
 
 export {
   $$Blob ,
   getSolverExample ,
   downloadTemplate ,
-  clearTextarea ,
-  make ,
+  TabState ,
+  make$1 as make,
 }
 /* react Not a pure module */

@@ -75,6 +75,30 @@ let make = () => {
     ->ignore
   }
 
+  let handleSetAsInitial = () => {
+    setGridValues(prev => {
+      Belt.Array.map(prev, row => {
+        Belt.Array.map(row, cell => {
+          if cell.value !== "" {
+            {...cell, isInitial: true}
+          } else {
+            cell
+          }
+        })
+      })
+    })
+  }
+
+  let handleResetInitial = () => {
+    setGridValues(prev => {
+      Belt.Array.map(prev, row => {
+        Belt.Array.map(row, cell => {
+          {...cell, isInitial: false}
+        })
+      })
+    })
+  }
+
   <div className="grid grid-cols-2 gap-6">
     <div>
       <div className="text-xl font-semibold mb-4 justify-start flex items-center">
@@ -112,6 +136,28 @@ let make = () => {
         <Button onClick={_ => handleClearGrid()}>
           {React.string("Clear Grid")}
         </Button>
+
+        <div className="border-t pt-4 mt-4">
+          <h3 className="text-lg font-medium mb-2"> 
+            {React.string("Custom Puzzle")} 
+          </h3>
+          <div className="space-y-2">
+            <Button 
+              onClick={_ => handleSetAsInitial()}
+              className="bg-indigo-600 hover:bg-indigo-700">
+              {React.string("Set Current Numbers as Initial")}
+            </Button>
+            
+            <Button 
+              onClick={_ => handleResetInitial()}
+              className="bg-gray-600 hover:bg-gray-700">
+              {React.string("Reset Initial Status")}
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            {React.string("Input your puzzle and click 'Set as Initial' before solving")}
+          </p>
+        </div>
       </div>
     </div>
   </div>

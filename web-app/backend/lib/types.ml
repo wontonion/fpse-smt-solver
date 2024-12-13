@@ -33,7 +33,7 @@ type problem = {
 
 type solution = {
   problem_type: problem_type;
-  assignments: (string * string) list option;
+  data: string;
   time_taken: float;
 } [@@deriving yojson]
 

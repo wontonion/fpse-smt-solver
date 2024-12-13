@@ -66,3 +66,16 @@ type solverData = {
   // TODO must be array?
   problemSet: array<problemSetItem>,
 }
+
+// Add these new types for solver
+type solverSolutionData = {
+  problem_type: string,
+  data: string,
+  time_taken: float,
+}
+
+type solverResponse = {
+  status: string,
+  message: string,
+  data: option<solverSolutionData>,
+}
