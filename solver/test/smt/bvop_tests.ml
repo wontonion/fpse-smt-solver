@@ -107,7 +107,17 @@ let test_mul _ =
     | `SAT assignment -> assignment
     | `UNSAT -> assert_failure "UNSAT"
   in
-  assert_equal 60255 @@ Bitvec.value assignment o.o0
+  assert_equal 60255 @@ Bitvec.value assignment o.o0;
+
+  let bv1 = Bitvec.constant f 12871 in
+  let i = 4 in
+  let ctx', o = Bvop.op_mul ctx { i0 = bv1; i1 = i } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal 51484 @@ Bitvec.value assignment o.o0
 
 let series =
   "BitOp tests"

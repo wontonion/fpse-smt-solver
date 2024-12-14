@@ -69,6 +69,12 @@ let test_string_of_t _ =
   let a = Assignment.assign a v2 false None in
   assert_equal "1 -2" (Assignment.string_of_t a)
 
+let test_to_list _ =
+  let a = Assignment.assign Assignment.empty v1 true None in
+  assert_equal [ true ] (Assignment.to_list a);
+  let a = Assignment.assign a v2 false None in
+  assert_equal [ true; false ] (Assignment.to_list a)
+
 let series =
   "Assignment tests"
   >::: [
@@ -80,4 +86,5 @@ let series =
          "Test unassign" >:: test_unassign;
          "Test satisfy" >:: test_satisfy;
          "Test string_of_t" >:: test_string_of_t;
+         "Test to_list" >:: test_to_list;
        ]

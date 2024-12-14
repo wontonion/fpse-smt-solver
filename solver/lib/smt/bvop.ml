@@ -76,7 +76,7 @@ let op_mul (ctx : Context.t) (input : input_int) : Context.t * output_1 =
   in
   let ctx, ls = aux ctx [] input.i1 0 in
   match ls with
-  | [] -> failwith "Should not happen: Multiplied by constant zero"
+  | [] -> failwith "Should not happen: Multiplied by constant zero" [@coverage off]
   | hd :: [] -> (ctx, { o0 = hd })
   | hd :: tl ->
       let ctx, bv =
