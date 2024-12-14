@@ -188,7 +188,8 @@ let solve_sudoku_handler =
               }
             in
             json_response
-              (Types.response_to_yojson Types.sudoku_data_to_yojson error_response)
+              (Types.response_to_yojson Types.sudoku_data_to_yojson
+                 error_response)
       with e ->
         let error_response =
           {
@@ -209,6 +210,15 @@ let solve_sat_formula (dimacs : string) : string =
           "SATISFIABLE\n" ^ Assignment.string_of_t assignment ^ "\n"
       | `UNSAT -> "UNSATISFIABLE\n")
 
+let solve_smt_formula (smt : string) : string =
+  match Vm.Parser.parse smt with
+  | Error msg -> msg
+  | Ok context -> (
+      match Smt.Context.solve context with
+      | `SAT assignment ->
+          "SATISFIABLE\n" ^ Smt.Context.to_string context assignment ^ "\n"
+      | `UNSAT -> "UNSATISFIABLE\n")
+
 let solve_formula_handler =
   Dream.post "/api/solver/solve" (fun request ->
       let%lwt body = Dream.body request in
@@ -218,13 +228,10 @@ let solve_formula_handler =
         let formula_type = member "type" json |> to_string in
         let formula_content = member "content" json |> to_string in
 
-        (* TODO Jemmy: Implement actual solving logic for each formula type *)
         let result =
           match formula_type with
           | "sat" -> solve_sat_formula formula_content
-          | "smt" ->
-              "TODO: Implement SMT solver\nReceived formula:\n"
-              ^ formula_content
+          | "smt" -> solve_smt_formula formula_content
           | _ -> failwith "Unknown formula type"
         in
 
