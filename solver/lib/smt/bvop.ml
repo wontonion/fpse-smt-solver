@@ -5,6 +5,10 @@ type input_int = { i0 : Bitvec.t; i1 : int }
 type input_2 = { i0 : Bitvec.t; i1 : Bitvec.t }
 type output_1 = { o0 : Bitvec.t }
 
+let op_var (ctx : Context.t) : Context.t * output_1 =
+  let ctx, o0 = Context.bVars ctx 16 in
+  (ctx, { o0 })
+
 let op_xor (ctx : Context.t) (input : input_2) : Context.t * output_1 =
   let ctx, o =
     List.fold_left (List.zip_exn input.i0 input.i1) ~init:(ctx, [])
@@ -51,10 +55,8 @@ let constraint_neq0 (ctx : Context.t) (input : input_1) : Context.t =
 
 let op_add (ctx : Context.t) (input : input_2) : Context.t * output_1 =
   let ctx, o, _ =
-    List.fold_left
-      (List.zip_exn input.i0 input.i1)
-      ~init:(ctx, [], Context.bFalse)
-      ~f:(fun (ctx, acc, cin) (i0, i1) ->
+    List.fold_left (List.zip_exn input.i0 input.i1)
+      ~init:(ctx, [], Context.bFalse) ~f:(fun (ctx, acc, cin) (i0, i1) ->
         let ctx, o = Bitop.op_add ctx { i0; i1; cin } in
         (ctx, o.s :: acc, o.cout))
   in
@@ -76,7 +78,8 @@ let op_mul (ctx : Context.t) (input : input_int) : Context.t * output_1 =
   in
   let ctx, ls = aux ctx [] input.i1 0 in
   match ls with
-  | [] -> failwith "Should not happen: Multiplied by constant zero" [@coverage off]
+  | [] ->
+      failwith "Should not happen: Multiplied by constant zero" [@coverage off]
   | hd :: [] -> (ctx, { o0 = hd })
   | hd :: tl ->
       let ctx, bv =

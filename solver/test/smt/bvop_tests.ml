@@ -53,7 +53,9 @@ let test_eq _ =
   let bv1 = Bitvec.constant f 47165 in
   let bv2 = Bitvec.constant f 63577 in
   let bv3 = Bitvec.constant f 16484 in
-  let ctx', o = Bvop.op_xor ctx { i0 = bv1; i1 = bv2 } in
+  let ctx', bv4 = Bvop.op_var ctx in
+  let ctx', o = Bvop.op_xor ctx' { i0 = bv1; i1 = bv2 } in
+  let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv4.o0 } in
   let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv3 } in
   let assignment =
     match Context.solve ctx' with
@@ -61,10 +63,11 @@ let test_eq _ =
     | `UNSAT -> assert_failure "UNSAT"
   in
   assert_equal 16484 @@ Bitvec.value assignment o.o0;
+  assert_equal 16484 @@ Bitvec.value assignment bv4.o0;
 
-  let bv4 = Bitvec.constant f 26922 in
+  let bv5 = Bitvec.constant f 26922 in
   let ctx', o = Bvop.op_xor ctx { i0 = bv1; i1 = bv2 } in
-  let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv4 } in
+  let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv5 } in
   let sat = match Context.solve ctx' with `SAT _ -> true | `UNSAT -> false in
   assert_equal false sat
 
