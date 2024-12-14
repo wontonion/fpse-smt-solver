@@ -44,3 +44,10 @@ module RandomSolver = Solver.Make (Cdcl.Heuristic.Randomized)
 
 let solve (ctx : t) : [ `SAT of Cdcl.Assignment.t | `UNSAT ] =
   RandomSolver.cdcl_solve (Formula.create ctx.clauses)
+
+let to_string (ctx : t) (a : Cdcl.Assignment.t) : string =
+  let vars = Map.keys ctx.bvs in
+  List.fold_left vars ~init:"" ~f:(fun acc id ->
+      let bv = Map.find_exn ctx.bvs id in
+      let value = Bitvec.value a bv in
+      acc ^ Printf.sprintf "bv%d = %d\n" id value)

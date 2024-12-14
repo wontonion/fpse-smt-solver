@@ -29,3 +29,6 @@ val add_clauses : t -> Cdcl.Clause.t list -> t
 
 val solve : t -> [ `SAT of Cdcl.Assignment.t | `UNSAT ]
 (** [solve ctx] solves the context [ctx]. *)
+
+val to_string : t -> Cdcl.Assignment.t -> string
+(** [to_string ctx a] outputs thee bitvector assignment [a] as a string. *)
