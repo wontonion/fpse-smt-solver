@@ -1,6 +1,7 @@
 (library
- (name ilp)
- (modules bitvec)
+ (name smt)
+  (public_name solver.smt)
+ (modules context bitvec bitop)
  (libraries core cdcl landmarks)
  (preprocess
   (pps ppx_deriving.show ppx_jane bisect_ppx landmarks-ppx --auto)))

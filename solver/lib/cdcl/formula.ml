@@ -3,6 +3,10 @@ open Core
 type t = Clause.t list * Set.M(Variable).t
 
 let create (ls : Clause.t list) : t =
+  let ls =
+    List.filter ls ~f:(fun c ->
+        Clause.literals c |> List.length = (Clause.variables c |> Set.length))
+  in
   let variables =
     List.fold_left ls
       ~init:(Core.Set.empty (module Variable))
@@ -18,4 +22,6 @@ let clauses ((ls, _) : t) : Clause.t list = ls
 let variables ((_, vs) : t) : Set.M(Variable).t = vs
 
 let add_clause ((ls, vs) : t) (c : Clause.t) : t =
-  (c :: ls, Set.union vs (Clause.variables c))
+  if Clause.literals c |> List.length = (Clause.variables c |> Set.length) then
+    (c :: ls, Set.union vs (Clause.variables c))
+  else (ls, vs)
