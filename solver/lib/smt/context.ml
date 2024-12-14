@@ -1,7 +1,12 @@
 open Cdcl
 open Cdcl.Variable
+open Core
 
-type t = { next_var : int; clauses : Cdcl.Clause.t list }
+type t = {
+  next_var : int;
+  clauses : Cdcl.Clause.t list;
+  bvs : Bitvec.t Map.M(Int).t;
+}
 
 let empty =
   {
@@ -11,16 +16,23 @@ let empty =
         Clause.create [ Literal.create (Var 1) Positive ];
         Clause.create [ Literal.create (Var 2) Negative ];
       ];
+    bvs = Map.empty (module Int);
   }
 
-let bTrue (_ : t) = Var 1
-let bFalse (_ : t) = Var 2
-let bConst (_ : t) (b : bool) = if b then Var 1 else Var 2
+let bTrue = Var 1
+let bFalse = Var 2
+let bConst (b : bool) = if b then Var 1 else Var 2
 let bVar (ctx : t) = ({ ctx with next_var = ctx.next_var + 1 }, Var ctx.next_var)
 
 let bVars (ctx : t) (n : int) =
   ( { ctx with next_var = ctx.next_var + n },
-    List.init n (fun i -> Var (ctx.next_var + i)) )
+    List.init n ~f:(fun i -> Var (ctx.next_var + i)) )
+
+let bvNew (ctx : t) (id : int) : t * Bitvec.t =
+  if Map.mem ctx.bvs id then (ctx, Map.find_exn ctx.bvs id)
+  else
+    let ctx, bv = bVars ctx 16 in
+    ({ ctx with bvs = Map.set ctx.bvs ~key:id ~data:bv }, bv)
 
 let add_clause (ctx : t) (c : Cdcl.Clause.t) =
   { ctx with clauses = c :: ctx.clauses }
@@ -32,3 +44,10 @@ module RandomSolver = Solver.Make (Cdcl.Heuristic.Randomized)
 
 let solve (ctx : t) : [ `SAT of Cdcl.Assignment.t | `UNSAT ] =
   RandomSolver.cdcl_solve (Formula.create ctx.clauses)
+
+let to_string (ctx : t) (a : Cdcl.Assignment.t) : string =
+  let vars = Map.keys ctx.bvs in
+  List.fold_left vars ~init:"" ~f:(fun acc id ->
+      let bv = Map.find_exn ctx.bvs id in
+      let value = Bitvec.value a bv in
+      acc ^ Printf.sprintf "bv%d = %d\n" id value)

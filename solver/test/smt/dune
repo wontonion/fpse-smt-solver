@@ -1,4 +1,4 @@
 (library
  (name smt_tests)
- (modules smt_tests context_tests bitvec_tests bitop_tests)
+ (modules smt_tests context_tests bitvec_tests bitop_tests bvop_tests)
  (libraries core ounit2 cdcl smt))

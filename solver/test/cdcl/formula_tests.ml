@@ -39,11 +39,13 @@ let test_variables _ =
 let test_add_clause _ =
   let c1 = Clause.create [ l1 ] in
   let c2 = Clause.create [ l2'; l3' ] in
+  let c3 = Clause.create [ l1'; l1; l2 ] in
 
   let f = Formula.create [ c1 ] in
   let f' = Formula.add_clause f c2 in
+  let f'' = Formula.add_clause f' c3 in
 
-  assert_equal [ c2; c1 ] (Formula.clauses f')
+  assert_equal [ c2; c1 ] (Formula.clauses f'')
 
 let series =
   "Formula tests"

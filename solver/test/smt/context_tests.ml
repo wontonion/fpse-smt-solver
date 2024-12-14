@@ -2,11 +2,10 @@ open OUnit2
 open Smt
 
 let test_constants _ =
-  let ctx = Context.empty in
-  assert_equal (Context.bTrue ctx) (Var 1);
-  assert_equal (Context.bFalse ctx) (Var 2);
-  assert_equal (Context.bConst ctx true) (Var 1);
-  assert_equal (Context.bConst ctx false) (Var 2)
+  assert_equal (Context.bTrue) (Var 1);
+  assert_equal (Context.bFalse) (Var 2);
+  assert_equal (Context.bConst true) (Var 1);
+  assert_equal (Context.bConst false) (Var 2)
 
 let test_var _ =
   let ctx = Context.empty in

@@ -1,0 +1,7 @@
+(library
+ (name vm)
+ (public_name solver.vm)
+ (modules utils parser)
+ (libraries core cdcl smt)
+ (preprocess
+  (pps ppx_deriving.show ppx_jane bisect_ppx)))

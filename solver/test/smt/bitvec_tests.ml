@@ -2,9 +2,9 @@ open OUnit2
 open Smt
 
 let ctx = Context.empty
-let f = Context.bConst ctx
-let bTrue = Context.bTrue ctx
-let bFalse = Context.bFalse ctx
+let f = Context.bConst
+let bTrue = Context.bTrue
+let bFalse = Context.bFalse
 
 let test_constant _ =
   assert_equal

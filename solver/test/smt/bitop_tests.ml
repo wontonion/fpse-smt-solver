@@ -3,9 +3,9 @@ open Cdcl
 open Smt
 
 let ctx = Context.empty
-let f = Context.bConst ctx
-let bTrue = Context.bTrue ctx
-let bFalse = Context.bFalse ctx
+let f = Context.bConst
+let bTrue = Context.bTrue
+let bFalse = Context.bFalse
 
 let test_xor _ =
   let ctx', o = Bitop.op_xor ctx { i0 = bFalse; i1 = bFalse } in

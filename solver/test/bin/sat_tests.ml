@@ -27,9 +27,9 @@ let test_dir = "../test/"
 (* We may get timing errors when using dune exec -- src/filename.exe <args>, so we locate the executable and run it directly. *)
 let test_exec (args : string) (expected : string) (ctxt : test_ctxt) : unit =
   assert_command
-    ~foutput:(assert_string_output ("main.exe " ^ args) expected)
+    ~foutput:(assert_string_output ("sat_solver.exe " ^ args) expected)
       (* this is a function from char Seq.t to unit that throws an exception if the output is not as expected *)
-    ~ctxt (exec_dir ^ "main.exe")
+    ~ctxt (exec_dir ^ "sat_solver.exe")
     (String.split ~on:' ' args)
 (* Arguments to exec *)
 
@@ -44,7 +44,7 @@ let test_sudoku =
     (In_channel.read_all (test_dir ^ "files/sudoku.cnf.sat"))
 
 let series =
-  "Executable tests"
+  "Sat tests"
   >::: [
          "Example" >:: test_example;
          "Unsat" >:: test_unsat;

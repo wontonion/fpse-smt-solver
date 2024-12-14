@@ -9,7 +9,9 @@ let[@landmark] main () =
     | _ -> failwith "Invalid arguments\n" [@coverage off]
   in
   let formula =
-    match Dimacs.Parser.parse input with Error msg -> failwith msg | Ok f -> f
+    match Dimacs.Parser.parse input with
+    | Error msg -> failwith msg [@coverage off]
+    | Ok f -> f
   in
   match RandomSolver.cdcl_solve formula with
   | `UNSAT -> print_endline "UNSATISFIABLE"

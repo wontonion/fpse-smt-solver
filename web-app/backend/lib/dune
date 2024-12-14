@@ -1,18 +1,16 @@
 (library
  (name handlers)
  (modules handlers)
-
- (libraries 
-  dream 
-  yojson 
-  types 
-  utils 
-  sudoku 
-  solver.cdcl 
-  solver.dimacs 
-  
- )
-
+ (libraries
+  dream
+  yojson
+  types
+  utils
+  sudoku
+  solver.cdcl
+  solver.dimacs
+  solver.smt
+  solver.vm)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
@@ -35,4 +33,4 @@
  (modules utils)
  (libraries dream yojson types)
  (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))  
+  (pps lwt_ppx ppx_deriving_yojson)))
