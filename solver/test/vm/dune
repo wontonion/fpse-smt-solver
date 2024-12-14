@@ -1,0 +1,4 @@
+(library
+ (name vm_tests)
+ (modules vm_tests parser_tests)
+ (libraries core ounit2 vm smt))

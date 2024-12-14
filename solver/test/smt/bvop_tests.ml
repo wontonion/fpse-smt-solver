@@ -122,8 +122,6 @@ let test_mul _ =
   in
   assert_equal 51484 @@ Bitvec.value assignment o.o0
 
-open Printf
-
 let test_solve_equation _ =
   let ctx', bv1 = Context.bvNew ctx 1 in
   let ctx', bv2 = Bvop.op_mul ctx' { i0 = bv1; i1 = 3 } in
@@ -136,8 +134,12 @@ let test_solve_equation _ =
     | `UNSAT -> assert_failure "UNSAT"
   in
   let s = Bitvec.value assignment bv1 in
-  printf "s = %d\n" s;
-  assert_equal true @@ List.mem s [ 3; 32763; 32771; 65531 ]
+  assert_equal true @@ List.mem s [ 3; 32763; 32771; 65531 ];
+
+  let bvs = Context.to_string ctx' assignment in
+  assert_equal true
+  @@ List.mem bvs
+       [ "bv1 = 3\n"; "bv1 = 32763\n"; "bv1 = 32771\n"; "bv1 = 65531\n" ]
 
 let series =
   "BitOp tests"

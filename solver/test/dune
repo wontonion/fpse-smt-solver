@@ -6,4 +6,4 @@
 (test
  (name tests)
  (modules tests)
- (libraries core ounit2 cdcl_tests dimacs_tests bin_tests smt_tests))
+ (libraries core ounit2 cdcl_tests dimacs_tests bin_tests smt_tests vm_tests))
