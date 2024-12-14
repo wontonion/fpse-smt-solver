@@ -183,7 +183,7 @@ let test_conflict_analysis _ =
 
 module TrueFirstSolver = Solver.Make (Heuristic.OrderedTrueFirst)
 module FalseFirstSolver = Solver.Make (Heuristic.OrderedFalseFirst)
-module RandomSolver = Solver.Make (Heuristic.Random)
+module RandomSolver = Solver.Make (Heuristic.Randomized)
 
 let test_cdcl_solve_0 _ =
   let c0 = Clause.create [ l2'; l3' ] in

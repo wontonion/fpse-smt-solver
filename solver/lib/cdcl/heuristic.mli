@@ -10,4 +10,4 @@ module type H = sig
 
 module OrderedTrueFirst : H
 module OrderedFalseFirst : H
-module Random : H
+module Randomized : H

@@ -1,5 +1,5 @@
 open Core
-module RandomSolver = Cdcl.Solver.Make (Cdcl.Heuristic.Random)
+module RandomSolver = Cdcl.Solver.Make (Cdcl.Heuristic.Randomized)
 
 let[@landmark] main () =
   let input =

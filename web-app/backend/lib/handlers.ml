@@ -75,7 +75,7 @@ let sudoku_formula_2x2 =
   let open Core.In_channel in
   Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
 
-module RandomSolver = Solver.Make (Heuristic.Random)
+module RandomSolver = Solver.Make (Heuristic.Randomized)
 
 let solve_sudoku (int_grid : int list list) (size : int) :
     (int list list, string) Result.t =

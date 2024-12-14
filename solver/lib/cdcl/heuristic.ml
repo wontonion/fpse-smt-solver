@@ -49,7 +49,7 @@ module OrderedFalseFirst : H = struct
   let backtrack _ _ = ()
 end
 
-module Random : H = struct
+module Randomized : H = struct
   type t = unit
 
   let empty = ()

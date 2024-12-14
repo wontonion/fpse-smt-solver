@@ -32,3 +32,6 @@ _opam/
 
 # Bisect coverage
 _coverage
+
+# Python cache
+__pycache__
