@@ -14,4 +14,6 @@ val solve_grid : grid -> block_size:int -> grid option
 val generate_puzzle : block_size:int -> unit -> grid
 val print_board : grid -> unit
 val convert_to_sudoku_data : grid -> sudoku_data
-val generate_puzzle_with_timeout : ?timeout:float -> block_size:int -> unit -> grid
+val convert_frontend_grid : Yojson.Safe.t -> sudoku_data
+val solve_sudoku : grid -> int -> (int list list, string) Result.t
+

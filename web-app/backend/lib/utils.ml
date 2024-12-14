@@ -36,15 +36,11 @@ let build_error_response ~message ~problem_type () =
   in
   error_message
 
-(** Run a task with timeout
-    @param timeout Timeout in seconds
-    @param f The function that returns a Lwt promise
-    @return Lwt promise containing either the result or timeout error
-*)
+(** Run a function with timeout (timeout in milliseconds) *)
 let with_timeout ~timeout f =
   let* result = 
     Lwt.pick [
-      (let* () = Lwt_unix.sleep (float_of_int timeout) in
+      (let* () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
        Lwt.return (Error "Task timed out"));
       (let* x = f () in 
        Lwt.return (Ok x))
@@ -52,4 +48,6 @@ let with_timeout ~timeout f =
   in
   Lwt.return result
 
-  
+let json_response data =
+  let json_string = Yojson.Safe.to_string data in
+  Dream.json json_string
