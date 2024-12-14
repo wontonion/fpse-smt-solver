@@ -32,6 +32,54 @@ function SudokuIndex(props) {
       });
   var setGridValues = match$2[1];
   var gridValues = match$2[0];
+  var hasNoNumber = Belt_Array.reduce(gridValues, true, (function (acc, row) {
+          if (acc) {
+            return Belt_Array.reduce(row, true, (function (acc, cell) {
+                          if (acc) {
+                            return cell.value === "";
+                          } else {
+                            return false;
+                          }
+                        }));
+          } else {
+            return false;
+          }
+        }));
+  var hasAnyValidationError = function (grid) {
+    var size = grid.length;
+    var blockSize = size !== 4 ? 3 : 2;
+    var hasRowError = Belt_Array.reduceWithIndex(grid, false, (function (acc, param, rowIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasRowConflict(rowIndex, grid);
+            }
+          }));
+    var hasColError = Belt_Array.reduce(Belt_Array.makeBy(size, (function (i) {
+                return i;
+              })), false, (function (acc, colIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasColConflict(colIndex, grid);
+            }
+          }));
+    var numBlocks = Math.imul(blockSize, blockSize);
+    var hasBlockError = Belt_Array.reduce(Belt_Array.makeBy(numBlocks, (function (i) {
+                return i;
+              })), false, (function (acc, blockIndex) {
+            if (acc) {
+              return true;
+            } else {
+              return Grid.hasBlockConflict(blockIndex, grid);
+            }
+          }));
+    if (hasRowError || hasColError) {
+      return true;
+    } else {
+      return hasBlockError;
+    }
+  };
   React.useEffect((function () {
           setGridValues(function (param) {
                 return SudokuUtils.createEmptyGrid(gridSize);
@@ -65,6 +113,7 @@ function SudokuIndex(props) {
     setGridValues(function (param) {
           return SudokuUtils.createEmptyGrid(gridSize);
         });
+    ToastService.success("Grid cleared successfully");
   };
   var handleGenerateGrid = function () {
     Core__Promise.$$catch(SudokuUtils.sudokuGenerate(blockSize).then(function (json) {
@@ -72,13 +121,18 @@ function SudokuIndex(props) {
               setGridValues(function (param) {
                     return newGrid;
                   });
+              ToastService.success("Grid generated successfully");
               return Promise.resolve();
             }), (function (error) {
             console.error("Error generating grid:", error);
+            ToastService.error("Error generating grid: " + String(error));
             return Promise.resolve();
           }));
   };
-  var handleSolveGrid = function () {
+  var handleSolveSudoku = function () {
+    if (hasNoNumber) {
+      return ToastService.error("Cannot solve sudoku: There are no numbers in the grid");
+    }
     var gridForSolving = Belt_Array.map(gridValues, (function (row) {
             return Belt_Array.map(row, (function (cell) {
                           if (cell.isInitial) {
@@ -100,54 +154,14 @@ function SudokuIndex(props) {
               return Promise.resolve();
             }), (function (error) {
             console.error("Error solving grid:", error);
+            ToastService.error("Error solving grid");
             return Promise.resolve();
           }));
   };
-  var hasAnyValidationError = function (grid) {
-    var size = grid.length;
-    var blockSize;
-    switch (size) {
-      case 4 :
-      case 6 :
-          blockSize = 2;
-          break;
-      default:
-        blockSize = 3;
-    }
-    var hasRowError = Belt_Array.reduceWithIndex(grid, false, (function (acc, param, rowIndex) {
-            if (acc) {
-              return true;
-            } else {
-              return Grid.hasRowConflict(rowIndex, grid);
-            }
-          }));
-    var hasColError = Belt_Array.reduce(Belt_Array.makeBy(size, (function (i) {
-                return i;
-              })), false, (function (acc, colIndex) {
-            if (acc) {
-              return true;
-            } else {
-              return Grid.hasColConflict(colIndex, grid);
-            }
-          }));
-    var numBlocks = Math.imul(blockSize, blockSize);
-    var hasBlockError = Belt_Array.reduce(Belt_Array.makeBy(numBlocks, (function (i) {
-                return i;
-              })), false, (function (acc, blockIndex) {
-            if (acc) {
-              return true;
-            } else {
-              return Grid.hasBlockConflict(blockIndex, grid);
-            }
-          }));
-    if (hasRowError || hasColError) {
-      return true;
-    } else {
-      return hasBlockError;
-    }
-  };
   var handleSetAsInitial = function () {
-    if (hasAnyValidationError(gridValues)) {
+    if (hasNoNumber) {
+      return ToastService.error("Cannot set as initial: There are no numbers in the grid");
+    } else if (hasAnyValidationError(gridValues)) {
       return ToastService.error("Cannot set as initial: There are validation errors in the grid");
     } else {
       return setGridValues(function (prev) {
@@ -168,17 +182,22 @@ function SudokuIndex(props) {
     }
   };
   var handleResetInitial = function () {
-    setGridValues(function (prev) {
-          return Belt_Array.map(prev, (function (row) {
-                        return Belt_Array.map(row, (function (cell) {
-                                      return {
-                                              value: cell.value,
-                                              isInitial: false,
-                                              isValid: cell.isValid
-                                            };
-                                    }));
-                      }));
-        });
+    if (hasNoNumber) {
+      return ToastService.error("Cannot reset initial: There are no numbers in the grid");
+    } else {
+      setGridValues(function (prev) {
+            return Belt_Array.map(prev, (function (row) {
+                          return Belt_Array.map(row, (function (cell) {
+                                        return {
+                                                value: cell.value,
+                                                isInitial: false,
+                                                isValid: cell.isValid
+                                              };
+                                      }));
+                        }));
+          });
+      return ToastService.success("Initial status reset successfully");
+    }
   };
   return JsxRuntime.jsxs("div", {
               children: [
@@ -254,15 +273,15 @@ function SudokuIndex(props) {
                                 JsxRuntime.jsxs("div", {
                                       children: [
                                         JsxRuntime.jsx(Button.make, {
-                                              children: "Solve Puzzle",
+                                              children: "Generate New Sudoku",
                                               onClick: (function (param) {
-                                                  handleSolveGrid();
+                                                  handleGenerateGrid();
                                                 })
                                             }),
                                         JsxRuntime.jsx(Button.make, {
-                                              children: "Generate New Puzzle",
+                                              children: "Solve Sudoku",
                                               onClick: (function (param) {
-                                                  handleGenerateGrid();
+                                                  handleSolveSudoku();
                                                 })
                                             }),
                                         JsxRuntime.jsx(Button.make, {
@@ -274,8 +293,8 @@ function SudokuIndex(props) {
                                         JsxRuntime.jsxs("div", {
                                               children: [
                                                 JsxRuntime.jsx("h3", {
-                                                      children: "Custom Puzzle",
-                                                      className: "text-lg font-medium mb-2"
+                                                      children: "Custom Sudoku",
+                                                      className: "text-lg font-bold mb-2 "
                                                     }),
                                                 JsxRuntime.jsxs("div", {
                                                       children: [
@@ -294,7 +313,7 @@ function SudokuIndex(props) {
                                                                 })
                                                             })
                                                       ],
-                                                      className: "space-y-2"
+                                                      className: "flex gap-2"
                                                     }),
                                                 JsxRuntime.jsx("p", {
                                                       children: "Input your puzzle and click 'Set as Initial' before solving",
