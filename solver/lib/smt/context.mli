@@ -3,14 +3,14 @@ type t
 val empty : t
 (** [empty] creates a new empty context. *)
 
-val bTrue : t -> Cdcl.Variable.t
-(** [bTrue ctx] returns a fresh boolean variable representing the constant [true]. *)
+val bTrue : Cdcl.Variable.t
+(** [bTrue] returns a constant boolean variable representing the constant [true]. *)
 
-val bFalse : t -> Cdcl.Variable.t
-(** [bFalse ctx] returns a fresh boolean variable representing the constant [false]. *)
+val bFalse : Cdcl.Variable.t
+(** [bFalse] returns a constant boolean variable representing the constant [false]. *)
 
-val bConst : t -> bool -> Cdcl.Variable.t
-(** [bConst ctx b] returns a fresh boolean variable representing the constant [b]. *)
+val bConst : bool -> Cdcl.Variable.t
+(** [bConst b] returns a constant boolean variable representing the constant [b]. *)
 
 val bVar : t -> t * Cdcl.Variable.t
 (** [bVar ctx] returns a fresh boolean variable and the updated context. *)

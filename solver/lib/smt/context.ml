@@ -13,9 +13,9 @@ let empty =
       ];
   }
 
-let bTrue (_ : t) = Var 1
-let bFalse (_ : t) = Var 2
-let bConst (_ : t) (b : bool) = if b then Var 1 else Var 2
+let bTrue = Var 1
+let bFalse = Var 2
+let bConst (b : bool) = if b then Var 1 else Var 2
 let bVar (ctx : t) = ({ ctx with next_var = ctx.next_var + 1 }, Var ctx.next_var)
 
 let bVars (ctx : t) (n : int) =
