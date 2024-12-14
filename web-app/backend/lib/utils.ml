@@ -38,15 +38,20 @@ let build_error_response ~message ~problem_type () =
 
 (** Run a function with timeout (timeout in milliseconds) *)
 let with_timeout ~timeout f =
-  let* result = 
-    Lwt.pick [
-      (let* () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
-       Lwt.return (Error "Task timed out"));
-      (let* x = f () in 
-       Lwt.return (Ok x))
-    ]
+  let task = f () in
+  let timeout_thread = 
+    let* () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
+    Lwt.cancel task;
+    Lwt.return (Error "Task timed out")
   in
-  Lwt.return result
+  Lwt.catch
+    (fun () ->
+      let* result = Lwt.pick [timeout_thread; (let* x = task in Lwt.return (Ok x))] in
+      Lwt.cancel timeout_thread;
+      Lwt.return result)
+    (function
+      | Lwt.Canceled -> Lwt.return (Error "Task timed out")
+      | e -> Lwt.fail e)
 
 let json_response data =
   let json_string = Yojson.Safe.to_string data in

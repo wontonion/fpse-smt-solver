@@ -20,6 +20,7 @@
  (modules sudoku)
  (libraries 
   core 
+  lwt
   types 
   utils
   solver.cdcl

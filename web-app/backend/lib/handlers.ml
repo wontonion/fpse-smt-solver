@@ -31,7 +31,8 @@ let generate_sudoku_handler =
         ()
     else
       let%lwt result = 
-        Utils.with_timeout ~timeout:1000 (fun () ->
+        Utils.with_timeout ~timeout:5000 (fun () ->
+          (* let%lwt () = Lwt_unix.sleep 6.0 in *)
           Lwt.return @@ Sudoku.generate_puzzle ~block_size ()
         )
       in
@@ -51,70 +52,86 @@ let generate_sudoku_handler =
 
 let solve_sudoku_handler =
   Dream.post "/api/sudoku/solve" (fun request ->
-      let%lwt body = Dream.body request in
-      try
-        let json = Yojson.Safe.from_string body in
-        let data = Sudoku.convert_frontend_grid json in
-        let int_grid =
-          List.map
-            (fun row ->
-              List.map
-                (fun cell ->
-                  if cell.Types.is_initial then
-                    match cell.Types.value with
-                    | "" -> 0
-                    | s -> ( try int_of_string s with _ -> 0)
-                  else 0)
-                row)
-            data.grid
-        in
+    let%lwt body = Dream.body request in
+    try
+      let json = Yojson.Safe.from_string body in
+      let data = Sudoku.convert_frontend_grid json in
+      let int_grid =
+        List.map
+          (fun row ->
+            List.map
+              (fun cell ->
+                if cell.Types.is_initial then
+                  match cell.Types.value with
+                  | "" -> 0
+                  | s -> (try int_of_string s with _ -> 0)
+                else 0)
+              row)
+          data.grid
+      in
 
-        match Sudoku.solve_sudoku int_grid data.size with
-        | Ok grid ->
-            let merged_grid =
-              List.map2
-                (fun solved_row orig_row ->
-                  List.map2
-                    (fun solved_val orig_cell ->
-                      {
-                        Types.value = string_of_int solved_val;
-                        Types.is_initial = orig_cell.Types.is_initial;
-                        Types.is_valid = true;
-                      })
-                    solved_row orig_row)
-                grid data.grid
-            in
-            let response =
-              {
-                Types.status = "success";
-                Types.message = "Sudoku solved successfully";
-                Types.data =
-                  Some { Types.size = data.size; Types.grid = merged_grid };
-              }
-            in
-            Utils.json_response
-              (Types.response_to_yojson Types.sudoku_data_to_yojson response)
-        | Error msg ->
-            let error_response =
-              {
-                Types.status = "error";
-                Types.message = "Failed to solve sudoku: " ^ msg;
-                Types.data = None;
-              }
-            in
-            Utils.json_response
-              (Types.response_to_yojson Types.sudoku_data_to_yojson
-                 error_response)
-      with e ->
-        let error_response =
-          {
-            Types.status = "error";
-            Types.message = "Server error: " ^ Printexc.to_string e;
-            Types.data = None;
-          }
-        in
-        Utils.json_response
-          (Types.response_to_yojson Types.sudoku_data_to_yojson error_response))
+      let%lwt result = 
+        Utils.with_timeout ~timeout:5000 (fun () ->
+          Sudoku.solve_sudoku int_grid data.size
+        )
+      in
+
+      match result with
+      | Ok (Ok grid) ->
+          let merged_grid =
+            List.map2
+              (fun solved_row orig_row ->
+                List.map2
+                  (fun solved_val orig_cell ->
+                    {
+                      Types.value = string_of_int solved_val;
+                      Types.is_initial = orig_cell.Types.is_initial;
+                      Types.is_valid = true;
+                    })
+                  solved_row orig_row)
+              grid data.grid
+          in
+          let response =
+            {
+              Types.status = "success";
+              Types.message = "Sudoku solved successfully";
+              Types.data =
+                Some { Types.size = data.size; Types.grid = merged_grid };
+            }
+          in
+          Utils.json_response
+            (Types.response_to_yojson Types.sudoku_data_to_yojson response)
+      | Ok (Error msg) ->
+          let error_response =
+            {
+              Types.status = "error";
+              Types.message = "Failed to solve sudoku: " ^ msg;
+              Types.data = None;
+            }
+          in
+          Utils.json_response
+            (Types.response_to_yojson Types.sudoku_data_to_yojson error_response)
+      | Error timeout_msg ->
+          let error_response =
+            {
+              Types.status = "error";
+              Types.message = "Solver timed out: " ^ timeout_msg;
+              Types.data = None;
+            }
+          in
+          Utils.json_response
+            (Types.response_to_yojson Types.sudoku_data_to_yojson error_response)
+
+    with e ->
+      let error_response =
+        {
+          Types.status = "error";
+          Types.message = "Server error: " ^ Printexc.to_string e;
+          Types.data = None;
+        }
+      in
+      Utils.json_response
+        (Types.response_to_yojson Types.sudoku_data_to_yojson error_response))
 
 let solve_formula_handler =
   Dream.post "/api/solver/solve" (fun request ->

@@ -179,59 +179,95 @@ let sudoku_formula_2x2 =
 
 module RandomSolver = Solver.Make (Heuristic.Randomized)
 
+(* Split a list into sublists of given size *)
+let split_into_sublists size lst =
+  let rec aux acc current_sublist remaining count =
+    match remaining with
+    | [] -> 
+        if current_sublist <> [] then List.rev current_sublist :: acc
+        else acc
+        |> List.rev
+    | x :: rest ->
+        if count = size then
+          aux (List.rev current_sublist :: acc) [x] rest 1
+        else
+          aux acc (x :: current_sublist) rest (count + 1)
+  in
+  aux [] [] lst 0
+
+(* Convert boolean assignments to sudoku values *)
+let bool_to_value size assignments =
+  let grid_size = size * size in
+  let values = Array.make (grid_size * grid_size) 0 in
+  List.iteri
+    (fun i b ->
+      if b then
+        let row = (i / (grid_size * size)) in
+        let col = ((i / size) mod grid_size) in
+        let value = (i mod size) + 1 in
+        if row < grid_size && col < grid_size then
+          values.((row * grid_size) + col) <- value)
+    assignments;
+  Array.to_list values 
+  |> split_into_sublists grid_size
+
 let solve_sudoku (int_grid : int list list) (size : int) :
-    (int list list, string) Result.t =
-  let rec bool_to_value (size : int) (ls : bool list) : int list =
-    match ls with
-    | [] -> []
-    | _ ->
-        let open Core in
-        let vs, ls = List.split_n ls size in
-        let value, _ =
-          List.fold_left vs ~init:(0, 1) ~f:(fun (res, num) x ->
-              if x then (num, num + 1) else (res, num + 1))
+    (int list list, string) Result.t Lwt.t =
+  let cancelled = ref false in
+  let pid = Unix.getpid () in
+  
+  Printf.printf "[PID:%d] Starting computation\n%!" pid;
+  
+  let task = 
+    Lwt.catch
+      (fun () ->
+        let%lwt result = Lwt_preemptive.detach
+          (fun () ->
+            Printf.printf "[PID:%d] Worker thread started\n%!" pid;
+            let formula =
+              match size with
+              | 4 when List.length (List.flatten int_grid) = 16 -> Ok sudoku_formula_2x2
+              | 9 when List.length (List.flatten int_grid) = 81 -> Ok sudoku_formula_3x3
+              | _ -> Error "Invalid grid size"
+            in
+            if !cancelled then (
+              Printf.printf "[PID:%d] Task cancelled early\n%!" pid;
+              Error "Cancelled"
+            )
+            else if Result.is_error formula then Error (Result.get_error formula)
+            else
+              let formula, _ =
+                List.fold_left
+                  (fun (f, idx) x ->
+                    if !cancelled then (
+                      Printf.printf "[PID:%d] Task cancelled during computation\n%!" pid;
+                      raise Lwt.Canceled
+                    );
+                    if x = 0 then (f, idx + 1)
+                    else
+                      let lit = Literal.create (Var ((idx * size) + x)) Positive in
+                      (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
+                  (Result.get_ok formula, 0)
+                  (List.flatten int_grid)
+              in
+              if !cancelled then Error "Cancelled"
+              else
+                match RandomSolver.cdcl_solve formula with
+                | `SAT assignment -> 
+                    Printf.printf "[PID:%d] Solution found\n%!" pid;
+                    Ok (bool_to_value size (Assignment.to_list assignment))
+                | `UNSAT -> Error "Unsatisfiable")
+          ()
         in
-        value :: bool_to_value size ls
+        Lwt.return result)
+      (function
+        | Lwt.Canceled ->
+            Printf.printf "[PID:%d] Task cancelled\n%!" pid;
+            cancelled := true;
+            Lwt.return (Error "Cancelled")
+        | e -> 
+            Printf.printf "[PID:%d] Error: %s\n%!" pid (Printexc.to_string e);
+            Lwt.fail e)
   in
-  let split_into_sublists (size : int) (lst : int list) : int list list =
-    let rec aux (acc : int list list) (current : int list) (lst : int list) :
-        int list list =
-      match lst with
-      | [] ->
-          List.rev (List.rev current :: acc)
-          (* Add the last collected sublist *)
-      | x :: xs ->
-          if List.length current < size then
-            aux acc (x :: current) xs (* Add element to current sublist *)
-          else aux (List.rev current :: acc) [ x ] xs (* Start a new sublist *)
-    in
-    aux [] [] lst
-  in
-  let grids = List.flatten int_grid in
-  let formula =
-    match size with
-    | 4 when List.length grids = 16 -> Ok sudoku_formula_2x2
-    | 9 when List.length grids = 81 -> Ok sudoku_formula_3x3
-    | _ -> Error "Invalid grid size"
-  in
-  if Result.is_error formula then Error (Result.get_error formula)
-  else
-    let formula, _ =
-      List.fold_left
-        (fun (f, idx) x ->
-          if x = 0 then (f, idx + 1)
-          else
-            let lit = Literal.create (Var ((idx * size) + x)) Positive in
-            (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
-        (Result.get_ok formula, 0)
-        grids
-    in
-    let assignment =
-      match RandomSolver.cdcl_solve formula with
-      | `SAT assignment -> Ok (Assignment.to_list assignment)
-      | `UNSAT -> Error "Unsatisfiable"
-    in
-    match assignment with
-    | Error msg -> Error msg
-    | Ok assignment ->
-        Ok (bool_to_value size assignment |> split_into_sublists size)
+  task
+
