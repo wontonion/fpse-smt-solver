@@ -5,10 +5,6 @@ type input_int = { i0 : Bitvec.t; i1 : int }
 type input_2 = { i0 : Bitvec.t; i1 : Bitvec.t }
 type output_1 = { o0 : Bitvec.t }
 
-let op_var (ctx : Context.t) : Context.t * output_1 =
-  let ctx, o0 = Context.bVars ctx 16 in
-  (ctx, { o0 })
-
 let op_xor (ctx : Context.t) (input : input_2) : Context.t * output_1 =
   let ctx, o =
     List.fold_left (List.zip_exn input.i0 input.i1) ~init:(ctx, [])

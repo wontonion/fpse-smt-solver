@@ -18,6 +18,9 @@ val bVar : t -> t * Cdcl.Variable.t
 val bVars : t -> int -> t * Cdcl.Variable.t list
 (** [bVars ctx n] returns [n] fresh boolean variables and the updated context. *)
 
+val bvNew : t -> int -> t * Bitvec.t
+(** [bvNew ctx n] returns a fresh bitvector of size [n] and the updated context. *)
+
 val add_clause : t -> Cdcl.Clause.t -> t
 (** [add_clause ctx c] adds the clause [c] to the context [ctx]. *)
 

@@ -53,9 +53,9 @@ let test_eq _ =
   let bv1 = Bitvec.constant f 47165 in
   let bv2 = Bitvec.constant f 63577 in
   let bv3 = Bitvec.constant f 16484 in
-  let ctx', bv4 = Bvop.op_var ctx in
+  let ctx', bv4 = Context.bvNew ctx 16 in
   let ctx', o = Bvop.op_xor ctx' { i0 = bv1; i1 = bv2 } in
-  let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv4.o0 } in
+  let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv4 } in
   let ctx' = Bvop.constraint_eq ctx' { i0 = o.o0; i1 = bv3 } in
   let assignment =
     match Context.solve ctx' with
@@ -63,7 +63,7 @@ let test_eq _ =
     | `UNSAT -> assert_failure "UNSAT"
   in
   assert_equal 16484 @@ Bitvec.value assignment o.o0;
-  assert_equal 16484 @@ Bitvec.value assignment bv4.o0;
+  assert_equal 16484 @@ Bitvec.value assignment bv4;
 
   let bv5 = Bitvec.constant f 26922 in
   let ctx', o = Bvop.op_xor ctx { i0 = bv1; i1 = bv2 } in
@@ -122,18 +122,22 @@ let test_mul _ =
   in
   assert_equal 51484 @@ Bitvec.value assignment o.o0
 
+open Printf
+
 let test_solve_equation _ =
-  let ctx', bv1 = Bvop.op_var ctx in
-  let ctx', bv2 = Bvop.op_mul ctx' { i0 = bv1.o0; i1 = 3 } in
+  let ctx', bv1 = Context.bvNew ctx 1 in
+  let ctx', bv2 = Bvop.op_mul ctx' { i0 = bv1; i1 = 3 } in
   let ctx', bv3 = Bvop.op_add ctx' { i0 = bv2.o0; i1 = Bitvec.constant f 4 } in
-  let ctx', bv4 = Bvop.op_xor ctx' { i0 = bv1.o0; i1 = Bitvec.constant f 14 } in
+  let ctx', bv4 = Bvop.op_xor ctx' { i0 = bv1; i1 = Bitvec.constant f 14 } in
   let ctx' = Bvop.constraint_eq ctx' { i0 = bv3.o0; i1 = bv4.o0 } in
   let assignment =
     match Context.solve ctx' with
     | `SAT assignment -> assignment
     | `UNSAT -> assert_failure "UNSAT"
   in
-  assert_equal true @@ List.mem (Bitvec.value assignment bv1.o0) [ 32771; 3 ]
+  let s = Bitvec.value assignment bv1 in
+  printf "s = %d\n" s;
+  assert_equal true @@ List.mem s [ 3; 32763; 32771; 65531 ]
 
 let series =
   "BitOp tests"
