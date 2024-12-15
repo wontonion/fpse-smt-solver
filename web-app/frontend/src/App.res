@@ -1,17 +1,18 @@
 open Utils
-
+open ReactToastify
+%%raw(`import "react-toastify/dist/ReactToastify.css"`)
 // 首先定义类型来匹配后端的响应结构
-type solution = {
-  problem_type: string,
-  assignments: option<array<(string, string)>>,
-  time_taken: float
-}
+// type solution = {
+//   problem_type: string,
+//   assignments: option<array<(string, string)>>,
+//   time_taken: float
+// }
 
-type _response = {
-  status: string,
-  message: string,
-  data: option<solution>
-}
+// type _response = {
+//   status: string,
+//   message: string,
+//   data: option<solution>
+// }
 @react.component
 let make = () => {
   let (activeTab, setActiveTab) = React.useState(() => "sudoku")
@@ -49,21 +50,35 @@ let make = () => {
   }
 
   <ToastContext>
+    <ReactToastify.toastContainer
+      {...makeToastContainerProps({
+        "position": positionToString(#topRight),
+        "autoClose": 5000,
+        "hideProgressBar": false,
+        "newestOnTop": true,
+        "closeOnClick": true,
+        "rtl": false,
+        "pauseOnFocusLoss": true,
+        "draggable": true,
+        "pauseOnHover": true,
+        "theme": "light",
+      })}
+    />
     <div className="p-6">
       <h1 className="text-3xl font-semibold mb-6"> {"Logic Solver Playground🛝"->React.string} </h1>
       // Test connection button
-      <div className="mb-4">
-        <button
-          onClick={_ => testBackendConnection()}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          {React.string("Test Backend Connection")}
-        </button>
-        {backendMessage !== "" 
-          ? <div className="mt-2 p-2 bg-gray-100 rounded">
-              <pre className="whitespace-pre-wrap"> {React.string(backendMessage)} </pre>
-            </div>
-          : React.null}
-      </div>
+      // <div className="mb-4">
+        // <button
+        //   onClick={_ => testBackendConnection()}
+        //   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        //   {React.string("Test Backend Connection")}
+        // </button>
+      //   {backendMessage !== "" 
+      //     ? <div className="mt-2 p-2 bg-gray-100 rounded">
+      //         <pre className="whitespace-pre-wrap"> {React.string(backendMessage)} </pre>
+      //       </div>
+      //     : React.null}
+      // </div>
       // Tab navigation
       <div className="flex space-x-4 mb-6 border-b">
         <button
@@ -71,7 +86,7 @@ let make = () => {
           className={`py-2 px-4 ${activeTab === "sudoku"
               ? "border-b-2 border-blue-500 font-semibold"
               : ""}`}>
-          {React.string("Sudoku Solver")}
+          {React.string("Sudoku")}
         </button>
         <button
           onClick={_ => setActiveTab(_ => "sat")}

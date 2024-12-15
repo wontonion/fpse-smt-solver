@@ -7,3 +7,11 @@
   types)
  (preprocess
   (pps ppx_deriving_yojson)))
+
+(test
+ (name test_utils)
+ (libraries
+  ounit2
+  utils
+  lwt.unix))
+

@@ -2,9 +2,12 @@
 
 import * as React from "react";
 import * as Button from "../Button/Button.res.mjs";
+import * as Js_exn from "rescript/lib/es6/js_exn.js";
 import * as Belt_Option from "rescript/lib/es6/belt_Option.js";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as SolverUtils from "../../utils/SolverUtils.res.mjs";
+import * as ToastService from "../../services/ToastService.res.mjs";
+import * as Core__Promise from "@rescript/core/src/Core__Promise.res.mjs";
 import * as Belt_MapString from "rescript/lib/es6/belt_MapString.js";
 import * as JsxRuntime from "react/jsx-runtime";
 import * as Caml_js_exceptions from "rescript/lib/es6/caml_js_exceptions.js";
@@ -23,7 +26,7 @@ function getSolverExample(tabName) {
     case "smt" :
         match = [
           "Enter SMT formula",
-          "placeholder for SMT formula example"
+          "VAR 1 MUL 3 CONST 4 ADD VAR 1 CONST 14 XOR EQ END\n\nThe SMT module supports a limited set of operations: \nXOR, AND, OR, NOT, EQ, NEQ0, GEQ0, LT0, ADD, SHL, and MUL. \n\nIt operates on int16_t, but the length can be easily \nadjusted to higher types (e.g., int32_t, int64_t)."
         ];
         break;
     default:
@@ -35,7 +38,7 @@ function getSolverExample(tabName) {
   return match[0] + "\n\nExample:\n" + match[1];
 }
 
-function downloadTemplate(tabName) {
+function handleDownloadTemplate(tabName) {
   try {
     var content = getSolverExample(tabName) + "\n\nDelete all template text before entering your formula";
     var element = document.createElement("a");
@@ -49,12 +52,12 @@ function downloadTemplate(tabName) {
     element.click();
     document.body.removeChild(element);
     URL.revokeObjectURL(url);
-    return ;
+    return ToastService.success("Template downloaded successfully, please check your download folder");
   }
   catch (raw_err){
     var err = Caml_js_exceptions.internalToOCamlException(raw_err);
     console.error("Error downloading template:", err);
-    return ;
+    return ToastService.error("Error downloading template");
   }
 }
 
@@ -135,14 +138,17 @@ function SolverIndex(props) {
         
       });
     reader.readAsText(file);
+    ToastService.success("File uploaded successfully");
   };
-  var handleSolve = function (param) {
+  var handleSolveProblems = function (param) {
     var textarea = textareaRef.current;
     if (textarea == null) {
       return ;
     }
     var content = textarea.value;
-    if (content.length > 0) {
+    if (content.length === 0) {
+      return ToastService.error("Nothing to solve");
+    } else {
       setIsLoading(function (param) {
             return true;
           });
@@ -150,35 +156,58 @@ function SolverIndex(props) {
             content: currentState.content,
             solution: "Solving..."
           });
-      SolverUtils.postFormula(tabName.toLowerCase(), content).then(function (result) {
-            if (result.TAG === "Ok") {
+      Core__Promise.$$catch(SolverUtils.postFormula(tabName.toLowerCase(), content).then(function (result) {
+                if (result.TAG === "Ok") {
+                  updateTabState({
+                        content: currentState.content,
+                        solution: result._0
+                      });
+                  ToastService.success("Solved successfully");
+                } else {
+                  updateTabState({
+                        content: currentState.content,
+                        solution: "Error: " + result._0
+                      });
+                  ToastService.error("Failed to solve");
+                }
+                setIsLoading(function (param) {
+                      return false;
+                    });
+                return Promise.resolve();
+              }), (function (err) {
+              var errorMessage;
+              if (err.RE_EXN_ID === Js_exn.$$Error) {
+                var msg = err._1.message;
+                errorMessage = msg !== undefined ? msg : "An unknown error occurred";
+              } else {
+                errorMessage = "An unknown error occurred";
+              }
               updateTabState({
                     content: currentState.content,
-                    solution: result._0
+                    solution: "Error: " + errorMessage
                   });
-            } else {
-              updateTabState({
-                    content: currentState.content,
-                    solution: "Error: " + result._0
+              setIsLoading(function (param) {
+                    return false;
                   });
-            }
-            setIsLoading(function (param) {
-                  return false;
-                });
-            return Promise.resolve();
-          });
+              ToastService.error("An error occurred while solving");
+              return Promise.resolve();
+            }));
       return ;
     }
-    
   };
-  var clearTextarea = function () {
-    updateTabState({
-          content: "",
-          solution: "Solution will appear here"
-        });
-    Belt_Option.forEach(Caml_option.nullable_to_opt(textareaRef.current), (function (textarea) {
-            textarea.value = "";
-          }));
+  var handleClearTextarea = function () {
+    if (currentState.content.length === 0) {
+      return ToastService.error("Nothing to clear");
+    } else {
+      updateTabState({
+            content: "",
+            solution: "Solution will appear here"
+          });
+      Belt_Option.forEach(Caml_option.nullable_to_opt(textareaRef.current), (function (textarea) {
+              textarea.value = "";
+            }));
+      return ToastService.success("Cleared successfully");
+    }
   };
   return JsxRuntime.jsxs("div", {
               children: [
@@ -210,40 +239,36 @@ function SolverIndex(props) {
                             }),
                         JsxRuntime.jsxs("div", {
                               children: [
-                                JsxRuntime.jsxs("div", {
-                                      children: [
-                                        JsxRuntime.jsx(Button.make, {
-                                              children: "Download Template",
-                                              onClick: (function (param) {
-                                                  downloadTemplate(tabName);
-                                                })
-                                            }),
-                                        JsxRuntime.jsx(Button.make, {
-                                              children: "Upload problem batch",
-                                              onClick: (function (param) {
-                                                  Belt_Option.forEach(Caml_option.nullable_to_opt(document.getElementById("fileInput")), (function (prim) {
-                                                          prim.click();
-                                                        }));
-                                                })
-                                            }),
-                                        JsxRuntime.jsx(Button.make, {
-                                              children: "Clear",
-                                              onClick: (function (param) {
-                                                  clearTextarea();
-                                                })
-                                            })
-                                      ],
-                                      className: "flex gap-4"
+                                JsxRuntime.jsx(Button.make, {
+                                      children: "Download Template",
+                                      onClick: (function (param) {
+                                          handleDownloadTemplate(tabName);
+                                        })
+                                    }),
+                                JsxRuntime.jsx(Button.make, {
+                                      children: "Upload problem batch",
+                                      onClick: (function (param) {
+                                          Belt_Option.forEach(Caml_option.nullable_to_opt(document.getElementById("fileInput")), (function (prim) {
+                                                  prim.click();
+                                                }));
+                                        })
+                                    }),
+                                JsxRuntime.jsx(Button.make, {
+                                      children: "Clear",
+                                      onClick: (function (param) {
+                                          handleClearTextarea();
+                                        })
                                     }),
                                 JsxRuntime.jsx(Button.make, {
                                       children: Caml_option.some(isLoading ? "Solving..." : "Solve"),
                                       disabled: isLoading,
-                                      onClick: handleSolve
+                                      onClick: handleSolveProblems
                                     })
                               ],
-                              className: "flex mt-4 gap-4 justify-between"
+                              className: "mt-4 flex gap-4 justify-between"
                             })
-                      ]
+                      ],
+                      className: "flex flex-col"
                     }),
                 JsxRuntime.jsxs("div", {
                       children: [
@@ -267,7 +292,7 @@ var make$1 = SolverIndex;
 export {
   $$Blob ,
   getSolverExample ,
-  downloadTemplate ,
+  handleDownloadTemplate ,
   TabState ,
   make$1 as make,
 }
