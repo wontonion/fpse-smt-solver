@@ -42,3 +42,15 @@ for a in False, True:
                     temp = int(a) + int(b) + int(ci)
                     assert res == ((s == bool(temp & 1))
                                    and (co == bool(temp & 2)))
+
+clauses = Sub(1, 2, 3, 4, 5)
+for a in False, True:
+    for b in False, True:
+        for bi in False, True:
+            for d in False, True:
+                for bo in False, True:
+                    assignment = {1: a, 2: b, 3: bi, 4: d, 5: bo}
+                    res = satisfy(clauses, assignment)
+                    temp = 2 + int(a) - int(b) - int(bi)
+                    assert res == ((d == bool(temp & 1))
+                                   and (bo != bool(temp & 2)))

@@ -105,6 +105,12 @@ let test_invalid_stack _ =
   in
   assert_equal false success;
 
+  let input = "SUB" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal false success;
+
   let input = "SHL 1" in
   let success =
     match Vm.Parser.parse input with Ok _ -> true | Error _ -> false

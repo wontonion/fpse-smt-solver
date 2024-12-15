@@ -56,3 +56,18 @@ def Add(a, b, ci, s, co):
         [-b, -ci, co],
         [b, ci, -co],
     ]
+
+
+def Sub(a, b, bi, d, bo):
+    return [
+        [-a, -b, -bi, d],
+        [-a, -b, bi, -d],
+        [-a, b, bi, d],
+        [-a, b, -bo],
+        [a, -b, -bi, -d],
+        [a, -b, bo],
+        [a, b, -bi, d],
+        [a, b, bi, -d],
+        [-bi, -d, bo],
+        [bi, d, -bo]
+    ]

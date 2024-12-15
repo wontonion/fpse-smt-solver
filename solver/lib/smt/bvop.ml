@@ -58,6 +58,15 @@ let op_add (ctx : Context.t) (input : input_2) : Context.t * output_1 =
   in
   (ctx, { o0 = List.rev o })
 
+let op_sub (ctx : Context.t) (input : input_2) : Context.t * output_1 =
+  let ctx, o, _ =
+    List.fold_left (List.zip_exn input.i0 input.i1)
+      ~init:(ctx, [], Context.bFalse) ~f:(fun (ctx, acc, bin) (i0, i1) ->
+        let ctx, o = Bitop.op_sub ctx { i0; i1; bin } in
+        (ctx, o.d :: acc, o.bout))
+  in
+  (ctx, { o0 = List.rev o })
+
 let op_shl (ctx : Context.t) (input : input_int) : Context.t * output_1 =
   let zeros = List.init input.i1 ~f:(fun _ -> Context.bFalse) in
   let ls, _ = List.split_n (zeros @ input.i0) 16 in

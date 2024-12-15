@@ -90,6 +90,17 @@ let test_add _ =
   in
   assert_equal 28858 @@ Bitvec.value assignment o.o0
 
+let test_sub _ =
+  let bv1 = Bitvec.constant f 37709 in
+  let bv2 = Bitvec.constant f 64449 in
+  let ctx', o = Bvop.op_sub ctx { i0 = bv1; i1 = bv2 } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal 38796 @@ Bitvec.value assignment o.o0
+
 let test_shl _ =
   let bv1 = Bitvec.constant f 25109 in
   let i = 3 in
@@ -151,6 +162,7 @@ let series =
          "Test EQ" >:: test_eq;
          "Test NEQ0" >:: test_neq0;
          "Test ADD" >:: test_add;
+          "Test SUB" >:: test_sub;
          "Test SHL" >:: test_shl;
          "Test MUL" >:: test_mul;
          "Test solve equation" >:: test_solve_equation;
