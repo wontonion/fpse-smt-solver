@@ -9,5 +9,5 @@
   lwt
   lwt.unix)
  (preprocess
-  (pps ppx_deriving_yojson lwt_ppx)))
-
+  (pps ppx_deriving_yojson lwt_ppx))
+(deps (source_tree ../data)))
