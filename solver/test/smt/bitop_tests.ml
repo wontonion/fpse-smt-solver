@@ -238,6 +238,87 @@ let test_add _ =
   assert_equal true
     (Assignment.value_of_variable assignment o.cout |> Option.get)
 
+let test_sub _ =
+  let ctx', o = Bitop.op_sub ctx { i0 = bFalse; i1 = bFalse; bin = bFalse } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal false (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal false
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bFalse; i1 = bFalse; bin = bTrue } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal true (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal true
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bFalse; i1 = bTrue; bin = bFalse } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal true (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal true
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bFalse; i1 = bTrue; bin = bTrue } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal false (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal true
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bTrue; i1 = bFalse; bin = bFalse } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal true (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal false
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bTrue; i1 = bFalse; bin = bTrue } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal false (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal false
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bTrue; i1 = bTrue; bin = bFalse } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal false (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal false
+    (Assignment.value_of_variable assignment o.bout |> Option.get);
+
+  let ctx', o = Bitop.op_sub ctx { i0 = bTrue; i1 = bTrue; bin = bTrue } in
+  let assignment =
+    match Context.solve ctx' with
+    | `SAT assignment -> assignment
+    | `UNSAT -> assert_failure "UNSAT"
+  in
+  assert_equal true (Assignment.value_of_variable assignment o.d |> Option.get);
+  assert_equal true
+    (Assignment.value_of_variable assignment o.bout |> Option.get)
+
 let series =
   "Op tests"
   >::: [
@@ -248,4 +329,5 @@ let series =
          "Test EQ" >:: test_eq;
          "Test NEQ" >:: test_neq;
          "Test ADD" >:: test_add;
+         "Test SUB" >:: test_sub;
        ]

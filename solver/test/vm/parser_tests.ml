@@ -8,7 +8,7 @@ let test_example _ =
   assert_equal true success
 
 let test_op _ =
-  let input = "CONST 1 CONST 2 XOR CONST 3 EQ END" in
+  let input = "CONST -1 CONST 2 XOR CONST 3 EQ END" in
   let success =
     match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
   in
@@ -33,6 +33,30 @@ let test_op _ =
   assert_equal true success;
 
   let input = "CONST 1 NEQ0 END" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal true success;
+
+  let input = "CONST 1 GEQ0 END" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal true success;
+
+  let input = "CONST 32768 LT0 END" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal true success;
+
+  let input = "CONST 1 CONST 2 ADD CONST 3 EQ END" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal true success;
+
+  let input = "CONST 1 CONST 2 SUB CONST 65535 EQ END" in
   let success =
     match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
   in
@@ -99,7 +123,25 @@ let test_invalid_stack _ =
   in
   assert_equal false success;
 
+  let input = "GEQ0" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal false success;
+
+  let input = "LT0" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal false success;
+
   let input = "ADD" in
+  let success =
+    match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
+  in
+  assert_equal false success;
+
+  let input = "SUB" in
   let success =
     match Vm.Parser.parse input with Ok _ -> true | Error _ -> false
   in

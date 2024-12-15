@@ -18,3 +18,13 @@ type input_add = {
 type output_add = { s : Cdcl.Variable.t; cout : Cdcl.Variable.t }
 
 val op_add : Context.t -> input_add -> Context.t * output_add
+
+type input_sub = {
+  i0 : Cdcl.Variable.t;
+  i1 : Cdcl.Variable.t;
+  bin : Cdcl.Variable.t;
+}
+
+type output_sub = { d : Cdcl.Variable.t; bout : Cdcl.Variable.t }
+
+val op_sub : Context.t -> input_sub -> Context.t * output_sub

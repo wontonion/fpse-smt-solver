@@ -189,3 +189,87 @@ let op_add (ctx : Context.t) (input : input_add) : Context.t * output_add =
       ]
   in
   (ctx, { s; cout })
+
+type input_sub = {
+  i0 : Cdcl.Variable.t;
+  i1 : Cdcl.Variable.t;
+  bin : Cdcl.Variable.t;
+}
+
+type output_sub = { d : Cdcl.Variable.t; bout : Cdcl.Variable.t }
+
+let op_sub (ctx : Context.t) (input : input_sub) : Context.t * output_sub =
+  let ctx, d = Context.bVar ctx in
+  let ctx, bout = Context.bVar ctx in
+  let ctx =
+    Context.add_clauses ctx
+      [
+        Clause.create
+          [
+            Literal.create input.i0 Negative;
+            Literal.create input.i1 Negative;
+            Literal.create input.bin Negative;
+            Literal.create d Positive;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Negative;
+            Literal.create input.i1 Negative;
+            Literal.create input.bin Positive;
+            Literal.create d Negative;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Negative;
+            Literal.create input.i1 Positive;
+            Literal.create input.bin Positive;
+            Literal.create d Positive;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Negative;
+            Literal.create input.i1 Positive;
+            Literal.create bout Negative;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Positive;
+            Literal.create input.i1 Negative;
+            Literal.create input.bin Negative;
+            Literal.create d Negative;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Positive;
+            Literal.create input.i1 Negative;
+            Literal.create bout Positive;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Positive;
+            Literal.create input.i1 Positive;
+            Literal.create input.bin Negative;
+            Literal.create d Positive;
+          ];
+        Clause.create
+          [
+            Literal.create input.i0 Positive;
+            Literal.create input.i1 Positive;
+            Literal.create input.bin Positive;
+            Literal.create d Negative;
+          ];
+        Clause.create
+          [
+            Literal.create input.bin Negative;
+            Literal.create d Negative;
+            Literal.create bout Positive;
+          ];
+        Clause.create
+          [
+            Literal.create input.bin Positive;
+            Literal.create d Positive;
+            Literal.create bout Negative;
+          ];
+      ]
+  in
+  (ctx, { d; bout })

@@ -58,12 +58,30 @@ let parse (s : string) : (Context.t, string) Result.t =
             let ctx = Bvop.constraint_neq0 ctx { i0 = op } in
             parse_op ops ctx stack
         | _ -> Error "Not enough operands for NEQ0")
+    | "GEQ0" :: ops -> (
+        match stack with
+        | op :: stack ->
+            let ctx = Bvop.constraint_geq0 ctx { i0 = op } in
+            parse_op ops ctx stack
+        | _ -> Error "Not enough operands for GEQ0")
+    | "LT0" :: ops -> (
+        match stack with
+        | op :: stack ->
+            let ctx = Bvop.constraint_lt0 ctx { i0 = op } in
+            parse_op ops ctx stack
+        | _ -> Error "Not enough operands for LT0")
     | "ADD" :: ops -> (
         match stack with
         | op2 :: op1 :: stack ->
             let ctx, o = Bvop.op_add ctx { i0 = op1; i1 = op2 } in
             parse_op ops ctx (o.o0 :: stack)
         | _ -> Error "Not enough operands for ADD")
+    | "SUB" :: ops -> (
+        match stack with
+        | op2 :: op1 :: stack ->
+            let ctx, o = Bvop.op_sub ctx { i0 = op1; i1 = op2 } in
+            parse_op ops ctx (o.o0 :: stack)
+        | _ -> Error "Not enough operands for SUB")
     | "SHL" :: n :: ops -> (
         match Int.of_string_opt n with
         | None -> Error "Invalid shift amount"

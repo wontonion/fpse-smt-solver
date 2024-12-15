@@ -9,6 +9,9 @@ val op_or : Context.t -> input_2 -> Context.t * output_1
 val op_not : Context.t -> input_1 -> Context.t * output_1
 val constraint_eq : Context.t -> input_2 -> Context.t
 val constraint_neq0 : Context.t -> input_1 -> Context.t
+val constraint_geq0 : Context.t -> input_1 -> Context.t
+val constraint_lt0 : Context.t -> input_1 -> Context.t
 val op_add : Context.t -> input_2 -> Context.t * output_1
+val op_sub : Context.t -> input_2 -> Context.t * output_1
 val op_shl : Context.t -> input_int -> Context.t * output_1
 val op_mul : Context.t -> input_int -> Context.t * output_1
