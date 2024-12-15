@@ -18,7 +18,9 @@ val convert_frontend_grid : Yojson.Safe.t -> sudoku_data
 val solve_sudoku : 
   grid -> 
   int -> 
-  (int list list, string) Result.t Lwt.t
+  (int list list, string) Result.t Lwt.t 
 val bool_to_value : int -> bool list -> int list list
 val split_into_sublists : int -> 'a list -> 'a list list
+
+(* val solve_sudoku : grid -> int -> (int list list, string) Result.t *)
 

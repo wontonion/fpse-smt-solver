@@ -31,9 +31,9 @@ let generate_sudoku_handler =
         ()
     else
       let%lwt result = 
-        Utils.with_timeout ~timeout:5000 (fun () ->
-          (* let%lwt () = Lwt_unix.sleep 6.0 in *)
-          Lwt.return @@ Sudoku.generate_puzzle ~block_size ()
+        Utils.with_timeout ~timeout:5000 (fun _ ->
+          try Ok (Sudoku.generate_puzzle ~block_size ())
+          with e -> Error (Printexc.to_string e)
         )
       in
       
@@ -70,14 +70,10 @@ let solve_sudoku_handler =
           data.grid
       in
 
-      let%lwt result = 
-        Utils.with_timeout ~timeout:5000 (fun () ->
-          Sudoku.solve_sudoku int_grid data.size
-        )
-      in
-
+      let%lwt result = Sudoku.solve_sudoku int_grid data.size in
+      
       match result with
-      | Ok (Ok grid) ->
+      | Ok grid ->
           let merged_grid =
             List.map2
               (fun solved_row orig_row ->
@@ -101,21 +97,11 @@ let solve_sudoku_handler =
           in
           Utils.json_response
             (Types.response_to_yojson Types.sudoku_data_to_yojson response)
-      | Ok (Error msg) ->
+      | Error msg ->
           let error_response =
             {
               Types.status = "error";
               Types.message = "Failed to solve sudoku: " ^ msg;
-              Types.data = None;
-            }
-          in
-          Utils.json_response
-            (Types.response_to_yojson Types.sudoku_data_to_yojson error_response)
-      | Error timeout_msg ->
-          let error_response =
-            {
-              Types.status = "error";
-              Types.message = "Solver timed out: " ^ timeout_msg;
               Types.data = None;
             }
           in
@@ -142,29 +128,38 @@ let solve_formula_handler =
         let formula_type = member "type" json |> to_string in
         let formula_content = member "content" json |> to_string in
 
-        let result =
-          match formula_type with
-          | "sat" -> Logical_solver.solve_sat_formula formula_content
-          | "smt" -> Logical_solver.solve_smt_formula formula_content
-          | _ -> failwith "Unknown formula type"
+        let%lwt result = 
+          Utils.with_timeout ~timeout:5000 (fun _ ->
+            try 
+              let result = match formula_type with
+                | "sat" -> Logical_solver.solve_sat_formula formula_content
+                | "smt" -> Logical_solver.solve_smt_formula formula_content
+                | _ -> failwith "Unknown formula type"
+              in
+              Ok result
+            with e -> Error (Printexc.to_string e)
+          )
         in
 
-        let response =
-          {
-            Types.status = "success";
-            Types.message = "Formula received successfully";
-            Types.data =
-              Some
-                {
-                  Types.problem_type =
-                    (if formula_type = "sat" then Types.SAT else Types.SMT);
-                  Types.data = result;
-                  Types.time_taken = 0.0;
-                };
-          }
-        in
-        Utils.json_response
-          (Types.response_to_yojson Types.solution_to_yojson response)
+        match result with
+        | Ok solution ->
+            let response = {
+              Types.status = "success";
+              Types.message = "Formula received successfully";
+              Types.data = Some {
+                Types.problem_type = (if formula_type = "sat" then Types.SAT else Types.SMT);
+                Types.data = solution;
+                Types.time_taken = 0.0;
+              };
+            } in
+            Utils.json_response (Types.response_to_yojson Types.solution_to_yojson response)
+        | Error msg ->
+            let error_response = {
+              Types.status = "error";
+              Types.message = "Failed to process formula: " ^ msg;
+              Types.data = None;
+            } in
+            Utils.json_response (Types.response_to_yojson Types.solution_to_yojson error_response)
       with e ->
         let error_response =
           {

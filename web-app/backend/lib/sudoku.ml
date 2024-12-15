@@ -183,15 +183,12 @@ module RandomSolver = Solver.Make (Heuristic.Randomized)
 let split_into_sublists size lst =
   let rec aux acc current_sublist remaining count =
     match remaining with
-    | [] -> 
+    | [] ->
         if current_sublist <> [] then List.rev current_sublist :: acc
-        else acc
-        |> List.rev
+        else acc |> List.rev
     | x :: rest ->
-        if count = size then
-          aux (List.rev current_sublist :: acc) [x] rest 1
-        else
-          aux acc (x :: current_sublist) rest (count + 1)
+        if count = size then aux (List.rev current_sublist :: acc) [ x ] rest 1
+        else aux acc (x :: current_sublist) rest (count + 1)
   in
   aux [] [] lst 0
 
@@ -202,72 +199,40 @@ let bool_to_value size assignments =
   List.iteri
     (fun i b ->
       if b then
-        let row = (i / (grid_size * size)) in
-        let col = ((i / size) mod grid_size) in
+        let row = i / (grid_size * size) in
+        let col = i / size mod grid_size in
         let value = (i mod size) + 1 in
         if row < grid_size && col < grid_size then
           values.((row * grid_size) + col) <- value)
     assignments;
-  Array.to_list values 
-  |> split_into_sublists grid_size
+  Array.to_list values |> split_into_sublists grid_size
 
 let solve_sudoku (int_grid : int list list) (size : int) :
     (int list list, string) Result.t Lwt.t =
-  let cancelled = ref false in
-  let pid = Unix.getpid () in
-  
-  Printf.printf "[PID:%d] Starting computation\n%!" pid;
-  
-  let task = 
-    Lwt.catch
-      (fun () ->
-        let%lwt result = Lwt_preemptive.detach
-          (fun () ->
-            Printf.printf "[PID:%d] Worker thread started\n%!" pid;
-            let formula =
-              match size with
-              | 4 when List.length (List.flatten int_grid) = 16 -> Ok sudoku_formula_2x2
-              | 9 when List.length (List.flatten int_grid) = 81 -> Ok sudoku_formula_3x3
-              | _ -> Error "Invalid grid size"
-            in
-            if !cancelled then (
-              Printf.printf "[PID:%d] Task cancelled early\n%!" pid;
-              Error "Cancelled"
-            )
-            else if Result.is_error formula then Error (Result.get_error formula)
-            else
-              let formula, _ =
-                List.fold_left
-                  (fun (f, idx) x ->
-                    if !cancelled then (
-                      Printf.printf "[PID:%d] Task cancelled during computation\n%!" pid;
-                      raise Lwt.Canceled
-                    );
-                    if x = 0 then (f, idx + 1)
-                    else
-                      let lit = Literal.create (Var ((idx * size) + x)) Positive in
-                      (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
-                  (Result.get_ok formula, 0)
-                  (List.flatten int_grid)
-              in
-              if !cancelled then Error "Cancelled"
-              else
-                match RandomSolver.cdcl_solve formula with
-                | `SAT assignment -> 
-                    Printf.printf "[PID:%d] Solution found\n%!" pid;
-                    Ok (bool_to_value size (Assignment.to_list assignment))
-                | `UNSAT -> Error "Unsatisfiable")
-          ()
-        in
-        Lwt.return result)
-      (function
-        | Lwt.Canceled ->
-            Printf.printf "[PID:%d] Task cancelled\n%!" pid;
-            cancelled := true;
-            Lwt.return (Error "Cancelled")
-        | e -> 
-            Printf.printf "[PID:%d] Error: %s\n%!" pid (Printexc.to_string e);
-            Lwt.fail e)
-  in
-  task
+  let solve cancelled =
+    let formula =
+      match size with
+      | 4 when List.length (List.flatten int_grid) = 16 -> Ok sudoku_formula_2x2
+      | 9 when List.length (List.flatten int_grid) = 81 -> Ok sudoku_formula_3x3
+      | _ -> Error "Invalid grid size"
+    in
 
+    if Result.is_error formula then Error (Result.get_error formula)
+    else
+      let formula, _ =
+        List.fold_left
+          (fun (f, idx) x ->
+            if !cancelled then raise Lwt.Canceled;
+            if x = 0 then (f, idx + 1)
+            else
+              let lit = Literal.create (Var ((idx * size) + x)) Positive in
+              (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
+          (Result.get_ok formula, 0)
+          (List.flatten int_grid)
+      in
+      match RandomSolver.cdcl_solve formula with
+      | `SAT assignment ->
+          Ok (bool_to_value size (Assignment.to_list assignment))
+      | `UNSAT -> Error "Unsatisfiable"
+  in
+  Utils.with_timeout ~timeout:5000 solve
