@@ -14,40 +14,37 @@ let hello_handler =
           data = Some sample_data;
         }
       in
-      Utils.json_response (Types.response_to_yojson Types.solution_to_yojson response))
+      Utils.json_response
+        (Types.response_to_yojson Types.solution_to_yojson response))
 
 let generate_sudoku_handler =
   Dream.get "/api/sudoku/generate" (fun request ->
-    let block_size =
-      match Dream.query request "blockSize" with
-      | Some size -> int_of_string_opt size |> Option.value ~default:3
-      | None -> 3
-    in
-    
-    if not (List.mem block_size [2; 3]) then
-      Utils.build_error_response 
-        ~message:"Block size must be either 2 or 3" 
-        ~problem_type:Types.Sudoku 
-        ()
-    else
-      let%lwt result = 
-        Utils.with_timeout ~timeout:1000 (fun () ->
-          Lwt.return @@ Sudoku.generate_puzzle ~block_size ()
-        )
+      let block_size =
+        match Dream.query request "blockSize" with
+        | Some size -> int_of_string_opt size |> Option.value ~default:3
+        | None -> 3
       in
-      
-      match result with
-      | Ok grid ->
-          let sudoku_data = Sudoku.convert_to_sudoku_data grid in
-          Utils.build_sudoku_response 
-            ~message:"Sudoku puzzle generated successfully" 
-            ~data:sudoku_data 
-            ()
-      | Error msg ->
-          Utils.build_error_response 
-            ~message:("Failed to generate sudoku puzzle: " ^ msg)
-            ~problem_type:Types.Sudoku 
-            ())
+
+      if not (List.mem block_size [ 2; 3 ]) then
+        Utils.build_error_response ~message:"Block size must be either 2 or 3"
+          ~problem_type:Types.Sudoku ()
+      else
+        let%lwt result =
+          Utils.with_timeout ~timeout:1000 (fun () ->
+              try Ok (Sudoku.generate_puzzle ~block_size ())
+              with e -> Error (Printexc.to_string e))
+        in
+
+        match result with
+        | Ok grid ->
+            let sudoku_data = Sudoku.convert_to_sudoku_data grid in
+            Utils.build_sudoku_response
+              ~message:"Sudoku puzzle generated successfully" ~data:sudoku_data
+              ()
+        | Error msg ->
+            Utils.build_error_response
+              ~message:("Failed to generate sudoku puzzle: " ^ msg)
+              ~problem_type:Types.Sudoku ())
 
 let solve_sudoku_handler =
   Dream.post "/api/sudoku/solve" (fun request ->
@@ -68,9 +65,15 @@ let solve_sudoku_handler =
                 row)
             data.grid
         in
+        let%lwt result =
+          Utils.with_timeout ~timeout:10000 (fun () ->
+              try Ok (Sudoku.solve_sudoku int_grid data.size)
+              with e -> Error (Printexc.to_string e))
+        in
 
-        match Sudoku.solve_sudoku int_grid data.size with
-        | Ok grid ->
+        match result with
+        | Ok result ->
+          let grid = Result.get_ok result in
             let merged_grid =
               List.map2
                 (fun solved_row orig_row ->
@@ -125,36 +128,33 @@ let solve_formula_handler =
         let formula_type = member "type" json |> to_string in
         let formula_content = member "content" json |> to_string in
 
-        let result =
-          match formula_type with
-          | "sat" -> Logical_solver.solve_sat_formula formula_content
-          | "smt" -> Logical_solver.solve_smt_formula formula_content
-          | _ -> failwith "Unknown formula type"
+        let%lwt result =
+          Utils.with_timeout ~timeout:5000 (fun () ->
+              try
+                match formula_type with
+                | "sat" -> Ok (Logical_solver.solve_sat_formula formula_content)
+                | "smt" -> Ok (Logical_solver.solve_smt_formula formula_content)
+                | _ -> Error "Unknown formula type"
+              with e -> Error (Printexc.to_string e))
         in
 
-        let response =
-          {
-            Types.status = "success";
-            Types.message = "Formula received successfully";
-            Types.data =
-              Some
+        match result with
+        | Ok solution ->
+            Utils.build_solution_response
+              ~message:"Formula received successfully"
+              ~data:
                 {
                   Types.problem_type =
                     (if formula_type = "sat" then Types.SAT else Types.SMT);
-                  Types.data = result;
+                  Types.data = solution;
                   Types.time_taken = 0.0;
-                };
-          }
-        in
-        Utils.json_response
-          (Types.response_to_yojson Types.solution_to_yojson response)
+                }
+              ()
+        | Error msg ->
+            Utils.build_error_response
+              ~message:("Failed to process formula: " ^ msg)
+              ~problem_type:Types.SAT ()
       with e ->
-        let error_response =
-          {
-            Types.status = "error";
-            Types.message = "Failed to process formula: " ^ Printexc.to_string e;
-            Types.data = None;
-          }
-        in
-        Utils.json_response
-          (Types.response_to_yojson Types.solution_to_yojson error_response))
+        Utils.build_error_response
+          ~message:("Failed to process formula: " ^ Printexc.to_string e)
+          ~problem_type:Types.SAT ())

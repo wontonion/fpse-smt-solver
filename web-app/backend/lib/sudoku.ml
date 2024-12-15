@@ -169,13 +169,17 @@ let convert_frontend_grid json =
   in
   { Types.size; Types.grid }
 
-let sudoku_formula_3x3 =
-  let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
 
-let sudoku_formula_2x2 =
+  
+let get_sudoku_formula size =
   let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
+  match size with
+  | 9 -> 
+      Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
+  | 4 ->
+      Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
+  | _ -> failwith "Invalid grid size"
+
 
 module RandomSolver = Solver.Make (Heuristic.Randomized)
 
@@ -210,8 +214,8 @@ let solve_sudoku (int_grid : int list list) (size : int) :
   let grids = List.flatten int_grid in
   let formula =
     match size with
-    | 4 when List.length grids = 16 -> Ok sudoku_formula_2x2
-    | 9 when List.length grids = 81 -> Ok sudoku_formula_3x3
+    | 4 when List.length grids = 16 -> Ok (get_sudoku_formula 4)
+    | 9 when List.length grids = 81 -> Ok (get_sudoku_formula 9)
     | _ -> Error "Invalid grid size"
   in
   if Result.is_error formula then Error (Result.get_error formula)
