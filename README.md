@@ -1,4 +1,5 @@
 # fpse-smt-solver
+
 This repo is for FPSE project assignment.
 
 `web-app` is for the whole application of this project
@@ -6,55 +7,145 @@ This repo is for FPSE project assignment.
 `sovler` will be a indepent home-brew library including SAT solver and Integer SMT solver
 
 ## Web App
+
 The web app is built with Docker, and the docker image is based on x86_64. So please make sure your machine is based on x86_64.
 
 ### Prerequisite
+
 - Docker
 
 ### Run the web app
+
 ```bash
 cd web-app
 docker compose build --no-cache
 docker compose up
 ```
+
 The web app will be available at `localhost:80`.
-
-
-## Solver
-
-### Library directory
-
-The SAT Solver is located in `solver` directory.
-```bash
-dune build
-dune test
-```
-
-### Run command line SAT solver
-```bash
-cd solver
-dune build
-OCAML_LANDMARKS=on _build/default/bin/main.exe < test/files/timetable5.cnf
-```
-The input can any valid DIMACS format CNF formulas, please pipe it to `stdin`.
-The SAT solver will output the assignment on `stdout`.
-
-Here’s a more formal and clearer version of your project progress summary:
 
 ### Progress Summary
 
 #### Functional Components
 
-1. **SAT CDCL Solver (`lib/cdcl`)**: The SAT CDCL solver is operational, but its effectiveness is limited to small formulas. It can efficiently identify a valid assignment when multiple solutions exist. However, in instances where the formula has a single solution or is unsatisfiable, the solver experiences significant delays.
+#### Issues Encountered
 
-2. **DIMACS Parsing Library (`lib/dimacs`)**: The DIMACS parsing library is fully functional and is capable of parsing DIMACS CNF formulas successfully.
+1. **Timeouts**: The SAT solver can take a long time to solve some problems, which can cause the web app to stuck. We need to implement a timeout mechanism to prevent this.
 
-3. **Sudoku Solver**: The Sudoku solver effectively resolves the `sudoku.cnf` file and subsequently converts the output back to a Sudoku format. This can be implemented very easily once the performance issues with the SAT solver are addressed.
+## Solver Project
+
+### Overview
+
+The `solver` project is located in the `solver` directory and consists of four libraries and two command-line executables designed for solving SAT and SMT problems.
+
+### Project Components
+
+#### Libraries
+
+- **`cdcl`**: Implements the Conflict-Driven Clause Learning (CDCL) algorithm for solving SAT problems.
+  
+- **`dimacs`**: A library for parsing standard [DIMACS CNF](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) formulas, used for reading SAT problem instances.
+
+- **`smt`**: A simple SMT library that supports 16-bit BitVectors. It treats all BitVectors as `uint16_t`, ignoring higher bits on overflow, and supports a limited set of operations.
+
+- **`vm`**: A virtual machine representation for `uint16_t` SMT problems, utilizing a stack-based approach. Detailed descriptions will be provided later.
+
+#### Command-Line Executables
+
+- **`sat_solver`**:
+  - **Location**: `_build/default/solver/bin/sat_solver.exe`
+  - **Function**: Reads DIMACS CNF formulas and outputs whether they are satisfiable, along with a possible assignment in DIMACS format.
+
+- **`smt_solver`**:
+  - **Location**: `_build/default/solver/bin/smt_solver.exe`
+  - **Function**: Reads custom VM OpCodes and outputs whether the constraints can be satisfied, along with a possible assignment to the BitVectors.
+
+### Running the Command-Line Executables
+
+To build the project, use the following command:
+
+```bash
+dune build
+```
+
+#### SAT Solver
+
+To run the SAT solver:
+
+- **Read from standard input**:
+
+  ```bash
+  OCAML_LANDMARKS=on _build/default/solver/bin/sat_solver.exe < solver/test/files/timetable5.cnf
+  ```
+
+- **Provide a filename**:
+
+  ```bash
+  OCAML_LANDMARKS=on _build/default/solver/bin/sat_solver.exe solver/test/files/timetable5.cnf
+  ```
+
+#### SMT Solver
+
+To run the SMT solver:
+
+- **Read from standard input**:
+
+  ```bash
+  OCAML_LANDMARKS=on _build/default/solver/bin/smt_solver.exe < solver/test/files/example.smt
+  ```
+
+- **Provide a filename**:
+
+  ```bash
+  OCAML_LANDMARKS=on _build/default/solver/bin/smt_solver.exe solver/test/files/example.smt
+  ```
+
+### Progress Summary
+
+#### Functional Components
+
+1. **SAT CDCL Solver (`lib/cdcl`)**: This module previously experienced performance issues, which were resolved by changing the heuristic and adopting the two-watched literals optimization. These changes significantly increased the solver's speed.
+
+2. **DIMACS Parsing Library (`lib/dimacs`)**: The DIMACS parsing library is fully functional and successfully parses DIMACS CNF formulas.
+
+3. **Simple SMT Solver (`lib/smt`)**: The SMT module supports a limited set of operations: `XOR`, `AND`, `OR`, `NOT`, `EQ`, `NEQ0`, `ADD`, `SHL`, and `MUL`. It operates on `uint16_t`, but the length can be easily adjusted to higher types (e.g., `uint32_t`, `uint64_t`).
+
+4. **SMT Virtual Machine (`lib/vm`)**: This stack-based virtual machine adds constraints specified by each opcode and can represent and execute all operations supported by our SMT library.
 
 #### Issues Encountered
 
-1. **Performance of SAT Solver on Larger Formulas**: The SAT solver struggles with larger formulas (e.g., `test/files/sudoku.cnf`). A comparison between the OCaml implementation and its Python counterpart reveals that the OCaml version is at least five times slower. This discrepancy may be due to excessive data copying or a potential bug in the implementation causing an infinite loop. Another approach to mitigate this issue could involve solving smaller Sudoku instances, such as 4x4 or 6x6 grids.
+1. **Efficient Implementation of `SUB` and `NEG` in SMT Module**: Currently, subtraction and negation are implemented by adding constraints that the sum of two bitvectors equals zero. This method is not efficient and could potentially be optimized by considering a full subtractor circuit.
+2. **Help with timeout mechanism**: If the timeout cannot be implemented from the web app, we need to implement it in the solver itself.
 
-2. **Frontend and Backend Integration**: The frontend functionality for solving has not yet been integrated with the backend handlers. Consequently, the solving button is currently non-functional.
+### Format Specification
 
-3. **Integer Linear Programming**: Only the definition of functions available as of now.
+#### DIMACS
+
+The [DIMACS](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) format is straightforward.
+
+The first line should be in the format: `p cnf [num of variables] [num of clauses]`, followed by clauses that are `0`-terminated.
+
+For example, the formula `(x ∨ y ∨ ¬z) ∧ (¬y ∨ z)` can be represented as:
+
+```text
+p cnf 3 2
+1 2 -3 0
+-2 3 0
+```
+
+#### VM
+
+This section describes our custom VM opcodes, which operate on stacks:
+
+- `END`: Ends a constraint and ensures the stack is empty.
+- `VAR n`: Pushes Bitvector `n` onto the stack.
+- `CONST n`: Pushes constant `n` onto the stack.
+- `XOR`: Pops two bitvectors from the stack and pushes the XORed result back.
+- `AND`: Pops two bitvectors from the stack and pushes the ANDed result back.
+- `OR`: Pops two bitvectors from the stack and pushes the ORed result back.
+- `NOT`: Pops one bitvector from the stack and pushes the NOTed result back.
+- `EQ`: Pops two bitvectors from the stack and adds a constraint that they are equal.
+- `NEQ0`: Pops one bitvector from the stack and adds a constraint that it is not equal to 0.
+- `ADD`: Pops two bitvectors from the stack and pushes the added result back.
+- `SHL n`: Pops one bitvector from the stack and pushes the shifted result back.
+- `MUL n`: Pops one bitvector from the stack and pushes the multiplied result back.
