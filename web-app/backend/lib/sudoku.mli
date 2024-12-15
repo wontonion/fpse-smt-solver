@@ -14,13 +14,4 @@ val solve_grid : grid -> block_size:int -> grid option
 val generate_puzzle : block_size:int -> unit -> grid
 val print_board : grid -> unit
 val convert_to_sudoku_data : grid -> sudoku_data
-val convert_frontend_grid : Yojson.Safe.t -> sudoku_data
-val solve_sudoku : 
-  grid -> 
-  int -> 
-  (int list list, string) Result.t Lwt.t 
-val bool_to_value : int -> bool list -> int list list
-val split_into_sublists : int -> 'a list -> 'a list list
-
-(* val solve_sudoku : grid -> int -> (int list list, string) Result.t *)
-
+val generate_puzzle_with_timeout : ?timeout:float -> block_size:int -> unit -> grid

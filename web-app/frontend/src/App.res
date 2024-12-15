@@ -52,18 +52,18 @@ let make = () => {
     <div className="p-6">
       <h1 className="text-3xl font-semibold mb-6"> {"Logic Solver Playground🛝"->React.string} </h1>
       // Test connection button
-      // <div className="mb-4">
-        // <button
-        //   onClick={_ => testBackendConnection()}
-        //   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        //   {React.string("Test Backend Connection")}
-        // </button>
-      //   {backendMessage !== "" 
-      //     ? <div className="mt-2 p-2 bg-gray-100 rounded">
-      //         <pre className="whitespace-pre-wrap"> {React.string(backendMessage)} </pre>
-      //       </div>
-      //     : React.null}
-      // </div>
+      <div className="mb-4">
+        <button
+          onClick={_ => testBackendConnection()}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          {React.string("Test Backend Connection")}
+        </button>
+        {backendMessage !== "" 
+          ? <div className="mt-2 p-2 bg-gray-100 rounded">
+              <pre className="whitespace-pre-wrap"> {React.string(backendMessage)} </pre>
+            </div>
+          : React.null}
+      </div>
       // Tab navigation
       <div className="flex space-x-4 mb-6 border-b">
         <button
@@ -71,7 +71,7 @@ let make = () => {
           className={`py-2 px-4 ${activeTab === "sudoku"
               ? "border-b-2 border-blue-500 font-semibold"
               : ""}`}>
-          {React.string("Sudoku")}
+          {React.string("Sudoku Solver")}
         </button>
         <button
           onClick={_ => setActiveTab(_ => "sat")}
