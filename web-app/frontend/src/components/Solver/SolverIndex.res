@@ -68,7 +68,7 @@ let getSolverExample = tabName => {
     )
   | "smt" => (
       "Enter SMT formula",
-      "VAR 1 MUL 3 CONST 4 ADD VAR 1 CONST 14 XOR EQ END\n\nThe SMT module supports a limited set of operations: \nXOR, AND, OR, NOT, EQ, NEQ0, GEQ0, LT0, ADD, SHL, and MUL. \n\nIt operates on int16_t, but the length can be easily \nadjusted to higher types (e.g., int32_t, int64_t)."
+      "VAR 1 MUL 3 CONST 4 ADD VAR 1 CONST 14 XOR EQ END\n\nThe SMT module supports a limited set of operations: \nXOR, AND, OR, NOT, EQ, NEQ0, GEQ0, LT0, ADD, SUB, SHL, and MUL. \n\nIt operates on int16_t, but the length can be easily \nadjusted to higher types (e.g., int32_t, int64_t)."
     )
   | _ => ("", "")
   }
