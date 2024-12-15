@@ -25,12 +25,12 @@ let processGridResponse = (json: Js.Json.t): array<array<Types.cellState>> => {
   let response = json->Js.Json.decodeObject->Belt.Option.getExn
   let data = response->Js.Dict.get("data")->Belt.Option.getExn
   let gridObj = data->Js.Json.decodeObject->Belt.Option.getExn
-  let size = gridObj
-    ->Js.Dict.get("size")
-    ->Belt.Option.getExn
-    ->Js.Json.decodeNumber
-    ->Belt.Option.getExn
-    ->int_of_float
+  // let size = gridObj
+  //   ->Js.Dict.get("size")
+  //   ->Belt.Option.getExn
+  //   ->Js.Json.decodeNumber
+  //   ->Belt.Option.getExn
+  //   ->int_of_float
   let grid = gridObj
     ->Js.Dict.get("grid")
     ->Belt.Option.getExn

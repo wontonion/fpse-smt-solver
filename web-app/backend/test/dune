@@ -1,9 +1,13 @@
-(test
- (name test_sudoku)
+(tests
+ (names test_sudoku test_utils)
  (libraries
   ounit2
   handlers
   sudoku
-  types)
+  types
+  utils
+  lwt
+  lwt.unix)
  (preprocess
-  (pps ppx_deriving_yojson)))
+  (pps ppx_deriving_yojson lwt_ppx))
+(deps (source_tree ../data)))

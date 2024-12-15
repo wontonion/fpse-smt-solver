@@ -7,6 +7,7 @@
   types
   utils
   sudoku
+  logical_solver
   solver.cdcl
   solver.dimacs
   solver.smt
@@ -17,7 +18,29 @@
 (library
  (name sudoku)
  (modules sudoku)
- (libraries core types utils)
+ (libraries 
+  core 
+  lwt
+  types 
+  utils
+  solver.cdcl
+  solver.dimacs
+  solver.smt
+  solver.vm)
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
+
+(library
+ (name logical_solver)
+ (modules logical_solver)
+ (libraries 
+  core 
+  types 
+  utils 
+  solver.cdcl 
+  solver.dimacs 
+  solver.smt 
+  solver.vm)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
