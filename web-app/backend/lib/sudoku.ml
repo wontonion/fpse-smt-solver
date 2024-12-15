@@ -171,11 +171,11 @@ let convert_frontend_grid json =
 
 let sudoku_formula_3x3 =
   let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
+  Dimacs.Parser.parse @@ read_all "../data/sudoku.3x3.cnf" |> Result.get_ok
 
 let sudoku_formula_2x2 =
   let open Core.In_channel in
-  Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
+  Dimacs.Parser.parse @@ read_all "../data/sudoku.2x2.cnf" |> Result.get_ok
 
 module RandomSolver = Solver.Make (Heuristic.Randomized)
 
@@ -209,7 +209,7 @@ let bool_to_value size assignments =
 
 let solve_sudoku (int_grid : int list list) (size : int) :
     (int list list, string) Result.t Lwt.t =
-  let solve cancelled =
+  let solve () =
     let formula =
       match size with
       | 4 when List.length (List.flatten int_grid) = 16 -> Ok sudoku_formula_2x2
@@ -222,7 +222,6 @@ let solve_sudoku (int_grid : int list list) (size : int) :
       let formula, _ =
         List.fold_left
           (fun (f, idx) x ->
-            if !cancelled then raise Lwt.Canceled;
             if x = 0 then (f, idx + 1)
             else
               let lit = Literal.create (Var ((idx * size) + x)) Positive in

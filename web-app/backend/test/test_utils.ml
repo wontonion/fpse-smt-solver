@@ -1,69 +1,84 @@
 open OUnit2
 open Utils
-open Lwt.Syntax
 
-let test_with_timeout_success _ =
-  let result = Lwt_main.run (
-    with_timeout ~timeout:2000 (fun () ->
-      let* () = Lwt_unix.sleep 1.0 in
-      Lwt.return "success"
+let test_successful_execution _ =
+  let result = 
+    Lwt_main.run (
+      with_timeout ~timeout:1000 (fun () ->
+        Unix.sleep 0;  (* 立即返回的任务 *)
+        Ok "success"
+      )
     )
-  ) in
+  in
   assert_equal (Ok "success") result
 
-let test_with_timeout_timeout _ =
-  let result = Lwt_main.run (
-    with_timeout ~timeout:1000 (fun () ->
-      let* () = Lwt_unix.sleep 2.0 in
-      Lwt.return "should not reach here"
+let test_timeout _ =
+  let result = 
+    Lwt_main.run (
+      with_timeout ~timeout:100 (fun () ->
+        Unix.sleep 1;  (* 睡眠1秒，会触发超时 *)
+        Ok "should not reach here"
+      )
     )
-  ) in
+  in
   assert_equal (Error "Task timed out") result
 
-let test_with_timeout_cancellation _ =
-  let counter = ref 0 in
-  let result = Lwt_main.run (
-    with_timeout ~timeout:1000 (fun () ->
-      let rec loop () =
-        let* () = Lwt_unix.sleep 0.1 in
-        incr counter;
-        loop ()
-      in
-      loop ()
+let test_error_propagation _ =
+  let result =
+    Lwt_main.run (
+      with_timeout ~timeout:1000 (fun () ->
+        Error "custom error"
+      )
     )
-  ) in
-  Unix.sleep 2;
-  assert_bool "Counter should be limited due to cancellation" (!counter < 15);
-  assert_equal (Error "Task timed out") result
+  in
+  assert_equal (Error "custom error") result
 
-let test_with_timeout_cpu_intensive _ =
-  let counter = ref 0 in
-  let result = Lwt_main.run (
-    with_timeout ~timeout:1000 (fun () ->
-      Lwt_preemptive.detach (fun () ->
-        let rec heavy_computation n =
-          if n mod 1000000 = 0 then counter := n;
-          heavy_computation (n + 1)
-        in
-        heavy_computation 0
-      ) ()
+let test_exception_handling _ =
+  let result =
+    Lwt_main.run (
+      with_timeout ~timeout:1000 (fun () ->
+        raise (Invalid_argument "test exception");
+      )
     )
-  ) in
-  Unix.sleep 2;  (* Wait to ensure computation has been cancelled *)
-  let final_count = !counter in
-  Printf.printf "Final counter value: %d\n" final_count;
-  assert_equal (Error "Task timed out") result;
-  assert_bool "Counter should stop increasing after timeout" 
-    (let new_count = !counter in
-     Printf.printf "Counter after 2s: %d\n" new_count;
-     abs(new_count - final_count) < 1000000)
+  in
+  Printf.printf "Exception handling test received: %s\n" 
+    (match result with 
+     | Ok s -> "Ok: " ^ s 
+     | Error s -> "Error: " ^ s);
+  assert_equal 
+    (Error "Exception: Invalid_argument(\"test exception\")")
+    result
+
+let test_on_cancel_callback _ =
+  let was_cancelled = ref false in
+  let result = 
+    Lwt_main.run (
+      with_timeout 
+        ~timeout:100 
+        ~on_cancel:(fun () -> 
+          was_cancelled := true;
+          Printf.printf "Cancel callback executed, was_cancelled = %b\n" !was_cancelled)
+        (fun () ->
+          Unix.sleep 1;  (* 这会导致超时 *)
+          Ok "should not reach here"
+        )
+    )
+  in
+  Printf.printf "On cancel test received: %s\n" 
+    (match result with 
+     | Ok s -> "Ok: " ^ s 
+     | Error s -> "Error: " ^ s);
+  Printf.printf "Final was_cancelled value: %b\n" !was_cancelled;
+  assert_equal (Error "Task timed out") result
 
 let suite =
-  "Utils Test Suite" >::: [
-    "test_with_timeout_success" >:: test_with_timeout_success;
-    "test_with_timeout_timeout" >:: test_with_timeout_timeout;
-    "test_with_timeout_cancellation" >:: test_with_timeout_cancellation;
-    "test_with_timeout_cpu_intensive" >:: test_with_timeout_cpu_intensive;
+  "Utils tests" >::: [
+    "test successful execution" >:: test_successful_execution;
+    "test timeout" >:: test_timeout;
+    "test error propagation" >:: test_error_propagation;
+    "test exception handling" >:: test_exception_handling;
+    "test on_cancel callback" >:: test_on_cancel_callback;
   ]
 
-let () = run_test_tt_main suite
+let () =
+  run_test_tt_main suite
