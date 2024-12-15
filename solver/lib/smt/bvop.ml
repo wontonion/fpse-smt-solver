@@ -49,6 +49,16 @@ let constraint_neq0 (ctx : Context.t) (input : input_1) : Context.t =
     (Cdcl.Clause.create
     @@ List.map input.i0 ~f:(fun i0 -> Cdcl.Literal.create i0 Positive))
 
+let constraint_geq0 (ctx : Context.t) (input : input_1) : Context.t =
+  Context.add_clause ctx
+    (Cdcl.Clause.create
+       [ Cdcl.Literal.create (List.nth_exn input.i0 15) Negative ])
+
+let constraint_lt0 (ctx : Context.t) (input : input_1) : Context.t =
+  Context.add_clause ctx
+    (Cdcl.Clause.create
+       [ Cdcl.Literal.create (List.nth_exn input.i0 15) Positive ])
+
 let op_add (ctx : Context.t) (input : input_2) : Context.t * output_1 =
   let ctx, o, _ =
     List.fold_left (List.zip_exn input.i0 input.i1)
