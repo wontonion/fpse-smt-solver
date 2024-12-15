@@ -4,7 +4,12 @@ import * as React from "react";
 import * as SolverIndex from "./components/Solver/SolverIndex.res.mjs";
 import * as SudokuIndex from "./components/Sudoku/SudokuIndex.res.mjs";
 import * as ToastContext from "./components/Toast/ToastContext.res.mjs";
+import * as ReactToastify from "./bindings/ReactToastify.res.mjs";
+import * as ReactToastify$1 from "react-toastify";
 import * as JsxRuntime from "react/jsx-runtime";
+
+import "react-toastify/dist/ReactToastify.css"
+;
 
 function App(props) {
   var match = React.useState(function () {
@@ -33,58 +38,72 @@ function App(props) {
     default:
       tmp = null;
   }
-  return JsxRuntime.jsx(ToastContext.make, {
-              children: JsxRuntime.jsxs("div", {
-                    children: [
-                      JsxRuntime.jsx("h1", {
-                            children: "Logic Solver Playground🛝",
-                            className: "text-3xl font-semibold mb-6"
-                          }),
-                      JsxRuntime.jsxs("div", {
-                            children: [
-                              JsxRuntime.jsx("button", {
-                                    children: "Sudoku",
-                                    className: "py-2 px-4 " + (
-                                      activeTab === "sudoku" ? "border-b-2 border-blue-500 font-semibold" : ""
-                                    ),
-                                    onClick: (function (param) {
-                                        setActiveTab(function (param) {
-                                              return "sudoku";
-                                            });
-                                      })
-                                  }),
-                              JsxRuntime.jsx("button", {
-                                    children: "SAT Solver",
-                                    className: "py-2 px-4 " + (
-                                      activeTab === "sat" ? "border-b-2 border-blue-500 font-semibold" : ""
-                                    ),
-                                    onClick: (function (param) {
-                                        setActiveTab(function (param) {
-                                              return "sat";
-                                            });
-                                      })
-                                  }),
-                              JsxRuntime.jsx("button", {
-                                    children: "SMT Solver",
-                                    className: "py-2 px-4 " + (
-                                      activeTab === "smt" ? "border-b-2 border-blue-500 font-semibold" : ""
-                                    ),
-                                    onClick: (function (param) {
-                                        setActiveTab(function (param) {
-                                              return "smt";
-                                            });
-                                      })
-                                  })
-                            ],
-                            className: "flex space-x-4 mb-6 border-b"
-                          }),
-                      JsxRuntime.jsx("div", {
-                            children: tmp,
-                            className: "mt-4"
-                          })
-                    ],
-                    className: "p-6"
-                  })
+  return JsxRuntime.jsxs(ToastContext.make, {
+              children: [
+                JsxRuntime.jsx(ReactToastify$1.ToastContainer, {
+                      position: ReactToastify.positionToString("topRight"),
+                      autoClose: 5000,
+                      hideProgressBar: false,
+                      newestOnTop: true,
+                      closeOnClick: true,
+                      rtl: false,
+                      pauseOnFocusLoss: true,
+                      draggable: true,
+                      pauseOnHover: true,
+                      theme: "light"
+                    }),
+                JsxRuntime.jsxs("div", {
+                      children: [
+                        JsxRuntime.jsx("h1", {
+                              children: "Logic Solver Playground🛝",
+                              className: "text-3xl font-semibold mb-6"
+                            }),
+                        JsxRuntime.jsxs("div", {
+                              children: [
+                                JsxRuntime.jsx("button", {
+                                      children: "Sudoku",
+                                      className: "py-2 px-4 " + (
+                                        activeTab === "sudoku" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                      ),
+                                      onClick: (function (param) {
+                                          setActiveTab(function (param) {
+                                                return "sudoku";
+                                              });
+                                        })
+                                    }),
+                                JsxRuntime.jsx("button", {
+                                      children: "SAT Solver",
+                                      className: "py-2 px-4 " + (
+                                        activeTab === "sat" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                      ),
+                                      onClick: (function (param) {
+                                          setActiveTab(function (param) {
+                                                return "sat";
+                                              });
+                                        })
+                                    }),
+                                JsxRuntime.jsx("button", {
+                                      children: "SMT Solver",
+                                      className: "py-2 px-4 " + (
+                                        activeTab === "smt" ? "border-b-2 border-blue-500 font-semibold" : ""
+                                      ),
+                                      onClick: (function (param) {
+                                          setActiveTab(function (param) {
+                                                return "smt";
+                                              });
+                                        })
+                                    })
+                              ],
+                              className: "flex space-x-4 mb-6 border-b"
+                            }),
+                        JsxRuntime.jsx("div", {
+                              children: tmp,
+                              className: "mt-4"
+                            })
+                      ],
+                      className: "p-6"
+                    })
+              ]
             });
 }
 
@@ -93,4 +112,4 @@ var make = App;
 export {
   make ,
 }
-/* react Not a pure module */
+/*  Not a pure module */

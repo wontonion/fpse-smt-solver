@@ -1,17 +1,18 @@
 open Utils
-
+open ReactToastify
+%%raw(`import "react-toastify/dist/ReactToastify.css"`)
 // 首先定义类型来匹配后端的响应结构
-type solution = {
-  problem_type: string,
-  assignments: option<array<(string, string)>>,
-  time_taken: float
-}
+// type solution = {
+//   problem_type: string,
+//   assignments: option<array<(string, string)>>,
+//   time_taken: float
+// }
 
-type _response = {
-  status: string,
-  message: string,
-  data: option<solution>
-}
+// type _response = {
+//   status: string,
+//   message: string,
+//   data: option<solution>
+// }
 @react.component
 let make = () => {
   let (activeTab, setActiveTab) = React.useState(() => "sudoku")
@@ -49,6 +50,20 @@ let make = () => {
   }
 
   <ToastContext>
+    <ReactToastify.toastContainer
+      {...makeToastContainerProps({
+        "position": positionToString(#topRight),
+        "autoClose": 5000,
+        "hideProgressBar": false,
+        "newestOnTop": true,
+        "closeOnClick": true,
+        "rtl": false,
+        "pauseOnFocusLoss": true,
+        "draggable": true,
+        "pauseOnHover": true,
+        "theme": "light",
+      })}
+    />
     <div className="p-6">
       <h1 className="text-3xl font-semibold mb-6"> {"Logic Solver Playground🛝"->React.string} </h1>
       // Test connection button

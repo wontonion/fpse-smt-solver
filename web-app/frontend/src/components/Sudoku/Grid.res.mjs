@@ -86,15 +86,7 @@ function Grid(props) {
   var onCellChange = props.onCellChange;
   var values = props.values;
   var size = props.size;
-  var subGridSize;
-  switch (size) {
-    case 4 :
-    case 6 :
-        subGridSize = 2;
-        break;
-    default:
-      subGridSize = 3;
-  }
+  var subGridSize = size !== 4 ? 3 : 2;
   var isRowComplete = function (rowIndex, grid) {
     var row = Core__Option.getOr(Belt_Array.get(grid, rowIndex), []);
     var numbers = Belt_Array.map(row, (function (cell) {
@@ -201,10 +193,10 @@ function Grid(props) {
                                                         })
                                                     }, rowIndex.toString() + "-" + colIndex.toString());
                                         })),
-                                  className: "flex"
+                                  className: "flex flex-nowrap"
                                 }, rowIndex.toString());
                     })),
-              className: "grid gap-0 border-2 border-black"
+              className: "inline-block"
             });
 }
 

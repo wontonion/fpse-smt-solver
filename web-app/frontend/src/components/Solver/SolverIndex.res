@@ -68,14 +68,14 @@ let getSolverExample = tabName => {
     )
   | "smt" => (
       "Enter SMT formula",
-      "placeholder for SMT formula example"
+      "VAR 1 MUL 3 CONST 4 ADD VAR 1 CONST 14 XOR EQ END\n\nThe SMT module supports a limited set of operations: \nXOR, AND, OR, NOT, EQ, NEQ0, GEQ0, LT0, ADD, SHL, and MUL. \n\nIt operates on int16_t, but the length can be easily \nadjusted to higher types (e.g., int32_t, int64_t)."
     )
   | _ => ("", "")
   }
   description ++ "\n\nExample:\n" ++ example
 }
 
-let downloadTemplate = (tabName) => {
+let handleDownloadTemplate = (tabName) => {
   try {
     let content = getSolverExample(tabName) ++ "\n\n" ++ "Delete all template text before entering your formula"
     let element = createElement("a")
@@ -88,8 +88,10 @@ let downloadTemplate = (tabName) => {
     click(element)
     removeChild(body, element)
     revokeObjectURL(url)
+    ToastService.success("Template downloaded successfully, please check your download folder")
   } catch {
   | err => Js.Console.error2("Error downloading template:", err)
+  ToastService.error("Error downloading template")
   }
 }
 
@@ -117,6 +119,7 @@ let make = (~tabName: string) => {
       ("smt", TabState.make()),
     ])
   )
+  
   
   let currentState = Belt.Map.String.get(tabStates, tabName->String.toLowerCase)
     ->Belt.Option.getWithDefault(TabState.make())
@@ -163,25 +166,50 @@ let make = (~tabName: string) => {
       })
       
       readAsText(reader, file)
+      ToastService.success("File uploaded successfully")
     }
   }
 
-  let handleSolve = _ => {
+  let handleSolveProblems = _ => {
     switch textareaRef.current->Js.Nullable.toOption {
     | Some(textarea) => {
         let textArea = textarea->domElementToTextArea
         let content = textArea->getValue
-        if content->String.length > 0 {
+        if content->String.length === 0 {
+          ToastService.error("Nothing to solve")
+        } else {
           setIsLoading(_ => true)
           updateTabState({...currentState, solution: "Solving..."})
           
           SolverUtils.postFormula(tabName->String.toLowerCase, content)
           ->Promise.then(result => {
             switch result {
-            | Ok(solution) => updateTabState({...currentState, solution: solution})
-            | Error(err) => updateTabState({...currentState, solution: "Error: " ++ err})
+            | Ok(solution) => {
+                updateTabState({...currentState, solution: solution})
+                ToastService.success("Solved successfully")
+              }
+            | Error(err) => {
+                updateTabState({...currentState, solution: "Error: " ++ err})
+                ToastService.error("Failed to solve")
+              }
             }
             setIsLoading(_ => false)
+            Promise.resolve()
+          })
+          ->Promise.catch(err => {
+            // Handle unexpected errors (network errors, etc.)
+            let errorMessage = switch err {
+            | Js.Exn.Error(e) => 
+                switch Js.Exn.message(e) {
+                | Some(msg) => msg
+                | None => "An unknown error occurred"
+                }
+            | _ => "An unknown error occurred"
+            }
+            
+            updateTabState({...currentState, solution: "Error: " ++ errorMessage})
+            setIsLoading(_ => false)
+            ToastService.error("An error occurred while solving")
             Promise.resolve()
           })
           ->ignore
@@ -191,19 +219,25 @@ let make = (~tabName: string) => {
     }
   }
 
-  let clearTextarea = () => {
-    let newState = {...currentState, content: "", solution: "Solution will appear here"}
-    updateTabState(newState)
-    textareaRef.current
-    ->Js.Nullable.toOption
-    ->Belt.Option.forEach(textarea => {
+  // handle clear textarea
+  let handleClearTextarea = () => {
+    if currentState.content->String.length === 0 {
+      ToastService.error("Nothing to clear")
+    } else {
+      let newState = {...currentState, content: "", solution: "Solution will appear here"}
+      updateTabState(newState)
+      textareaRef.current
+      ->Js.Nullable.toOption
+      ->Belt.Option.forEach(textarea => {
       let textArea = textarea->domElementToTextArea
       textArea->setValue("")
     })
+    ToastService.success("Cleared successfully")
+    }
   }
 
   <div className="grid grid-cols-2 gap-6">
-    <div>
+    <div className="flex flex-col">
       <h2 className="text-xl font-semibold mb-4">
         {React.string(tabName->String.toUpperCase ++ " Formula Input")}
       </h2>
@@ -224,21 +258,21 @@ let make = (~tabName: string) => {
         id="fileInput"
         onChange={handleFileUpload}
       />
-      <div className="flex mt-4 gap-4 justify-between">
-        <div className="flex gap-4">
-          <Button onClick={_ => downloadTemplate(tabName)}>
-            {React.string("Download Template")}
-          </Button>
-          <Button onClick={_ => getElementById("fileInput")->Js.Nullable.toOption->Belt.Option.forEach(click)}>
-            {React.string("Upload problem batch")}
-          </Button>
-          <Button onClick={_ => clearTextarea()}>
-            {React.string("Clear")}
-          </Button>
-        </div>
+      <div className="mt-4 flex gap-4 justify-between">
+        <Button onClick={_ => handleDownloadTemplate(tabName)}>
+          {React.string("Download Template")}
+        </Button>
+        <Button onClick={_ => {
+          getElementById("fileInput")->Js.Nullable.toOption->Belt.Option.forEach(click)
+        }}>
+          {React.string("Upload problem batch")}
+        </Button>
+        <Button onClick={_ => handleClearTextarea()}>
+          {React.string("Clear")}
+        </Button>
         <Button 
           disabled=isLoading
-          onClick={handleSolve}> 
+          onClick={handleSolveProblems}> 
           {React.string(isLoading ? "Solving..." : "Solve")} 
         </Button>
       </div>

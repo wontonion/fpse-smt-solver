@@ -13,7 +13,7 @@ function Cell(props) {
   var cell = props.cell;
   var className = __className !== undefined ? __className : "";
   var getCellClassName = function () {
-    var baseStyle = "w-10 h-10 border border-gray-300 flex items-center justify-center relative";
+    var baseStyle = "w-[50px] h-[50px] border border-gray-300 flex items-center justify-center relative";
     var borderStyle = isRightBorder ? (
         isBottomBorder ? " border-r-2 border-b-2 border-r-gray-800 border-b-gray-800" : " border-r-2 border-r-gray-800"
       ) : (
@@ -27,7 +27,7 @@ function Cell(props) {
   };
   return JsxRuntime.jsx("div", {
               children: JsxRuntime.jsx("input", {
-                    className: "w-full h-full text-center focus:outline-none bg-transparent\n        " + (
+                    className: "w-full h-full text-center focus:outline-none bg-transparent text-base\n        " + (
                       props.hasRowError || props.hasColError || props.hasBlockConflict ? "text-red-600 font-bold" : (
                           props.isRowComplete || props.isColComplete || props.isBlockComplete ? "text-green-600 font-bold" : (
                               cell.isInitial ? "text-white font-bold" : ""

@@ -15,7 +15,7 @@ let isAllFilled = (numbers: array<string>) => {
   Belt.Array.every(numbers, value => value !== "")
 }
 
-// 在现有的类型定义和函数之后，添加这个新的辅助函数
+// helper function to get the block index
 let getBlockIndex = (rowIndex, colIndex, subGridSize) => {
   let blockRow = rowIndex / subGridSize
   let blockCol = colIndex / subGridSize
@@ -79,7 +79,6 @@ let make = (
 ) => {
   let subGridSize = switch size {
   | 9 => 3
-  | 6 => 2
   | 4 => 2
   | _ => 3 // default to 9x9
   }
@@ -102,7 +101,7 @@ let make = (
     isUniqueNumbers(numbers) && isAllFilled(numbers)
   }
 
-  // 修改现有的 isBlockComplete 函数
+  // check whether the block is complete
   let isBlockComplete = (blockIndex, grid) => {
     let blockRow = blockIndex / subGridSize
     let blockCol = mod(blockIndex, subGridSize)
@@ -135,7 +134,7 @@ let make = (
     rowValid && colValid && blockValid
   }
 
-  <div className="grid gap-0 border-2 border-black">
+  <div className="inline-block">
     {values
     ->Belt.Array.mapWithIndex((rowIndex, row) => {
       let hasRowError = hasRowConflict(rowIndex, values)
@@ -143,7 +142,7 @@ let make = (
       
       <div 
         key={rowIndex->Int.toString} 
-        className={`flex`}>
+        className="flex flex-nowrap">
         {row
         ->Belt.Array.mapWithIndex((colIndex, cell) => {
           let isRightBorder = mod(colIndex + 1, subGridSize) == 0 && colIndex != size - 1
