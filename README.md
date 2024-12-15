@@ -114,8 +114,8 @@ To run the SMT solver:
 
 #### Issues Encountered
 
-1. **Efficient Implementation of `SUB` and `NEG` in SMT Module**: Currently, subtraction and negation are implemented by adding constraints that the sum of two bitvectors equals zero. This method is not efficient and could potentially be optimized by considering a full subtractor circuit.
-2. **Help with timeout mechanism**: If the timeout cannot be implemented from the web app, we need to implement it in the solver itself.
+1. **Help with timeout mechanism**: If the timeout cannot be implemented from the web app, we need to implement it in the solver itself.
+2. **Support `MUL` between bitvectors**: Currently, only `MUL` between CONSTANT and Bitvector is allowed.
 
 ### Format Specification
 
