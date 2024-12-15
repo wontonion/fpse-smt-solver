@@ -46,9 +46,9 @@ The `solver` project is located in the `solver` directory and consists of four l
   
 - **`dimacs`**: A library for parsing standard [DIMACS CNF](https://jix.github.io/varisat/manual/0.2.0/formats/dimacs.html) formulas, used for reading SAT problem instances.
 
-- **`smt`**: A simple SMT library that supports 16-bit BitVectors. It treats all BitVectors as `uint16_t`, ignoring higher bits on overflow, and supports a limited set of operations.
+- **`smt`**: A simple SMT library that supports 16-bit BitVectors. It treats all BitVectors as `int16_t`, ignoring higher bits on overflow, and supports a limited set of operations.
 
-- **`vm`**: A virtual machine representation for `uint16_t` SMT problems, utilizing a stack-based approach. Detailed descriptions will be provided later.
+- **`vm`**: A virtual machine representation for `int16_t` SMT problems, utilizing a stack-based approach. Detailed descriptions will be provided later.
 
 #### Command-Line Executables
 
@@ -108,7 +108,7 @@ To run the SMT solver:
 
 2. **DIMACS Parsing Library (`lib/dimacs`)**: The DIMACS parsing library is fully functional and successfully parses DIMACS CNF formulas.
 
-3. **Simple SMT Solver (`lib/smt`)**: The SMT module supports a limited set of operations: `XOR`, `AND`, `OR`, `NOT`, `EQ`, `NEQ0`, `ADD`, `SHL`, and `MUL`. It operates on `uint16_t`, but the length can be easily adjusted to higher types (e.g., `uint32_t`, `uint64_t`).
+3. **Simple SMT Solver (`lib/smt`)**: The SMT module supports a limited set of operations: `XOR`, `AND`, `OR`, `NOT`, `EQ`, `NEQ0`, `GEQ0`, `LT0`, `ADD`, `SHL`, and `MUL`. It operates on `int16_t`, but the length can be easily adjusted to higher types (e.g., `int32_t`, `int64_t`).
 
 4. **SMT Virtual Machine (`lib/vm`)**: This stack-based virtual machine adds constraints specified by each opcode and can represent and execute all operations supported by our SMT library.
 
