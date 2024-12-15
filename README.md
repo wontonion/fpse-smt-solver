@@ -146,6 +146,9 @@ This section describes our custom VM opcodes, which operate on stacks:
 - `NOT`: Pops one bitvector from the stack and pushes the NOTed result back.
 - `EQ`: Pops two bitvectors from the stack and adds a constraint that they are equal.
 - `NEQ0`: Pops one bitvector from the stack and adds a constraint that it is not equal to 0.
+- `GEQ0`: Pops one bitvector from the stack and adds a constraint that it is greater than 0.
+- `LT0`: Pops one bitvector from the stack and adds a constraint that it is less than 0.
 - `ADD`: Pops two bitvectors from the stack and pushes the added result back.
+- `SUB`: Pops two bitvectors from the stack and pushes the subtracted result back.
 - `SHL n`: Pops one bitvector from the stack and pushes the shifted result back.
 - `MUL n`: Pops one bitvector from the stack and pushes the multiplied result back.
