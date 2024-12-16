@@ -19,16 +19,12 @@ let init_watches (f : Formula.t) : solver_state =
     List.fold (Formula.clauses f)
       ~init:(Map.empty (module Literal), Map.empty (module Clause))
       ~f:(fun (lit2clauses, clause2lits) c ->
-        let literals = Clause.literals c in
-        match List.length literals with
-        | 0 -> failwith "Should not happen" [@coverage off]
-        | 1 ->
-            let lit = List.hd_exn literals in
+        match Clause.literals c with
+        | [] -> failwith "Should not happen" [@coverage off]
+        | lit :: [] ->
             ( Map.add_multi lit2clauses ~key:lit ~data:c,
               Map.add_multi clause2lits ~key:c ~data:lit )
-        | _ ->
-            let lit1 = List.hd_exn literals in
-            let lit2 = List.nth_exn literals 1 in
+        | lit1 :: lit2 :: _ ->
             ( lit2clauses
               |> Map.add_multi ~key:lit1 ~data:c
               |> Map.add_multi ~key:lit2 ~data:c,
@@ -50,11 +46,8 @@ let add_learnt_clause (state : solver_state) (c : Clause.t) : solver_state =
     match lits with
     | [] -> state
     | lit :: lits -> (
-        match
-          List.length
-          @@ (Map.find state.clause2lits clause |> Option.value ~default:[])
-        with
-        | 0 | 1 ->
+        match Map.find state.clause2lits clause |> Option.value ~default:[] with
+        | [] | _ :: [] ->
             let clause2lits =
               Map.add_multi state.clause2lits ~key:clause ~data:lit
             in
@@ -71,15 +64,14 @@ let add_learnt_clause (state : solver_state) (c : Clause.t) : solver_state =
   let lits =
     List.sort (Clause.literals c) ~compare:(fun l1 l2 ->
         Int.compare
-          (Assignment.dl state.assignment l1.variable
-          |> Option.value_exn |> Int.neg)
-          (Assignment.dl state.assignment l2.variable
-          |> Option.value_exn |> Int.neg))
+          (Assignment.dl state.assignment l2.variable |> Option.value_exn)
+          (Assignment.dl state.assignment l1.variable |> Option.value_exn))
   in
+
   add_learnt_clause_helper state c lits
 
 let all_variables_assigned (f : Formula.t) (a : Assignment.t) : bool =
-  List.for_all (Set.to_list (Formula.variables f)) ~f:(Assignment.is_assigned a)
+  Set.for_all (Formula.variables f) ~f:(fun v -> Assignment.is_assigned a v)
 
 let backtrack (a : Assignment.t) (dl : int) : Assignment.t =
   { values = Map.filter ~f:(fun (d : Assignment.d) -> d.dl <= dl) a.values; dl }
@@ -156,11 +148,10 @@ let rec unit_propagation (state : solver_state) :
           process_watching_clause state watching_lit watching_clauses
         else
           let watching_lits = Map.find_exn state.clause2lits watching_clause in
-          match List.length watching_lits with
-          | 1 -> (state, `Conflict watching_clause)
-          | _ ->
-              let watching_lits_0 = List.hd_exn watching_lits in
-              let watching_lits_1 = List.nth_exn watching_lits 1 in
+          match watching_lits with
+          | [] -> failwith "Should not happen" [@coverage off]
+          | _ :: [] -> (state, `Conflict watching_clause)
+          | watching_lits_0 :: watching_lits_1 :: _ ->
               let other =
                 if Literal.equal watching_lit watching_lits_0 then
                   watching_lits_1
@@ -182,8 +173,8 @@ let rec unit_propagation (state : solver_state) :
               then process_watching_clause state watching_lit watching_clauses
               else (state, `Conflict watching_clause))
   in
-  match List.length state.to_propagate with
-  | 0 -> (state, `NoConflict)
+  match state.to_propagate with
+  | [] -> (state, `NoConflict)
   | _ ->
       let to_propagate, watching_lit =
         List.split_n state.to_propagate @@ (List.length state.to_propagate - 1)
@@ -207,26 +198,37 @@ let resolve (c1 : Clause.t) (c2 : Clause.t) (v : Variable.t) : Clause.t =
   in
   Clause.create (lits1 @ lits2)
 
+let snd_largest (l : int list) : int option =
+  List.fold l ~init:(None, None) ~f:(fun (largest, snd_largest) x ->
+      match largest with
+      | None -> (Some x, None)
+      | Some largest -> (
+          match snd_largest with
+          | None ->
+              if x > largest then (Some x, Some largest)
+              else (Some largest, Some x)
+          | Some snd_largest ->
+              if x > largest then (Some x, Some largest)
+              else if x > snd_largest then (Some largest, Some x)
+              else (Some largest, Some snd_largest)))
+  |> snd
+
 let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
   let rec conflict_analysis_once (c : Clause.t) (a : Assignment.t) : Clause.t =
     let literals =
-      (List.filter (Clause.literals c) ~f:(fun l ->
-           match Assignment.dl a l.variable with
-           | Some dl -> dl = a.dl
-           | None -> false)
-      [@coverage off])
-      (* Conflict clause has no unassigned literals *)
+      List.filter (Clause.literals c) ~f:(fun l ->
+          match Assignment.dl a l.variable with
+          | Some dl -> dl = a.dl
+          | None -> false [@coverage off]
+          (* Conflict clause has no unassigned literals *))
     in
-    match List.length literals with
-    | 1 -> c
+
+    match literals with
+    | _ :: [] -> c
     | _ ->
         let literal =
-          (List.find_exn literals ~f:(fun l ->
-               match Assignment.antecedent a l.variable with
-               | Some _ -> true
-               | None -> false)
-          [@coverage off])
-          (* Conflict clause has no unassigned literals *)
+          List.find_exn literals ~f:(fun l ->
+              Assignment.antecedent a l.variable |> Option.is_some)
         in
         let antecedent =
           Option.value_exn (Assignment.antecedent a literal.variable)
@@ -237,16 +239,10 @@ let conflict_analysis (c : Clause.t) (a : Assignment.t) : int * Clause.t =
   else
     let clause = conflict_analysis_once c a in
     let decision_levels =
-      List.dedup_and_sort ~compare:(fun x y -> Int.compare y x)
-      @@ (List.map (Clause.literals clause) ~f:(fun l ->
-              match Assignment.dl a l.variable with
-              | Some dl -> dl
-              | None -> failwith "variable not in assignment")
-         [@coverage off])
+      List.map (Clause.literals clause) ~f:(fun l ->
+          Assignment.dl a l.variable |> Option.value_exn)
     in
-    match List.length decision_levels with
-    | 0 | 1 -> (0, clause)
-    | _ -> (List.nth_exn decision_levels 1, clause)
+    (snd_largest decision_levels |> Option.value ~default:0, clause)
 
 module Make (Heuristic : Heuristic.H) : S = struct
   let cdcl_solve (formula : Formula.t) : [ `SAT of Assignment.t | `UNSAT ] =
@@ -300,7 +296,7 @@ module Make (Heuristic : Heuristic.H) : S = struct
     let state = init_watches formula in
     let unit_clauses =
       List.filter (Formula.clauses formula) ~f:(fun c ->
-          match List.length (Clause.literals c) with 1 -> true | _ -> false)
+          match Clause.literals c with _ :: [] -> true | _ -> false)
     in
     let state =
       List.fold unit_clauses ~init:state ~f:(fun state clause ->

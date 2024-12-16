@@ -17,12 +17,9 @@ module OrderedTrueFirst : H = struct
   let empty = ()
 
   let next_variable (f : Formula.t) (a : Assignment.t) =
-    let rec loop (vars : Variable.t list) : Variable.t =
-      match vars with
-      | [] -> failwith "no unassigned variables" [@coverage off]
-      | v :: vs -> if Assignment.is_assigned a v then loop vs else v
-    in
-    loop (Set.to_list (Formula.variables f))
+    Set.filter (Formula.variables f) ~f:(fun v ->
+        not (Assignment.is_assigned a v))
+    |> Set.min_elt_exn
 
   let pick_branching_variable _ (f : Formula.t) (a : Assignment.t) =
     ((), next_variable f a, true)
@@ -36,12 +33,9 @@ module OrderedFalseFirst : H = struct
   let empty = ()
 
   let next_variable (f : Formula.t) (a : Assignment.t) =
-    let rec loop (vars : Variable.t list) : Variable.t =
-      match vars with
-      | [] -> failwith "no unassigned variables" [@coverage off]
-      | v :: vs -> if Assignment.is_assigned a v then loop vs else v
-    in
-    loop (Set.to_list (Formula.variables f))
+    Set.filter (Formula.variables f) ~f:(fun v ->
+        not (Assignment.is_assigned a v))
+    |> Set.min_elt_exn
 
   let pick_branching_variable _ (f : Formula.t) (a : Assignment.t) =
     ((), next_variable f a, false)
@@ -54,15 +48,10 @@ module Randomized : H = struct
 
   let empty = ()
 
-  let unassigned_vars (f : Formula.t) (a : Assignment.t) =
-    let rec loop (ls : Variable.t list) (vars : Variable.t list) :
-        Variable.t list =
-      match vars with
-      | [] -> ls
-      | v :: vs ->
-          if Assignment.is_assigned a v then loop ls vs else loop (v :: ls) vs
-    in
-    loop [] (Set.to_list (Formula.variables f))
+  let unassigned_vars (f : Formula.t) (a : Assignment.t) : Variable.t list =
+    Set.filter (Formula.variables f) ~f:(fun v ->
+        not (Assignment.is_assigned a v))
+    |> Set.to_list
 
   let pick_branching_variable _ (f : Formula.t) (a : Assignment.t) =
     let vars = unassigned_vars f a in
