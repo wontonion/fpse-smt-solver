@@ -1,6 +1,7 @@
 open Core
 
-type t = Var of int
+type t = Var of int [@@ unboxed]
+(** A variable is represented by an integer *)
 type comparator_witness
 
 val comparator : (t, comparator_witness) Comparator.t

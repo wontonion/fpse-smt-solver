@@ -108,7 +108,7 @@ To run the SMT solver:
 
 2. **DIMACS Parsing Library (`lib/dimacs`)**: The DIMACS parsing library is fully functional and successfully parses DIMACS CNF formulas.
 
-3. **Simple SMT Solver (`lib/smt`)**: The SMT module supports a limited set of operations: `XOR`, `AND`, `OR`, `NOT`, `EQ`, `NEQ0`, `GEQ0`, `LT0`, `ADD`, `SHL`, and `MUL`. It operates on `int16_t`, but the length can be easily adjusted to higher types (e.g., `int32_t`, `int64_t`).
+3. **Simple SMT Solver (`lib/smt`)**: The SMT module supports a limited set of operations: `XOR`, `AND`, `OR`, `NOT`, `EQ`, `NEQ0`, `GEQ0`, `LT0`, `ADD`, `SUB`, `SHL`, and `MUL`. It operates on `int16_t`, but the length can be easily adjusted to higher types (e.g., `int32_t`, `int64_t`).
 
 4. **SMT Virtual Machine (`lib/vm`)**: This stack-based virtual machine adds constraints specified by each opcode and can represent and execute all operations supported by our SMT library.
 
