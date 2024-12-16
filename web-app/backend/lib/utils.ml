@@ -47,11 +47,14 @@ let build_error_response ?(code=400) ~message ~problem_type () =
 
 
 let with_timeout ~timeout ?on_cancel f =
+  let pid_ref = ref None in
+  
   let task = 
     Lwt.catch
       (fun () ->
         let%lwt result = Lwt_preemptive.detach
           (fun () ->
+            pid_ref := Some (Unix.getpid ());
             try
               f ()
             with e ->
@@ -64,12 +67,22 @@ let with_timeout ~timeout ?on_cancel f =
             (match on_cancel with
              | Some cb -> cb ()
              | None -> ());
+            (match !pid_ref with
+             | Some pid -> 
+                 (try Unix.kill pid Sys.sigkill 
+                  with Unix.Unix_error _ -> ())
+             | None -> ());
             Lwt.return (Error "Task timed out")
         | e -> Lwt.return (Error ("Unexpected error: " ^ Printexc.to_string e)))
   in
 
   let timeout_thread = 
     let* () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
+    (match !pid_ref with
+     | Some pid -> 
+         (try Unix.kill pid Sys.sigkill 
+          with Unix.Unix_error _ -> ())
+     | None -> ());
     Lwt.cancel task;
     Lwt.return (Error "Task timed out")
   in
