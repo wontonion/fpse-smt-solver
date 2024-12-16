@@ -1,0 +1,25 @@
+(library
+ (name handlers)
+ (public_name backend.handlers)
+ (modules 
+  handlers
+  hello_handler
+  sudoku_handler
+  formula_handler
+ )
+ (libraries 
+  dream
+  lwt 
+  yojson
+  types
+  utils
+  sudoku
+  logical_solver
+ )
+ (preprocess
+  (pps 
+   lwt_ppx 
+   ppx_deriving_yojson
+  )
+ )
+)

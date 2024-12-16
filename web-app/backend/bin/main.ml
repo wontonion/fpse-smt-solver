@@ -1,8 +1,8 @@
 let routes = [ 
-  Handlers.hello_handler; 
-  Handlers.generate_sudoku_handler; 
-  Handlers.solve_sudoku_handler;
-  Handlers.solve_formula_handler 
+  Routes.hello_route; 
+  Routes.generate_sudoku_route; 
+  Routes.solve_sudoku_route;
+  Routes.solve_formula_route 
 ] 
 
 

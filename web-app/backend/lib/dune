@@ -1,11 +1,12 @@
 (library
- (name handlers)
- (modules handlers)
+ (name routes)
+ (modules routes)
  (libraries
   dream
   yojson
   types
   utils
+  handlers
   sudoku
   logical_solver
   solver.cdcl
@@ -15,8 +16,10 @@
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
+
 (library
  (name sudoku)
+ (public_name backend.sudoku)
  (modules sudoku)
  (libraries 
   core 
@@ -31,6 +34,7 @@
 
 (library
  (name logical_solver)
+ (public_name backend.logical_solver)
  (modules logical_solver)
  (libraries 
   core 
@@ -45,6 +49,7 @@
 
 (library
  (name types)
+ (public_name backend.types)
  (modules types)
  (libraries core)
  (preprocess
@@ -52,6 +57,7 @@
 
 (library
  (name utils)
+ (public_name backend.utils)
  (modules utils)
  (libraries dream yojson types)
  (preprocess

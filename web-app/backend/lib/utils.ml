@@ -1,7 +1,28 @@
-open Lwt.Syntax
+
+
+let build_simple_json_string ~msg =
+  let body = {
+    Types.message = msg;
+    Types.problem_type = Types.SAT;
+    Types.data = None;
+  } in
+  let json = Types.json_body_to_yojson Types.solution_to_yojson body in
+  Yojson.Safe.to_string json
+
+let build_string_from_json ~msg ~problem_type ~data ~data_to_yojson =
+  let body = {
+    Types.message = msg;
+    Types.problem_type = problem_type;
+    Types.data = data;
+  } in
+  body
+  |> Types.json_body_to_yojson data_to_yojson
+  |> Yojson.Safe.to_string
+
 
 let json_response data =
   Dream.json (Yojson.Safe.to_string data)
+
 
 let build_response ~status ~message ?data to_yojson =
   let response = {
@@ -55,6 +76,7 @@ let with_timeout ~timeout ?on_cancel f =
         let%lwt result = Lwt_preemptive.detach
           (fun () ->
             pid_ref := Some (Unix.getpid ());
+            Printf.printf "Process ID: %d\n%!" (match !pid_ref with Some pid -> pid | None -> -1);
             try
               f ()
             with e ->
@@ -77,7 +99,7 @@ let with_timeout ~timeout ?on_cancel f =
   in
 
   let timeout_thread = 
-    let* () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
+    let%lwt () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
     (match !pid_ref with
      | Some pid -> 
          (try Unix.kill pid Sys.sigkill 
@@ -87,12 +109,13 @@ let with_timeout ~timeout ?on_cancel f =
     Lwt.return (Error "Task timed out")
   in
 
-  let* result = Lwt.pick [
-    (let* x = task in Lwt.return x);
+  let%lwt result = Lwt.pick [
+    (let%lwt x = task in Lwt.return x);
     timeout_thread
   ] in
   Lwt.cancel timeout_thread;
   Lwt.return result
+
 
 
 

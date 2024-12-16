@@ -42,3 +42,9 @@ type 'a response = {
   message: string;
   data: 'a option;
 } [@@deriving yojson]
+
+type 'a json_body = {
+  message: string;
+  problem_type: problem_type;
+  data: 'a option;
+} [@@deriving yojson]

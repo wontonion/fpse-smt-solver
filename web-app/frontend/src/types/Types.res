@@ -43,7 +43,6 @@ type cellState = {
 
 type sudokuGridResponseData = {
   size: int,
-  // TODO must be array?
   grid: array<array<cellState>>,
 }
 

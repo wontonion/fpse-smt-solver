@@ -17,10 +17,8 @@ function createEmptyGrid(size) {
 }
 
 function processGridResponse(json) {
-  var response = Belt_Option.getExn(Js_json.decodeObject(json));
-  var data = Belt_Option.getExn(Js_dict.get(response, "data"));
-  var gridObj = Belt_Option.getExn(Js_json.decodeObject(data));
-  var grid = Belt_Option.getExn(Js_json.decodeArray(Belt_Option.getExn(Js_dict.get(gridObj, "grid"))));
+  var data = Belt_Option.getExn(Js_json.decodeObject(json));
+  var grid = Belt_Option.getExn(Js_json.decodeArray(Belt_Option.getExn(Js_dict.get(data, "grid"))));
   return Belt_Array.map(grid, (function (row) {
                 return Belt_Array.map(Belt_Option.getExn(Js_json.decodeArray(row)), (function (cell) {
                               var cellObj = Belt_Option.getExn(Js_json.decodeObject(cell));

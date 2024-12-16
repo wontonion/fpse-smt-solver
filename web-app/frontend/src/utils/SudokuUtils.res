@@ -22,23 +22,22 @@ let createEmptyGrid = size => {
 
 // process the grid response from the backend
 let processGridResponse = (json: Js.Json.t): array<array<Types.cellState>> => {
-  let response = json->Js.Json.decodeObject->Belt.Option.getExn
-  let data = response->Js.Dict.get("data")->Belt.Option.getExn
-  let gridObj = data->Js.Json.decodeObject->Belt.Option.getExn
-  // let size = gridObj
-  //   ->Js.Dict.get("size")
+  let data = json->Js.Json.decodeObject->Belt.Option.getExn
+  let grid = data->Js.Dict.get("grid")->Belt.Option.getExn->Js.Json.decodeArray->Belt.Option.getExn
+  // let data = response->Js.Dict.get("data")->Belt.Option.getExn
+  // let gridObj = data->Js.Json.decodeObject->Belt.Option.getExn
+
+  // let grid = gridObj
+  //   ->Js.Dict.get("grid")
   //   ->Belt.Option.getExn
-  //   ->Js.Json.decodeNumber
+  //   ->Js.Json.decodeArray
   //   ->Belt.Option.getExn
-  //   ->int_of_float
-  let grid = gridObj
-    ->Js.Dict.get("grid")
-    ->Belt.Option.getExn
+
+  grid
+  ->Belt.Array.map(row => {
+    row
     ->Js.Json.decodeArray
     ->Belt.Option.getExn
-
-  grid->Belt.Array.map(row => {
-    row->Js.Json.decodeArray->Belt.Option.getExn
     ->Belt.Array.map(cell => {
       let cellObj = cell->Js.Json.decodeObject->Belt.Option.getExn
       {
