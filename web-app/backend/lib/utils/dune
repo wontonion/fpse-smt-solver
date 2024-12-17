@@ -40,6 +40,10 @@
  (name utils)
  (public_name backend.utils.utils)
  (modules utils)
- (libraries dream yojson types)
+ (libraries 
+  core
+  dream 
+  yojson 
+  types)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))

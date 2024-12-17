@@ -8,10 +8,17 @@
   formula_handler
  )
  (libraries 
+  core
   dream
   lwt
   sudoku_utils
   formula_utils
+  ; solver.cdcl
+  ; solver.dimacs
+  ; solver.smt
+  ; solver.vm
+  types
+  utils
  )
  (preprocess
   (pps 

@@ -14,8 +14,8 @@ let generate_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
       ~problem_type:Types.Sudoku () *)
   else
     let%lwt result =
-      Utils.with_timeout ~timeout:1000 (fun () ->
-          try Ok (Sudoku_utils.generate_puzzle ~block_size ())
+      Utils.with_timeout ~timeout:5000 (fun () ->
+          try Ok (Sudoku_utils.generate_puzzle ~block_size)
           with e -> Error (Printexc.to_string e))
     in
 
