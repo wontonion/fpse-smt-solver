@@ -43,7 +43,6 @@ type cellState = {
 
 type sudokuGridResponseData = {
   size: int,
-  // TODO must be array?
   grid: array<array<cellState>>,
 }
 
@@ -79,8 +78,17 @@ type solverResponse = {
   message: string,
   data: option<solverSolutionData>,
 }
+type jsonBodyData = 
+| String(string)
+| SudokuGridResponseData(sudokuGridResponseData)
 
-// 添加Toast相关类型
+type jsonBody = {
+  message: string,
+  problemType: problemType,
+  data: jsonBodyData,
+}
+
+
 type toastType = [#success | #error | #info]
 type toast = {
   id: string,

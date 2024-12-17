@@ -1,58 +1,11 @@
 (library
- (name handlers)
- (modules handlers)
+ (name routes)
+ (modules routes)
  (libraries
   dream
-  yojson
-  types
-  utils
-  sudoku
-  logical_solver
-  solver.cdcl
-  solver.dimacs
-  solver.smt
-  solver.vm)
+  handlers
+ )
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
 
-(library
- (name sudoku)
- (modules sudoku)
- (libraries 
-  core 
-  types 
-  utils
-  solver.cdcl
-  solver.dimacs
-  solver.smt
-  solver.vm)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
 
-(library
- (name logical_solver)
- (modules logical_solver)
- (libraries 
-  core 
-  types 
-  utils 
-  solver.cdcl 
-  solver.dimacs 
-  solver.smt 
-  solver.vm)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
-
-(library
- (name types)
- (modules types)
- (libraries core)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
-
-(library
- (name utils)
- (modules utils)
- (libraries dream yojson types)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))

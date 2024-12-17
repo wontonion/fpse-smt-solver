@@ -32,28 +32,11 @@ async function postFormula(type_, content) {
     }
     var json = await response.json();
     var result = Belt_Option.getExn(Js_json.decodeObject(json));
-    var status = Js_dict.get(result, "status");
-    var exit = 0;
-    if (status !== undefined) {
-      if (status === "error") {
-        return {
-                TAG: "Error",
-                _0: Belt_Option.getExn(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(result, "message"))))
-              };
-      }
-      exit = 1;
-    } else {
-      exit = 1;
-    }
-    if (exit === 1) {
-      var data = Belt_Option.getExn(Js_json.decodeObject(Belt_Option.getExn(Js_dict.get(result, "data"))));
-      var solution = Belt_Option.getExn(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(data, "data"))));
-      return {
-              TAG: "Ok",
-              _0: solution
-            };
-    }
-    
+    var solution = Belt_Option.getExn(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(result, "data"))));
+    return {
+            TAG: "Ok",
+            _0: solution
+          };
   }
   catch (raw_err){
     var err = Caml_js_exceptions.internalToOCamlException(raw_err);

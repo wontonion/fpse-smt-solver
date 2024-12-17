@@ -84,7 +84,7 @@ EXPOSE 8080
 
 # Create startup script
 USER root
-RUN echo '#!/bin/bash\neval $(opam env)\ncd /app && touch dune-workspace && dune build\ncd /app/backend && exec dune exec backend' > /start.sh && \
+RUN echo '#!/bin/bash\neval $(opam env)\ncd /app && touch dune-workspace && dune build\ncd /app/backend && exec dune exec backend --watch' > /start.sh && \
     chmod +x /start.sh
 
 USER opam

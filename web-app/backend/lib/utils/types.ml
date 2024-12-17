@@ -31,14 +31,20 @@ type problem = {
   variables: string list;
 } [@@deriving yojson]
 
-type solution = {
+(* type solution = {
   problem_type: problem_type;
   data: string;
   time_taken: float;
-} [@@deriving yojson]
+} [@@deriving yojson] *)
 
 type 'a response = {
   status: string;
   message: string;
+  data: 'a option;
+} [@@deriving yojson]
+
+type 'a json_body = {
+  message: string;
+  problem_type: problem_type;
   data: 'a option;
 } [@@deriving yojson]

@@ -2,9 +2,12 @@
  (name test_sudoku)
  (libraries
   ounit2
+  routes
   handlers
-  sudoku
-  types)
+  types
+  utils
+  sudoku_utils
+  )
  (preprocess
   (pps ppx_deriving_yojson)))
 
