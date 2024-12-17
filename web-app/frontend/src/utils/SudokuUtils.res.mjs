@@ -16,21 +16,6 @@ function createEmptyGrid(size) {
               }));
 }
 
-function processGridResponse(json) {
-  var data = Belt_Option.getExn(Js_json.decodeObject(json));
-  var grid = Belt_Option.getExn(Js_json.decodeArray(Belt_Option.getExn(Js_dict.get(data, "grid"))));
-  return Belt_Array.map(grid, (function (row) {
-                return Belt_Array.map(Belt_Option.getExn(Js_json.decodeArray(row)), (function (cell) {
-                              var cellObj = Belt_Option.getExn(Js_json.decodeObject(cell));
-                              return {
-                                      value: Belt_Option.getWithDefault(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(cellObj, "value"))), ""),
-                                      isInitial: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_initial"))), false),
-                                      isValid: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_valid"))), true)
-                                    };
-                            }));
-              }));
-}
-
 function sudokuGenerate(blockSize) {
   return fetch("/api/sudoku/generate?blockSize=" + blockSize.toString(), {
                 method: "GET"
@@ -41,6 +26,21 @@ function sudokuGenerate(blockSize) {
                 return Promise.reject(Js_exn.raiseError("Network response was not ok"));
               }
             });
+}
+
+function processGridResponse(json) {
+  var data = Belt_Option.getExn(Js_dict.get(Belt_Option.getExn(Js_json.decodeObject(json)), "data"));
+  var grid = Belt_Option.getExn(Js_dict.get(Belt_Option.getExn(Js_json.decodeObject(data)), "grid"));
+  return Belt_Array.map(Belt_Option.getExn(Js_json.decodeArray(grid)), (function (row) {
+                return Belt_Array.map(Belt_Option.getExn(Js_json.decodeArray(row)), (function (cell) {
+                              var cellObj = Belt_Option.getExn(Js_json.decodeObject(cell));
+                              return {
+                                      value: Belt_Option.getWithDefault(Js_json.decodeString(Belt_Option.getExn(Js_dict.get(cellObj, "value"))), ""),
+                                      isInitial: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_initial"))), false),
+                                      isValid: Belt_Option.getWithDefault(Js_json.decodeBoolean(Belt_Option.getExn(Js_dict.get(cellObj, "is_valid"))), true)
+                                    };
+                            }));
+              }));
 }
 
 function sudokuSolve(gridValues) {
@@ -90,8 +90,8 @@ function sudokuSolve(gridValues) {
 
 export {
   createEmptyGrid ,
-  processGridResponse ,
   sudokuGenerate ,
+  processGridResponse ,
   sudokuSolve ,
 }
 /* No side effect */

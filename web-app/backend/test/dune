@@ -4,7 +4,10 @@
   ounit2
   routes
   handlers
-  types)
+  types
+  utils
+  sudoku_utils
+  )
  (preprocess
   (pps ppx_deriving_yojson)))
 

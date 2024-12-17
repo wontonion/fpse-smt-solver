@@ -9,12 +9,9 @@
  )
  (libraries 
   dream
-  lwt 
-  yojson
-  types
-  utils
-  sudoku
-  logical_solver
+  lwt
+  sudoku_utils
+  formula_utils
  )
  (preprocess
   (pps 

@@ -1,5 +1,5 @@
 open OUnit2
-open Sudoku
+open Sudoku_utils
 
 let test_create_empty_grid_3x3 _ =
   let grid = create_empty_grid ~block_size:3 () in

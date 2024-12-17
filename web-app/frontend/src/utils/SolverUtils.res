@@ -19,30 +19,13 @@ let postFormula = async (type_, content) => {
       let json = await response->json
       let result = json->Js.Json.decodeObject->Belt.Option.getExn
 
-      switch Js.Dict.get(result, "status") {
-      | Some(status) if status === Js.Json.string("error") =>
-        Error(
-          result
-          ->Js.Dict.get("message")
-          ->Belt.Option.getExn
-          ->Js.Json.decodeString
-          ->Belt.Option.getExn,
-        )
-      | _ =>
-        let data = result
-          ->Js.Dict.get("data")
-          ->Belt.Option.getExn
-          ->Js.Json.decodeObject
-          ->Belt.Option.getExn
+      let solution = result
+        ->Js.Dict.get("data")
+        ->Belt.Option.getExn
+        ->Js.Json.decodeString
+        ->Belt.Option.getExn
         
-        let solution = data
-          ->Js.Dict.get("data")
-          ->Belt.Option.getExn
-          ->Js.Json.decodeString
-          ->Belt.Option.getExn
-        
-        Ok(solution)
-      }
+      Ok(solution)
     }
   } catch {
   | err => Error("Failed to solve formula: " ++ err->Js.String2.make)

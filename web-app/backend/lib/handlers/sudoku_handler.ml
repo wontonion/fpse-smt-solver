@@ -15,13 +15,13 @@ let generate_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
   else
     let%lwt result =
       Utils.with_timeout ~timeout:1000 (fun () ->
-          try Ok (Sudoku.generate_puzzle ~block_size ())
+          try Ok (Sudoku_utils.generate_puzzle ~block_size ())
           with e -> Error (Printexc.to_string e))
     in
 
     match result with
     | Ok grid ->
-        let sudoku_data = Sudoku.convert_to_sudoku_data grid in
+        let sudoku_data = Sudoku_utils.convert_to_sudoku_data grid in
         Utils.build_string_from_json 
           ~msg:"Sudoku puzzle generated successfully" 
           ~problem_type:Types.Sudoku 
@@ -45,10 +45,10 @@ let solve_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
  let%lwt body = Dream.body request in
       try
         let json = Yojson.Safe.from_string body in
-        let data = Sudoku.convert_frontend_grid json in
+        let data = Sudoku_utils.convert_frontend_grid json in
         let int_grid =
           List.map
-            (fun row ->
+            (fun row -> 
               List.map
                 (fun cell ->
                   if cell.Types.is_initial then
@@ -61,9 +61,16 @@ let solve_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
         in
         let%lwt result =
           Utils.with_timeout ~timeout:10000 (fun () ->
-              try Ok (Sudoku.solve_sudoku int_grid data.size)
+              try Ok (Sudoku_utils.solve_sudoku int_grid data.size)
               with e -> Error (Printexc.to_string e))
-        in
+              (* Utils.with_timeout_new ~timeout:1000 (fun () ->
+                Sudoku.solve_sudoku int_grid data.size) *)
+          (* Lwt_unix.with_timeout 1.0 
+          (fun () ->
+            (* let%lwt _ = Lwt_unix.sleep 0. in *)
+            Lwt.return (Sudoku.solve_sudoku int_grid data.size)
+          )*)
+        in 
 
         match result with
         | Ok result ->

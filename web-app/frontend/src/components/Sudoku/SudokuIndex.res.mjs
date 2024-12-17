@@ -127,7 +127,7 @@ function SudokuIndex(props) {
       return ToastService.success("Grid cleared successfully");
     }
   };
-  var handleGenerateGrid = function () {
+  var handleGenerateSudoku = function () {
     Core__Promise.$$catch(SudokuUtils.sudokuGenerate(blockSize).then(function (json) {
               var newGrid = SudokuUtils.processGridResponse(json);
               setGridValues(function (param) {
@@ -281,7 +281,7 @@ function SudokuIndex(props) {
                                       JsxRuntime.jsx(Button.make, {
                                             children: "Generate New Sudoku",
                                             onClick: (function (param) {
-                                                handleGenerateGrid();
+                                                handleGenerateSudoku();
                                               })
                                           }),
                                       JsxRuntime.jsx(Button.make, {

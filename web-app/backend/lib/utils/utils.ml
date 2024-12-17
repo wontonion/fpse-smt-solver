@@ -1,13 +1,12 @@
-
-
 let build_simple_json_string ~msg =
   let body = {
     Types.message = msg;
     Types.problem_type = Types.SAT;
     Types.data = None;
   } in
-  let json = Types.json_body_to_yojson Types.solution_to_yojson body in
-  Yojson.Safe.to_string json
+  body
+  |> Types.json_body_to_yojson (fun _ -> `Null)
+  |> Yojson.Safe.to_string
 
 let build_string_from_json ~msg ~problem_type ~data ~data_to_yojson =
   let body = {
@@ -51,23 +50,23 @@ let build_sudoku_response ?(status="success") ~message ?data () =
   build_response ~status ~message ?data Types.sudoku_data_to_yojson
 
 (** Build a standard JSON response for SAT/SMT solutions *)
-let build_solution_response ?(status="success") ~message ?data () =
-  build_response ~status ~message ?data Types.solution_to_yojson
+(* let build_solution_response ?(status="success") ~message ?data () =
+  build_response ~status ~message ?data Types.solution_to_yojson *)
 
 (** Build a standard JSON response for SAT/SMT problems *)
 let build_problem_response ?(status="success") ~message ?data () =
   build_response ~status ~message ?data Types.problem_to_yojson
 
 (** Build an error response *)
-let build_error_response ?(code=400) ~message ~problem_type () =
+(* let build_error_response ?(code=400) ~message ~problem_type () =
   match problem_type with
   | Types.Sudoku -> 
       build_error_response_with_converter ~code ~message Types.sudoku_data_to_yojson
   | Types.SAT | Types.SMT -> 
-      build_error_response_with_converter ~code ~message Types.solution_to_yojson
+      build_error_response_with_converter ~code ~message Types.solution_to_yojson *)
 
 
-let with_timeout ~timeout ?on_cancel f =
+(* let with_timeout ~timeout ?on_cancel f =
   let pid_ref = ref None in
   
   let task = 
@@ -114,8 +113,64 @@ let with_timeout ~timeout ?on_cancel f =
     timeout_thread
   ] in
   Lwt.cancel timeout_thread;
-  Lwt.return result
+  Lwt.return result *)
+
+  let with_timeout ~timeout ?on_cancel f =
+    let task = 
+      Lwt.catch
+        (fun () ->
+          let%lwt () = Lwt.pause () in  (* Allow other tasks to run *)
+          let%lwt result = Lwt_preemptive.detach
+            (fun () ->
+              try
+                f ()
+              with e ->
+                Error ("Exception: " ^ Printexc.to_string e))
+            ()
+          in
+          Lwt.return result)
+        (function
+          | Lwt.Canceled ->
+              (match on_cancel with
+               | Some cb -> cb ()
+               | None -> ());
+              Lwt.return (Error "Task timed out")
+          | e -> Lwt.return (Error ("Unexpected error: " ^ Printexc.to_string e)))
+    in
+  
+    let timeout_thread = 
+      let%lwt () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
+      Lwt.cancel task;
+      Lwt.return (Error "Task timed out")
+    in
+  
+    let%lwt result = Lwt.pick [
+      (let%lwt x = task in Lwt.return x);
+      timeout_thread
+    ] in
+    Lwt.cancel timeout_thread;
+    Lwt.return result
 
 
-
-
+(* let with_timeout_new ~seconds ~f =
+  let timeout = Lwt_unix.timeout seconds in
+  Lwt.catch (
+    fun () ->
+      let%lwt result = Lwt_unix.with_timeout ~timeout ~f in
+      Lwt.return result
+  ) (
+    fun e ->
+      match e with 
+      | Lwt_unix.Timeout -> Lwt.return (Error "Timeout")
+      | _ -> Lwt.return (Error ("Unexpected error: " ^ Printexc.to_string e))
+  )
+ *)
+(* let with_timeout_new ~timeout f =
+  let%lwt result = Lwt_unix.with_timeout 
+    (float_of_int timeout /. 1000.0)
+    (fun () ->
+      let%lwt _ = Lwt_unix.sleep 0. in
+      Lwt.return (f ())
+    )
+  in
+  result *)

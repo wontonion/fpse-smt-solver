@@ -128,19 +128,6 @@ let generate_puzzle ~block_size () : grid =
 
   remove_numbers solved_grid shuffled_positions 0
 
-(* Print board *)
-let print_board (grid : grid) : unit =
-  List.iteri
-    (fun i row ->
-      if i mod 3 = 0 && i <> 0 then print_endline "---------------------";
-      List.iteri
-        (fun j num ->
-          if j mod 3 = 0 && j <> 0 then print_string "| ";
-          if num = 0 then print_string ". " else Printf.printf "%d " num)
-        row;
-      print_newline ())
-    grid
-
 let convert_to_sudoku_data (grid : grid) : sudoku_data =
   let size = List.length grid in
   let convert_cell value =
@@ -174,10 +161,8 @@ let convert_frontend_grid json =
 let get_sudoku_formula size =
   let open Core.In_channel in
   match size with
-  | 9 -> 
-      Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
-  | 4 ->
-      Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
+  | 9 -> Dimacs.Parser.parse @@ read_all "data/sudoku.3x3.cnf" |> Result.get_ok
+  | 4 -> Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf" |> Result.get_ok
   | _ -> failwith "Invalid grid size"
 
 
@@ -239,3 +224,5 @@ let solve_sudoku (int_grid : int list list) (size : int) :
     | Error msg -> Error msg
     | Ok assignment ->
         Ok (bool_to_value size assignment |> split_into_sublists size)
+
+        

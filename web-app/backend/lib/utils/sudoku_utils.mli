@@ -12,7 +12,6 @@ val find_empty : grid -> block_size:int -> (int * int) option
 val solve_and_count : grid -> int -> block_size:int -> int
 val solve_grid : grid -> block_size:int -> grid option
 val generate_puzzle : block_size:int -> unit -> grid
-val print_board : grid -> unit
 val convert_to_sudoku_data : grid -> sudoku_data
 val convert_frontend_grid : Yojson.Safe.t -> sudoku_data
 val solve_sudoku : grid -> int -> (int list list, string) Result.t

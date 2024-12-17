@@ -86,8 +86,8 @@ let make = () => {
     }
   }
 
-  // handle generate grid
-  let handleGenerateGrid = () => {
+  // handle generate sudoku
+  let handleGenerateSudoku = () => {
     open Promise
     SudokuUtils.sudokuGenerate(~blockSize)
     ->then(json => {
@@ -183,20 +183,6 @@ let make = () => {
   }
 
   <div className="h-screen flex flex-col overflow-hidden">
-    // <ReactToastify.toastContainer
-    //   {...makeToastContainerProps({
-    //     "position": positionToString(#topRight),
-    //     "autoClose": 5000,
-    //     "hideProgressBar": false,
-    //     "newestOnTop": true,
-    //     "closeOnClick": true,
-    //     "rtl": false,
-    //     "pauseOnFocusLoss": true,
-    //     "draggable": true,
-    //     "pauseOnHover": true,
-    //     "theme": "light",
-    //   })}
-    // />
     <div className="flex-1 flex gap-6 p-4 max-w-7xl mx-auto w-full">
       <div className="w-1/2 flex flex-col">
         <div className="text-xl font-semibold mb-2">
@@ -230,7 +216,7 @@ let make = () => {
       <div className="w-1/2">
         <h2 className="text-xl font-semibold mb-2"> {React.string("Controls")} </h2>
         <div className="space-y-2 flex justify-start flex-col">
-          <Button onClick={_ => handleGenerateGrid()}>
+          <Button onClick={_ => handleGenerateSudoku()}>
             {React.string("Generate New Sudoku")}
           </Button>
           <Button onClick={_ => handleSolveSudoku()}> {React.string("Solve Sudoku")} </Button>
