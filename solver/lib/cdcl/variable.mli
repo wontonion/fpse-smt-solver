@@ -20,3 +20,9 @@ val t_of_sexp : Sexp.t -> t
 
 val string_of_t : t -> string
 (** [string_of_t v] returns a string representation of variable [v] *)
+
+val hash : t -> int
+(** [hash v] returns the hash of variable [v] *)
+
+val hash_fold_t : Hash.state -> t -> Hash.state
+(** [hash_fold_t state v] folds the hash of variable [v] into the state [state] *)

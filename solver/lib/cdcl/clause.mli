@@ -22,3 +22,12 @@ val variables : t -> Core.Set.M(Variable).t
 
 val equal : t -> t -> bool
 (** [equal c1 c2] returns [true] if [c1] and [c2] are equal, [false] otherwise *)
+
+val compare : t -> t -> int
+(** [compare c1 c2] compares clauses [c1] and [c2] *)
+
+val hash : t -> int
+(** [hash c] returns the hash of clause [c] *)
+
+val hash_fold_t : Hash.state -> t -> Hash.state
+(** [hash_fold_t state v] folds the hash of variable [v] into the state [state] *)

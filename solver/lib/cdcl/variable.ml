@@ -1,7 +1,7 @@
 open Core
 
 module T = struct
-  type t = Var of int [@@unboxed] [@@deriving sexp, compare, equal]
+  type t = Var of int [@@unboxed] [@@deriving sexp, compare, equal, hash]
 end
 
 include T

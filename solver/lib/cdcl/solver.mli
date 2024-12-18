@@ -5,8 +5,8 @@ type status = SATISFIED | UNSATISFIED | UNIT | UNRESOLVED
 type solver_state = {
   formula : Formula.t;
   assignment : Assignment.t;
-  lit2clauses : Clause.t list Map.M(Literal).t;
-  clause2lits : Literal.t list Map.M(Clause).t;
+  lit2clauses : Clause.t list Hashtbl.M(Literal).t;
+  clause2lits : Literal.t list Hashtbl.M(Clause).t;
   to_propagate : Literal.t list;
 }
 

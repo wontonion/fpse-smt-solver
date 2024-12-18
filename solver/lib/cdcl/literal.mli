@@ -40,3 +40,9 @@ val bool_to_polarity : bool -> polarity
 
 val polarity_to_bool : polarity -> bool
 (** [polarity_to_bool p] returns the boolean corresponding to polarity [p] *)
+
+val hash : t -> int
+(** [hash l] returns the hash of literal [l] *)
+
+val hash_fold_t : Hash.state -> t -> Hash.state
+(** [hash_fold_t state v] folds the hash of variable [v] into the state [state] *)

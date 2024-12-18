@@ -35,17 +35,17 @@ let test_init_watches _ =
   let state = Solver.init_watches f in
 
   let lits2clauses = state.lit2clauses in
-  assert_equal [ c2 ] (Map.find_exn lits2clauses l1);
-  assert_equal [ c1 ] (Map.find_exn lits2clauses l2);
-  assert_equal None (Map.find lits2clauses l3);
-  assert_equal [ c1 ] (Map.find_exn lits2clauses l1');
-  assert_equal [ c0 ] (Map.find_exn lits2clauses l2');
-  assert_equal [ c0 ] (Map.find_exn lits2clauses l3');
+  assert_equal [ c2 ] (Hashtbl.find_exn lits2clauses l1);
+  assert_equal [ c1 ] (Hashtbl.find_exn lits2clauses l2);
+  assert_equal None (Hashtbl.find lits2clauses l3);
+  assert_equal [ c1 ] (Hashtbl.find_exn lits2clauses l1');
+  assert_equal [ c0 ] (Hashtbl.find_exn lits2clauses l2');
+  assert_equal [ c0 ] (Hashtbl.find_exn lits2clauses l3');
 
   let clauses2lits = state.clause2lits in
-  assert_equal [ l2'; l3' ] (Map.find_exn clauses2lits c0);
-  assert_equal [ l2; l1' ] (Map.find_exn clauses2lits c1);
-  assert_equal [ l1 ] (Map.find_exn clauses2lits c2)
+  assert_equal [ l2'; l3' ] (Hashtbl.find_exn clauses2lits c0);
+  assert_equal [ l2; l1' ] (Hashtbl.find_exn clauses2lits c1);
+  assert_equal [ l1 ] (Hashtbl.find_exn clauses2lits c2)
 
 let test_all_variables_assigned _ =
   let c1 = Clause.create [ l1 ] in

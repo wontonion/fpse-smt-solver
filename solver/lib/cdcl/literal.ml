@@ -3,10 +3,10 @@ open Core
 module T = struct
   [@@@coverage off]
 
-  type polarity = Positive | Negative [@@deriving sexp, equal, compare]
+  type polarity = Positive | Negative [@@deriving sexp, equal, compare, hash]
 
   type t = { polarity : polarity; variable : Variable.t }
-  [@@deriving sexp, equal]
+  [@@deriving sexp, equal, hash]
 
   [@@@coverage on]
 

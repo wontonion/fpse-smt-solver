@@ -5,8 +5,8 @@ type status = SATISFIED | UNSATISFIED | UNIT | UNRESOLVED
 type solver_state = {
   formula : Formula.t;
   assignment : Assignment.t;
-  lit2clauses : Clause.t list Map.M(Literal).t;
-  clause2lits : Literal.t list Map.M(Clause).t;
+  lit2clauses : Clause.t list Hashtbl.M(Literal).t;
+  clause2lits : Literal.t list Hashtbl.M(Clause).t;
   to_propagate : Literal.t list;
 }
 
@@ -15,22 +15,20 @@ module type S = sig
 end
 
 let init_watches (f : Formula.t) : solver_state =
-  let lit2clauses, clause2lits =
-    List.fold (Formula.clauses f)
-      ~init:(Map.empty (module Literal), Map.empty (module Clause))
-      ~f:(fun (lit2clauses, clause2lits) c ->
+  let lit2clauses = Hashtbl.create (module Literal) in
+  let clause2lits = Hashtbl.create (module Clause) in
+  let _ =
+    List.fold_left (Formula.clauses f) ~init:() ~f:(fun _ c ->
         match Clause.literals c with
         | [] -> failwith "Should not happen" [@coverage off]
         | lit :: [] ->
-            ( Map.add_multi lit2clauses ~key:lit ~data:c,
-              Map.add_multi clause2lits ~key:c ~data:lit )
+            Hashtbl.add_multi lit2clauses ~key:lit ~data:c;
+            Hashtbl.add_multi clause2lits ~key:c ~data:lit
         | lit1 :: lit2 :: _ ->
-            ( lit2clauses
-              |> Map.add_multi ~key:lit1 ~data:c
-              |> Map.add_multi ~key:lit2 ~data:c,
-              clause2lits
-              |> Map.add_multi ~key:c ~data:lit1
-              |> Map.add_multi ~key:c ~data:lit2 ))
+            Hashtbl.add_multi lit2clauses ~key:lit1 ~data:c;
+            Hashtbl.add_multi lit2clauses ~key:lit2 ~data:c;
+            Hashtbl.add_multi clause2lits ~key:c ~data:lit1;
+            Hashtbl.add_multi clause2lits ~key:c ~data:lit2)
   in
   {
     formula = f;
@@ -46,17 +44,13 @@ let add_learnt_clause (state : solver_state) (c : Clause.t) : solver_state =
     match lits with
     | [] -> state
     | lit :: lits -> (
-        match Map.find state.clause2lits clause |> Option.value ~default:[] with
+        match
+          Hashtbl.find state.clause2lits clause |> Option.value ~default:[]
+        with
         | [] | _ :: [] ->
-            let clause2lits =
-              Map.add_multi state.clause2lits ~key:clause ~data:lit
-            in
-            let lit2clauses =
-              Map.add_multi state.lit2clauses ~key:lit ~data:clause
-            in
-            add_learnt_clause_helper
-              { state with clause2lits; lit2clauses }
-              clause lits
+            Hashtbl.add_multi state.clause2lits ~key:clause ~data:lit;
+            Hashtbl.add_multi state.lit2clauses ~key:lit ~data:clause;
+            add_learnt_clause_helper state clause lits
         | _ -> state)
   in
   let formula = Formula.add_clause state.formula c in
@@ -106,7 +100,7 @@ let rec unit_propagation (state : solver_state) :
       | lit :: clause_lits ->
           if
             List.mem
-              (Map.find state.clause2lits watching_clause
+              (Hashtbl.find state.clause2lits watching_clause
               |> Option.value ~default:[])
               lit ~equal:Literal.equal
           then try_rewatch_once state watching_lit watching_clause clause_lits
@@ -117,22 +111,19 @@ let rec unit_propagation (state : solver_state) :
           else
             let ls =
               lit
-              :: (Map.find_exn state.clause2lits watching_clause
+              :: (Hashtbl.find_exn state.clause2lits watching_clause
                  |> List.filter ~f:(fun l -> not (Literal.equal l watching_lit))
                  )
             in
-            let clause2lits =
-              Map.set state.clause2lits ~key:watching_clause ~data:ls
-            in
+            Hashtbl.set state.clause2lits ~key:watching_clause ~data:ls;
+
             let ls =
-              Map.find_exn state.lit2clauses watching_lit
+              Hashtbl.find_exn state.lit2clauses watching_lit
               |> List.filter ~f:(fun c -> not (Clause.equal c watching_clause))
             in
-            let lit2clauses =
-              Map.set state.lit2clauses ~key:watching_lit ~data:ls
-              |> Map.add_multi ~key:lit ~data:watching_clause
-            in
-            (true, { state with clause2lits; lit2clauses })
+            Hashtbl.set state.lit2clauses ~key:watching_lit ~data:ls;
+            Hashtbl.add_multi state.lit2clauses ~key:lit ~data:watching_clause;
+            (true, state)
     in
     try_rewatch_once state watching_lit watching_clause
     @@ Clause.literals watching_clause
@@ -147,7 +138,7 @@ let rec unit_propagation (state : solver_state) :
         if rewatched then
           process_watching_clause state watching_lit watching_clauses
         else
-          let watching_lits = Map.find_exn state.clause2lits watching_clause in
+          let watching_lits = Hashtbl.find_exn state.clause2lits watching_clause in
           match watching_lits with
           | [] -> failwith "Should not happen" [@coverage off]
           | _ :: [] -> (state, `Conflict watching_clause)
@@ -181,7 +172,7 @@ let rec unit_propagation (state : solver_state) :
       in
       let watching_lit = Literal.neg @@ List.hd_exn watching_lit in
       let watching_clauses =
-        Map.find state.lit2clauses watching_lit |> Option.value ~default:[]
+        Hashtbl.find state.lit2clauses watching_lit |> Option.value ~default:[]
       in
       process_watching_clause
         { state with to_propagate }

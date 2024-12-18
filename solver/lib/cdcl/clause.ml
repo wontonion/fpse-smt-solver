@@ -3,7 +3,7 @@ open Core
 module T = struct
   [@@@coverage off]
 
-  type t = Literal.t list [@@deriving sexp, compare, equal]
+  type t = Literal.t list [@@deriving sexp, compare, equal, hash]
 
   [@@@coverage on]
 end
