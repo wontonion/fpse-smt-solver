@@ -145,44 +145,23 @@ let test_solve_sudoku_unsolvable _ =
 let test_bool_to_value _ =
   (* Test case 1: size 2 *)
   assert_equal [1; 2] 
-    (bool_to_value 2 [true; false; false; true]) 
+    (bool_ls_to_int_ls 2 [true; false; false; true]) 
     ~msg:"Should convert [true; false; false; true] to [1; 2] for size 2";
   
   (* Test case 2: size 3 *)
   assert_equal [2; 1; 3] 
-    (bool_to_value 3 [false; true; false; true; false; false; false; false; true])
+    (bool_ls_to_int_ls 3 [false; true; false; true; false; false; false; false; true])
     ~msg:"Should correctly convert boolean list to values for size 3";
     
   (* Test case 3: empty list *)
   assert_equal [] 
-    (bool_to_value 2 []) 
+    (bool_ls_to_int_ls 2 []) 
     ~msg:"Should handle empty list";
     
   (* Test case 4: all false *)
   assert_equal [0; 0] 
-    (bool_to_value 2 [false; false; false; false])
+    (bool_ls_to_int_ls 2 [false; false; false; false])
     ~msg:"Should handle list with all false values"
-
-let test_split_into_sublists _ =
-  (* Test case 1: basic 2x2 grid *)
-  assert_equal [[1; 2]; [3; 4]] 
-    (split_into_sublists 2 [1; 2; 3; 4])
-    ~msg:"Should split 2x2 grid correctly";
-    
-  (* Test case 2: 3x3 grid *)
-  assert_equal [[1; 2; 3]; [4; 5; 6]; [7; 8; 9]] 
-    (split_into_sublists 3 [1; 2; 3; 4; 5; 6; 7; 8; 9])
-    ~msg:"Should split 3x3 grid correctly";
-    
-  (* Test case 3: empty list *)
-  assert_equal [] 
-    (split_into_sublists 2 [])
-    ~msg:"Should handle empty list";
-    
-  (* Test case 4: single sublist *)
-  assert_equal [[1; 2]] 
-    (split_into_sublists 2 [1; 2])
-    ~msg:"Should handle single sublist"
 
 let suite =
   "sudoku_tests" >::: [
@@ -203,7 +182,6 @@ let suite =
     "test_solve_sudoku_invalid_size" >:: test_solve_sudoku_invalid_size;
     "test_solve_sudoku_unsolvable" >:: test_solve_sudoku_unsolvable; *)
     "test_bool_to_value" >:: test_bool_to_value;
-    "test_split_into_sublists" >:: test_split_into_sublists;
   ]
 
 let () = run_test_tt_main suite

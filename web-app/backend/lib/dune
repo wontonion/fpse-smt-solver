@@ -4,8 +4,8 @@
  (libraries
   core
   dream
+  lwt
   handlers
-  
   landmarks
  )
  (preprocess

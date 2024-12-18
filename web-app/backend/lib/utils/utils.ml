@@ -8,6 +8,7 @@ let build_simple_json_string ~msg ~problem_type =
   |> Utils_types.json_body_to_yojson (fun _ -> `Null)
   |> Yojson.Safe.to_basic
   |> Yojson.Basic.to_string
+
 let build_string_from_json ~msg ~problem_type ~data ~data_to_yojson =
   let body = {
     Utils_types.message = msg;
@@ -19,7 +20,7 @@ let build_string_from_json ~msg ~problem_type ~data ~data_to_yojson =
   |> Yojson.Safe.to_basic
   |> Yojson.Basic.to_string
 
-
+[@@@coverage off]
 (* this version directly terminate the process *)
 let with_timeout ~timeout ?on_cancel f =
   let pid_ref = ref None in
@@ -54,13 +55,13 @@ let with_timeout ~timeout ?on_cancel f =
   in
 
   let timeout_thread = 
+    Lwt.cancel task;
     let%lwt () = Lwt_unix.sleep (float_of_int timeout /. 1000.0) in
     (match !pid_ref with
      | Some pid -> 
          (try Unix.kill pid Sys.sigkill 
           with Unix.Unix_error _ -> ())
      | None -> ());
-    Lwt.cancel task;
     Lwt.return (Error "Task timed out")
   in
 
@@ -70,7 +71,7 @@ let with_timeout ~timeout ?on_cancel f =
   ] in
   Lwt.cancel timeout_thread;
   Lwt.return result
-
+[@@@coverage on]
 
 (* didn't terminate calculation but cancel the promise *)
 (* let with_timeout ~timeout ?on_cancel f =

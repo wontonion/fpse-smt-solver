@@ -15,7 +15,7 @@ let timeout_test_route =
   Dream.get "/api/timeout/test" (fun _ ->
     let expensive_fun (timeout_sec : float) : int Lwt.t =
       let rec loop n =
-        let%lwt () = Lwt.pause () in (* Give a chance for Lwt to check if we have timed out yet *)
+        let%lwt () = Lwt.pause () in (*Give a chance for Lwt to check if we have timed out yet *)
         if n <= 0
         then Lwt.return 0
         else
@@ -23,11 +23,15 @@ let timeout_test_route =
           Lwt.return (res + n)
       in
       Lwt_unix.with_timeout timeout_sec
-      @@ fun () -> loop Core.Int.(10 ** 10) (* loop way too many times to finish in 1 second *)
+      @@ fun () -> (
+        (* let%lwt () = Lwt.pause () in *)
+        loop Core.Int.(10 ** 10) (* loop way too many times to finish in 1 second *)
+      )
+        
     in
     let timeout_example () =
       try
-        expensive_fun 3.0
+        expensive_fun 1.0
         |> Lwt_main.run (* run the computation *)
         |> Result.return (* if we got here (because an exception could have been thrown in the line above) then the computation finished in time *)
       with

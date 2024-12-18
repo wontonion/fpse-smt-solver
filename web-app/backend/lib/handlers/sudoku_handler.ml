@@ -24,7 +24,7 @@ let generate_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
 
     match result with
     | Ok grid ->
-        let sudoku_data = Sudoku_utils.convert_to_sudoku_data grid in
+        let sudoku_data = Sudoku_utils.to_frontend_sudoku_data grid in
         Utils.build_string_from_json 
           ~msg:"Sudoku puzzle generated successfully" 
           ~problem_type:Utils_types.Sudoku 
@@ -46,12 +46,12 @@ let solve_sudoku_handler (request : Dream.request) : Dream.response Lwt.t =
  let%lwt body = Dream.body request in
       try
         let json = Yojson.Safe.from_string body in
-        let data: Utils_types.sudoku_data = Sudoku_utils.convert_frontend_grid json in
-        let int_grid = Sudoku_utils.convert_frontend_grid_to_int_grid data.grid in
+        let data: Utils_types.sudoku_data = Sudoku_utils.to_backend_sudoku_data json in
+        let int_grid = Sudoku_utils.to_int_grid data.grid in
         let%lwt result =
           Utils.with_timeout ~timeout:10000 (fun () ->
               try Ok (Sudoku_utils.solve_sudoku int_grid data.size)
-                with e -> Error (Exn.to_string e))
+              with e -> Error (Exn.to_string e))
         in 
 
         match result with
