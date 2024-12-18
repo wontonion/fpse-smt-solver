@@ -4,21 +4,16 @@
 
 (generate_opam_files true)
 
-(source
- (github username/reponame))
+(authors "Yisheng Zhu")
 
-(authors "Author Name")
+(maintainers "Yisheng Zhu")
 
-(maintainers "Maintainer Name")
-
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(license "MIT")
 
 (package
  (name backend)
- (synopsis "Demo WebApp backend")
- (description "Demo WebApp backend")
+ (synopsis "WebApp backend")
+ (description "WebApp backend")
  (depends 
   ocaml 
   dream
@@ -32,5 +27,3 @@
  )
  (tags
   (backend webapp)))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

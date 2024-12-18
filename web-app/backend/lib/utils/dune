@@ -1,37 +1,7 @@
 (library
- (name sudoku_utils)
- (public_name backend.utils.sudoku_utils)
- (modules sudoku_utils)
- (libraries 
-  core 
-  types
-  utils
-  solver.cdcl
-  solver.dimacs
-  solver.smt
-  solver.vm)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
-
-(library
- (name formula_utils)
- (public_name backend.utils.formula_utils)
- (modules formula_utils)
- (libraries 
-  core 
-  types 
-  utils 
-  solver.cdcl 
-  solver.dimacs 
-  solver.smt 
-  solver.vm)
- (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
-
-(library
- (name types)
- (public_name backend.utils.types)
- (modules types)
+ (name utils_types)
+ (public_name backend.utils.utils_types)
+ (modules utils_types)
  (libraries core)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
@@ -41,9 +11,51 @@
  (public_name backend.utils.utils)
  (modules utils)
  (libraries 
-  core
   dream 
   yojson 
-  types)
+  utils_types
+  )
+ (preprocess
+  (pps 
+  lwt_ppx 
+  ppx_deriving_yojson 
+  ; bisect_ppx
+  ; landmarks-ppx --auto
+  )))
+
+(library
+ (name sudoku_utils)
+ (public_name backend.utils.sudoku_utils)
+ (modules sudoku_utils)
+ (libraries 
+  core 
+  utils_types
+  utils
+  solver.cdcl
+  solver.dimacs
+  solver.smt
+  solver.vm
+  )
+ (preprocess
+  (pps 
+  lwt_ppx 
+  ppx_deriving_yojson
+  ; bisect_ppx
+  ; landmarks-ppx --auto
+  )))
+
+(library
+ (name formula_utils)
+ (public_name backend.utils.formula_utils)
+ (modules formula_utils)
+ (libraries 
+  core 
+  utils_types 
+  utils 
+  solver.cdcl 
+  solver.dimacs 
+  solver.smt 
+  solver.vm)
  (preprocess
   (pps lwt_ppx ppx_deriving_yojson)))
+

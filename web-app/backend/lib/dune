@@ -2,10 +2,13 @@
  (name routes)
  (modules routes)
  (libraries
+  core
   dream
   handlers
+  
+  landmarks
  )
  (preprocess
-  (pps lwt_ppx ppx_deriving_yojson)))
+  (pps lwt_ppx ppx_deriving_yojson landmarks-ppx --auto)))
 
 

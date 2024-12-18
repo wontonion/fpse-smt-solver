@@ -10,15 +10,10 @@
  (libraries 
   core
   dream
-  lwt
+  utils_types
+  utils
   sudoku_utils
   formula_utils
-  ; solver.cdcl
-  ; solver.dimacs
-  ; solver.smt
-  ; solver.vm
-  types
-  utils
  )
  (preprocess
   (pps 

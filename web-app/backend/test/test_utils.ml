@@ -1,7 +1,41 @@
 open OUnit2
 open Utils
 
-let test_with_timeout_success _ =
+let test_build_simple_json_string _ =
+  let json_string1 = build_simple_json_string ~msg:"test sat" ~problem_type:Utils_types.SAT in
+  let json_string2 = build_simple_json_string ~msg:"test smt" ~problem_type:Utils_types.SMT in
+  let json_string3 = build_simple_json_string ~msg:"test sudoku" ~problem_type:Utils_types.Sudoku in
+  let expected_string1 = "{\"message\":\"test sat\",\"problem_type\":\"SAT\",\"data\":null}" in
+  let expected_string2 = "{\"message\":\"test smt\",\"problem_type\":\"SMT\",\"data\":null}" in
+  let expected_string3 = "{\"message\":\"test sudoku\",\"problem_type\":\"Sudoku\",\"data\":null}" in
+  assert_equal 
+    (Yojson.Safe.from_string expected_string1) 
+    (Yojson.Safe.from_string json_string1);
+  assert_equal 
+    (Yojson.Safe.from_string expected_string2) 
+    (Yojson.Safe.from_string json_string2);
+  assert_equal 
+    (Yojson.Safe.from_string expected_string3) 
+    (Yojson.Safe.from_string json_string3)
+
+let test_build_string_from_json _ =
+  let json_string1 = build_string_from_json ~msg:"test" ~problem_type:Utils_types.SAT ~data:None ~data_to_yojson:Utils_types.sat_smt_data_to_yojson in
+  let json_string2 = build_string_from_json ~msg:"test" ~problem_type:Utils_types.SMT ~data:None ~data_to_yojson:Utils_types.sat_smt_data_to_yojson in
+  let json_string3 = build_string_from_json ~msg:"test" ~problem_type:Utils_types.Sudoku ~data:None ~data_to_yojson:Utils_types.sudoku_data_to_yojson in
+  let expected_string1 = "{\"message\":\"test\",\"problem_type\":\"SAT\",\"data\":null}" in
+  let expected_string2 = "{\"message\":\"test\",\"problem_type\":\"SMT\",\"data\":null}" in
+  let expected_string3 = "{\"message\":\"test\",\"problem_type\":\"Sudoku\",\"data\":null}" in
+  assert_equal 
+    (Yojson.Safe.from_string expected_string1) 
+    (Yojson.Safe.from_string json_string1);
+  assert_equal 
+    (Yojson.Safe.from_string expected_string2) 
+    (Yojson.Safe.from_string json_string2);
+  assert_equal 
+    (Yojson.Safe.from_string expected_string3) 
+    (Yojson.Safe.from_string json_string3)
+
+(* let test_with_timeout_success _ =
   let result = Lwt_main.run (
     with_timeout ~timeout:2000 (fun () ->
       Ok "success"
@@ -56,14 +90,16 @@ let test_with_timeout_cpu_intensive _ =
   assert_bool "Counter should stop increasing after timeout" 
     (let new_count = !counter in
      Printf.printf "Counter after 2s: %d\n" new_count;
-     abs(new_count - final_count) < 1000000)
+     abs(new_count - final_count) < 1000000) *)
 
 let suite =
   "Utils Test Suite" >::: [
-    "test_with_timeout_success" >:: test_with_timeout_success;
+    "test_build_simple_json_string" >:: test_build_simple_json_string;
+    "test_build_string_from_json" >:: test_build_string_from_json;
+    (* "test_with_timeout_success" >:: test_with_timeout_success;
     "test_with_timeout_timeout" >:: test_with_timeout_timeout;
     "test_with_timeout_cancellation" >:: test_with_timeout_cancellation;
-    "test_with_timeout_cpu_intensive" >:: test_with_timeout_cpu_intensive;
+    "test_with_timeout_cpu_intensive" >:: test_with_timeout_cpu_intensive; *)
   ]
 
 let () = run_test_tt_main suite

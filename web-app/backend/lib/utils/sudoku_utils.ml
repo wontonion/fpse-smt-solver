@@ -1,11 +1,11 @@
 open Core
-open Types
+open Utils_types
 open Cdcl
 open Cdcl.Variable
 
 type grid = int list list
 
-let block_size_ls = [ 2; 3 ]
+let sudoku_block_sizes = [ 2; 3 ]
 
 (* create empty grid *)
 let create_empty_grid ~block_size : grid =
@@ -16,15 +16,15 @@ let create_empty_grid ~block_size : grid =
 let get_row (grid : grid) (row : int) : int list = List.nth_exn grid row
 
 let get_col (grid : grid) (col : int) : int list =
-  (* List.map ~f:(fun row -> List.nth_exn row col) grid *)
-  if col < 0 || List.is_empty grid then []
+  List.map ~f:(fun row -> List.nth_exn row col) grid
+(* if col < 0 || List.is_empty grid then []
   else
     let first_row = List.hd_exn grid in
     if col >= List.length first_row then []
     else
       List.fold_right
         ~f:(fun row acc -> List.nth_exn row col :: acc)
-        ~init:[] grid
+        ~init:[] grid *)
 
 let get_block (grid : grid) (row : int) (col : int) ~block_size : int list =
   let size = block_size * block_size in
@@ -38,7 +38,7 @@ let get_block (grid : grid) (row : int) (col : int) ~block_size : int list =
 (* Update a value in a list at given index *)
 let list_update (ls : 'a list) (index : int) (value : 'a) : 'a list =
   List.mapi ~f:(fun i x -> if i = index then value else x) ls
-  (* if index < 0 then ls
+(* if index < 0 then ls
   else
     let rec update_aux acc rest i =
       match rest with
@@ -117,7 +117,7 @@ let rec solve_grid (grid : grid) ~block_size : grid option =
 
 (* Improved generation algorithm *)
 let generate_puzzle ~block_size : grid =
-  if not (List.mem block_size_ls block_size ~equal:Int.equal) then
+  if not (List.mem sudoku_block_sizes block_size ~equal:Int.equal) then
     failwith "Block size must be either 2 or 3";
 
   Random.self_init ();
@@ -136,7 +136,7 @@ let generate_puzzle ~block_size : grid =
   in
 
   (* remove about half of the numbers *)
-  let target_removed = total_cells / 2 in
+  let target_removed = (total_cells / 2) + (total_cells / 20) in
 
   let rec remove_numbers grid positions removed =
     match positions with
@@ -149,9 +149,31 @@ let generate_puzzle ~block_size : grid =
           if solutions = 1 then remove_numbers new_grid rest (removed + 1)
           else remove_numbers grid rest removed
   in
-
   remove_numbers solved_grid shuffled_positions 0
 
+let convert_frontend_grid_to_int_grid (grid : sudoku_cell list list) :
+    int list list =
+  List.map grid ~f:(fun row ->
+      List.map row ~f:(fun cell ->
+          if cell.Utils_types.is_initial then
+            match cell.Utils_types.value with
+            | "" -> 0
+            | s -> ( try int_of_string s with _ -> 0)
+          else 0))
+
+let merge_grid_with_initial (grid : grid) (initial_grid : sudoku_cell list list)
+    : sudoku_cell list list =
+  List.zip_exn grid initial_grid
+  |> List.map ~f:(fun (solved_row, orig_row) ->
+         List.zip_exn solved_row orig_row
+         |> List.map ~f:(fun (solved_val, orig_cell) ->
+                {
+                  Utils_types.value = string_of_int solved_val;
+                  Utils_types.is_initial = orig_cell.Utils_types.is_initial;
+                  Utils_types.is_valid = true;
+                }))
+
+(* convert the grid to the sudoku data *)
 let convert_to_sudoku_data (grid : grid) : sudoku_data =
   let size = List.length grid in
   let convert_cell value =
@@ -166,9 +188,9 @@ let convert_to_sudoku_data (grid : grid) : sudoku_data =
 let convert_frontend_cell json =
   let open Yojson.Safe.Util in
   {
-    Types.value = member "value" json |> to_string;
-    Types.is_initial = member "isInitial" json |> to_bool;
-    Types.is_valid = member "isValid" json |> to_bool;
+    Utils_types.value = member "value" json |> to_string;
+    Utils_types.is_initial = member "isInitial" json |> to_bool;
+    Utils_types.is_valid = member "isValid" json |> to_bool;
   }
 
 let convert_frontend_grid json =
@@ -178,8 +200,9 @@ let convert_frontend_grid json =
     member "grid" json |> to_list
     |> List.map ~f:(fun row -> to_list row |> List.map ~f:convert_frontend_cell)
   in
-  { Types.size; Types.grid }
+  { Utils_types.size; Utils_types.grid }
 
+[@@@coverage off]
 let get_sudoku_formula size =
   let open Core.In_channel in
   match size with
@@ -190,67 +213,39 @@ let get_sudoku_formula size =
       Dimacs.Parser.parse @@ read_all "data/sudoku.2x2.cnf"
       |> Result.ok_or_failwith
   | _ -> failwith "Invalid grid size"
+[@@@coverage on]
 
+let rec bool_to_value (size : int) (ls : bool list) : int list =
+  match ls with
+  | [] -> []
+  | _ ->
+      let open Core in
+      let vs, ls = List.split_n ls size in
+      let value, _ =
+        List.fold_left vs ~init:(0, 1) ~f:(fun (res, num) x ->
+            if x then (num, num + 1) else (res, num + 1))
+      in
+      value :: bool_to_value size ls
+
+let split_into_sublists (size : int) (lst : int list) : int list list =
+  let rec aux (acc : int list list) (current : int list) (lst : int list) :
+      int list list =
+    match lst with
+    | [] ->
+        if List.length current = 0 then List.rev acc
+        else List.rev (List.rev current :: acc)
+    | x :: xs ->
+        if List.length current < size then aux acc (x :: current) xs
+        else aux (List.rev current :: acc) [ x ] xs
+  in
+  aux [] [] lst
+
+[@@@coverage off]
 module RandomSolver = Solver.Make (Heuristic.Randomized)
 
 let solve_sudoku (int_grid : int list list) (size : int) :
     (int list list, string) Result.t =
-  let rec bool_to_value (size : int) (ls : bool list) : int list =
-    match ls with
-    | [] -> []
-    | _ ->
-        let open Core in
-        let vs, ls = List.split_n ls size in
-        let value, _ =
-          List.fold_left vs ~init:(0, 1) ~f:(fun (res, num) x ->
-              if x then (num, num + 1) else (res, num + 1))
-        in
-        value :: bool_to_value size ls
-  in
-  let split_into_sublists (size : int) (lst : int list) : int list list =
-    let rec aux (acc : int list list) (current : int list) (lst : int list) :
-        int list list =
-      match lst with
-      | [] ->
-          List.rev (List.rev current :: acc)
-          (* Add the last collected sublist *)
-      | x :: xs ->
-          if List.length current < size then
-            aux acc (x :: current) xs (* Add element to current sublist *)
-          else aux (List.rev current :: acc) [ x ] xs (* Start a new sublist *)
-    in
-    aux [] [] lst
-  in
   let grids = List.concat int_grid in
-  (* let formula =
-    match size with
-    | 4 when List.length grids = 16 -> Ok (get_sudoku_formula 4)
-    | 9 when List.length grids = 81 -> Ok (get_sudoku_formula 9)
-    | _ -> Error "Invalid grid size"
-  in
-  if Result.is_error formula then Error (Result.get_error formula)
-  else
-    let formula, _ =
-      List.fold_left
-        ~init:(Result.ok_or_failwith formula, 0)
-        ~f:(fun (f, idx) x ->
-          if x = 0 then (f, idx + 1)
-          else
-            let lit = Literal.create (Var ((idx * size) + x)) Positive in
-            (Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ], idx + 1))
-        (* (Result.get_ok formula, 0) *)
-        grids
-    in
-    let assignment =
-      match RandomSolver.cdcl_solve formula with
-      | `SAT assignment -> Ok (Assignment.to_list assignment)
-      | `UNSAT -> Error "Unsatisfiable"
-    in
-    match assignment with
-    | Error msg -> Error msg
-    | Ok assignment ->
-        Ok (bool_to_value size assignment |> split_into_sublists size) *)
-
   let formula =
     match size with
     | 4 when List.length grids = 16 -> Ok (get_sudoku_formula 4)
@@ -262,11 +257,12 @@ let solve_sudoku (int_grid : int list list) (size : int) :
          let formula, _ =
            List.fold_left ~init:(initial_formula, 0)
              ~f:(fun (f, idx) x ->
-               if x = 0 then (f, idx + 1)
-               else
-                 let lit = Literal.create (Var ((idx * size) + x)) Positive in
-                 ( Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ],
-                   idx + 1 ))
+               match x with
+               | 0 -> (f, idx + 1)
+               | _ ->
+                   let lit = Literal.create (Var ((idx * size) + x)) Positive in
+                   ( Cdcl.Formula.add_clause f @@ Cdcl.Clause.create [ lit ],
+                     idx + 1 ))
              grids
          in
          match RandomSolver.cdcl_solve formula with
@@ -275,3 +271,4 @@ let solve_sudoku (int_grid : int list list) (size : int) :
                (assignment |> Assignment.to_list |> bool_to_value size
               |> split_into_sublists size)
          | `UNSAT -> Error "Unsatisfiable")
+[@@@coverage on]

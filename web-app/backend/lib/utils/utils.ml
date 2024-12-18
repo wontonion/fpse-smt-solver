@@ -1,82 +1,38 @@
-let build_simple_json_string ~msg =
+let build_simple_json_string ~msg ~problem_type =
   let body = {
-    Types.message = msg;
-    Types.problem_type = Types.SAT;
-    Types.data = None;
+    Utils_types.message = msg;
+    Utils_types.problem_type = problem_type;
+    Utils_types.data = None;
   } in
   body
-  |> Types.json_body_to_yojson (fun _ -> `Null)
-  |> Yojson.Safe.to_string
-
+  |> Utils_types.json_body_to_yojson (fun _ -> `Null)
+  |> Yojson.Safe.to_basic
+  |> Yojson.Basic.to_string
 let build_string_from_json ~msg ~problem_type ~data ~data_to_yojson =
   let body = {
-    Types.message = msg;
-    Types.problem_type = problem_type;
-    Types.data = data;
+    Utils_types.message = msg;
+    Utils_types.problem_type = problem_type;
+    Utils_types.data = data;
   } in
   body
-  |> Types.json_body_to_yojson data_to_yojson
-  |> Yojson.Safe.to_string
+  |> Utils_types.json_body_to_yojson data_to_yojson
+  |> Yojson.Safe.to_basic
+  |> Yojson.Basic.to_string
 
 
-let json_response data =
-  Dream.json (Yojson.Safe.to_string data)
-
-
-let build_response ~status ~message ?data to_yojson =
-  let response = {
-    Types.status;
-    Types.message;
-    Types.data;
-  } in
-  json_response (Types.response_to_yojson to_yojson response)
-
-let build_success_response ~message ?data to_yojson =
-  build_response ~status:"success" ~message ?data to_yojson
-
-let build_error_response_with_converter ?(code=400) ~message ?data to_yojson =
-  let response = {
-    Types.status = "error";
-    Types.message = message;
-    Types.data = data;
-  } in
-  Lwt.return (Dream.response 
-    ~code
-    ~headers:["Content-Type", "application/json"]
-    (Yojson.Safe.to_string (Types.response_to_yojson to_yojson response)))
-
-(** Build a standard JSON response for Sudoku problems *)
-let build_sudoku_response ?(status="success") ~message ?data () =
-  build_response ~status ~message ?data Types.sudoku_data_to_yojson
-
-(** Build a standard JSON response for SAT/SMT solutions *)
-(* let build_solution_response ?(status="success") ~message ?data () =
-  build_response ~status ~message ?data Types.solution_to_yojson *)
-
-(** Build a standard JSON response for SAT/SMT problems *)
-let build_problem_response ?(status="success") ~message ?data () =
-  build_response ~status ~message ?data Types.problem_to_yojson
-
-(** Build an error response *)
-(* let build_error_response ?(code=400) ~message ~problem_type () =
-  match problem_type with
-  | Types.Sudoku -> 
-      build_error_response_with_converter ~code ~message Types.sudoku_data_to_yojson
-  | Types.SAT | Types.SMT -> 
-      build_error_response_with_converter ~code ~message Types.solution_to_yojson *)
-
-
-(* let with_timeout ~timeout ?on_cancel f =
+(* this version directly terminate the process *)
+let with_timeout ~timeout ?on_cancel f =
   let pid_ref = ref None in
   
   let task = 
     Lwt.catch
       (fun () ->
-        let%lwt result = Lwt_preemptive.detach
-          (fun () ->
-            pid_ref := Some (Unix.getpid ());
-            Printf.printf "Process ID: %d\n%!" (match !pid_ref with Some pid -> pid | None -> -1);
-            try
+        let%lwt result = 
+          Lwt_preemptive.detach
+            (fun () ->
+              pid_ref := Some (Unix.getpid ());
+              Printf.printf "Process ID: %d\n%!" (match !pid_ref with Some pid -> pid | None -> -1);
+              try
               f ()
             with e ->
               Error ("Exception: " ^ Printexc.to_string e))
@@ -113,19 +69,21 @@ let build_problem_response ?(status="success") ~message ?data () =
     timeout_thread
   ] in
   Lwt.cancel timeout_thread;
-  Lwt.return result *)
+  Lwt.return result
 
-  let with_timeout ~timeout ?on_cancel f =
-    let task = 
-      Lwt.catch
-        (fun () ->
-          let%lwt () = Lwt.pause () in  (* Allow other tasks to run *)
-          let%lwt result = Lwt_preemptive.detach
-            (fun () ->
-              try
-                f ()
-              with e ->
-                Error ("Exception: " ^ Printexc.to_string e))
+
+(* didn't terminate calculation but cancel the promise *)
+(* let with_timeout ~timeout ?on_cancel f =
+  let task = 
+    Lwt.catch
+      (fun () ->
+        let%lwt () = Lwt.pause () in  (* Allow other tasks to run *)
+        let%lwt result = Lwt_preemptive.detach
+          (fun () ->
+            try
+              f ()
+            with e ->
+              Error ("Exception: " ^ Printexc.to_string e))
             ()
           in
           Lwt.return result)
@@ -149,28 +107,7 @@ let build_problem_response ?(status="success") ~message ?data () =
       timeout_thread
     ] in
     Lwt.cancel timeout_thread;
-    Lwt.return result
+  Lwt.return result *)
 
 
-(* let with_timeout_new ~seconds ~f =
-  let timeout = Lwt_unix.timeout seconds in
-  Lwt.catch (
-    fun () ->
-      let%lwt result = Lwt_unix.with_timeout ~timeout ~f in
-      Lwt.return result
-  ) (
-    fun e ->
-      match e with 
-      | Lwt_unix.Timeout -> Lwt.return (Error "Timeout")
-      | _ -> Lwt.return (Error ("Unexpected error: " ^ Printexc.to_string e))
-  )
- *)
-(* let with_timeout_new ~timeout f =
-  let%lwt result = Lwt_unix.with_timeout 
-    (float_of_int timeout /. 1000.0)
-    (fun () ->
-      let%lwt _ = Lwt_unix.sleep 0. in
-      Lwt.return (f ())
-    )
-  in
-  result *)
+

@@ -2,7 +2,8 @@ let routes = [
   Routes.hello_route; 
   Routes.generate_sudoku_route; 
   Routes.solve_sudoku_route;
-  Routes.solve_formula_route 
+  Routes.solve_formula_route;
+  Routes.timeout_test_route
 ] 
 
 

@@ -13,11 +13,5 @@ let hello_handler (_ : Dream.request) : Dream.response Lwt.t =
   in
   Dream.json ~status:`OK result
   
-  (* let%lwt result = Utils.with_timeout ~timeout:1000 (fun () ->
-    "Hello from Dream(backend)!"
-  ) in
-  result |> Lwt.return |> Dream.json ~status:`OK *)
-
-  (* Dream.json 
-    ~status:`OK 
-    message *)
+  (* let with_timeout_test (sec: float) (func: ) *)
+  

@@ -1,20 +1,21 @@
 (test
- (name test_sudoku)
- (libraries
-  ounit2
-  routes
-  handlers
-  types
-  utils
-  sudoku_utils
-  )
- (preprocess
-  (pps ppx_deriving_yojson)))
-
-(test
  (name test_utils)
  (libraries
   ounit2
   utils
-  lwt.unix))
+  lwt.unix
+  ))
+
+(test
+ (name test_sudoku_utils)
+ (libraries
+  ounit2
+  routes
+  handlers
+  utils_types
+  utils
+  sudoku_utils
+  )
+ (preprocess
+  (pps ppx_deriving_yojson )))
 

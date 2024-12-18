@@ -6,12 +6,12 @@ type problem_type =
 let problem_type_to_yojson = function
   | SAT -> `String "SAT"
   | SMT -> `String "SMT"
-  | Sudoku -> `String "sudoku"
+  | Sudoku -> `String "Sudoku"
 
 let problem_type_of_yojson = function
   | `String "SAT" -> Ok SAT
   | `String "SMT" -> Ok SMT
-  | `String "sudoku" -> Ok Sudoku
+  | `String "Sudoku" -> Ok Sudoku
   | _ -> Error "Invalid problem_type"
 
 type sudoku_cell = {
@@ -25,26 +25,11 @@ type sudoku_data = {
   grid: sudoku_cell list list;
 } [@@deriving yojson]
 
-type problem = {
-  problem_type: problem_type;
-  constraints: string list;
-  variables: string list;
-} [@@deriving yojson]
-
-(* type solution = {
-  problem_type: problem_type;
-  data: string;
-  time_taken: float;
-} [@@deriving yojson] *)
-
-type 'a response = {
-  status: string;
-  message: string;
-  data: 'a option;
-} [@@deriving yojson]
-
 type 'a json_body = {
   message: string;
   problem_type: problem_type;
   data: 'a option;
 } [@@deriving yojson]
+
+(* sat/smt problem data just string *)
+type sat_smt_data = string [@@deriving yojson]

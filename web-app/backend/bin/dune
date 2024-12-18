@@ -3,7 +3,12 @@
  (name main)
  (libraries 
   dream
-  lwt
   routes
   handlers
- ))
+ )
+ (preprocess
+  (pps 
+  lwt_ppx 
+  ppx_deriving_yojson 
+  ))
+)
