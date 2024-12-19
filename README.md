@@ -8,7 +8,7 @@ This repo is for FPSE project assignment.
 
 ## Web App
 
-The web app is built with Docker, and the docker image is based on x86_64. So please make sure your machine is based on x86_64.
+The web app is built with Docker, and the docker image is based on x86_64. So please make sure the host machine is based on x86_64.
 
 ### Prerequisite
 
@@ -24,13 +24,39 @@ docker compose up
 
 The web app will be available at `localhost:80`.
 
+### Overview
+The web app's backend is built with Dream and its frontend is built with ReScript.
+
 ### Progress Summary
 
-#### Functional Components
+#### Frontend Components
+
+#### Sudoku Puzzle
+- **Grid Specifications**
+  - Supports both 4x4 and 9x9 grid sizes, offering flexibility for different difficulty levels
+  - Features real-time validation with visual feedback:
+    - Invalid number placements trigger red highlighting in affected row/column/block
+    - Valid placements maintain normal cell appearance
+  - Custom initialization capability allows players to set their own starting numbers
+    - Input validation ensures all initial positions contain valid numbers
+  - Performance safeguard: Solutions exceeding 10-second computation time trigger an error notification
+
+#### SAT/SMT Solver Interface
+- **User Interface Features**
+  - Interactive textarea with guiding placeholders for proper formula formatting
+  - Template management system:
+    - Download template functionality for reference
+    - Batch upload support for multiple problem sets
+    - Automatic formula display in textarea upon successful upload
+
+### Backend Architecture
+  - All API endpoints managed through the `Dream` framework
+  - Pure OCaml implementation for Sudoku puzzle generation
+  - Implements yielding between promises with timeout mechanism, which prevents server lockup during complex calculations.
 
 #### Issues Encountered
 
-1. **Timeouts**: The SAT solver can take a long time to solve some problems, which can cause the web app to stuck. We need to implement a timeout mechanism to prevent this.
+1. **Timeouts**: The SAT solver can take a long time to solve some problems, which can cause the web app to reject other requests. We now achieve canceling promise using `Lwt`, but since canceling computation needs aggressive modification current helper functions. We haven't accomplished the genuine termination of computing task. 
 
 ## Solver Project
 
