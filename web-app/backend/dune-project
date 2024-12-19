@@ -4,33 +4,30 @@
 
 (generate_opam_files true)
 
-(source
- (github username/reponame))
+(authors "Yisheng Zhu" "Zihao Wang")
 
-(authors "Author Name")
-
-(maintainers "Maintainer Name")
-
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(maintainers "yzhu186@jh.edu" "zwang484@jh.edu")
 
 (package
  (name backend)
- (synopsis "Demo WebApp backend")
- (description "Demo WebApp backend")
- (depends 
-  ocaml 
-  dream
-  dune
-  core
-  lwt
-  ppx_jane
-  yojson
-  ounit2
-  solver
- )
- (tags
-  (backend webapp)))
+ (synopsis "WebApp backend")
+ (description "WebApp backend")
+ (depends
+  (ounit2
+   (>= 2.2.7))
+  (core
+   (>= 0.17.1))
+  (ppx_jane
+   (>= 0.17.0))
+  (ppx_deriving
+   (>= 0.17.0))
+  (dream
+   (>= 1.0.0~alpha7))
+  (lwt
+   (>= 5.8.0))
+  (yojson
+   (>= 2.2.2))
+  (ppx_deriving_yojson
+   (>= 3.9.0))))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

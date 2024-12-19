@@ -4,23 +4,28 @@
 
 (generate_opam_files true)
 
-(source
- (github username/reponame))
+(authors "Zihao Wang" "Yisheng Zhu")
 
-(authors "Author Name")
-
-(maintainers "Maintainer Name")
-
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(maintainers "zwang484@jh.edu" "yzhu186@jh.edu")
 
 (package
  (name solver)
- (synopsis "SAT/SMT solver")
- (description "SAT/SMT solver")
- (depends ocaml dune)
- (tags
-  (SMT SAT solver)))
+ (synopsis "A SAT/SMT solver")
+ (description "A SAT/SMT solver")
+ (depends
+  (ounit2
+   (>= 2.2.7))
+  (core
+   (>= 0.17.1))
+  (landmarks
+   (>= 1.4))
+  (landmarks-ppx
+   (>= 1.4))
+  (bisect_ppx
+   (>= 2.8.3))
+  (ppx_jane
+   (>= 0.17.0))
+  (ppx_deriving
+   (>= 0.17.0))))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
