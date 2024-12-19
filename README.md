@@ -49,7 +49,7 @@ The web app's backend is built with Dream and its frontend is built with ReScrip
     - Batch upload support for multiple problem sets
     - Automatic formula display in textarea upon successful upload
 
-### Backend Architecture
+#### Backend Architecture
   - All API endpoints managed through the `Dream` framework
   - Pure OCaml implementation for Sudoku puzzle generation
   - Implements yielding between promises with timeout mechanism, which prevents server lockup during complex calculations.
