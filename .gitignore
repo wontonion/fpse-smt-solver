@@ -29,3 +29,9 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+# Bisect coverage
+_coverage
+
+# Python cache
+__pycache__

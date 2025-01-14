@@ -1,6 +1,7 @@
 (library
  (name cdcl)
- (modules variable literal clause assignment solver)
- (libraries core)
+ (public_name solver.cdcl)
+ (modules variable literal clause formula assignment solver heuristic)
+ (libraries core landmarks)
  (preprocess
-  (pps ppx_deriving.show ppx_jane)))
+  (pps ppx_deriving.show ppx_jane bisect_ppx landmarks-ppx --auto)))

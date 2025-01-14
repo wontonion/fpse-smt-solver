@@ -1,0 +1,4 @@
+(library
+ (name cdcl_tests)
+ (modules cdcl_tests literal_tests clause_tests formula_tests assignment_tests solver_tests)
+ (libraries core ounit2 cdcl))

@@ -1,4 +1,5 @@
-(executable
- (public_name solver)
- (name main)
- (libraries cdcl))
+(executables
+ (names sat_solver smt_solver)
+ (libraries cdcl dimacs smt vm landmarks)
+ (preprocess
+  (pps bisect_ppx landmarks-ppx --auto)))

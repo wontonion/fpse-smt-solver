@@ -1,0 +1,7 @@
+(library
+ (name dimacs)
+ (public_name solver.dimacs)
+ (modules utils parser)
+ (libraries core cdcl)
+ (preprocess
+  (pps ppx_deriving.show ppx_jane bisect_ppx)))

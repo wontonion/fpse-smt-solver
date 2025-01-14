@@ -1,9 +1,11 @@
-open Dream
-let hello_handler = 
-  get "/" (fun _ -> html "Hello from Dream!") 
+let routes = [ 
+  Routes.hello_route; 
+  Routes.generate_sudoku_route; 
+  Routes.solve_sudoku_route;
+  Routes.solve_formula_route 
+] 
 
-let routes = [ hello_handler ] 
 
-let () = run ~interface:"0.0.0.0" ~port:8080
-  @@ logger
-  @@ router routes
+let () = Dream.run ~interface:"0.0.0.0" ~port:8080 
+  @@ Dream.logger
+  @@ Dream.router routes

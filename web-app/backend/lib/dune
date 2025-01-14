@@ -1,2 +1,11 @@
 (library
- (name backend))
+ (name routes)
+ (modules routes)
+ (libraries
+  dream
+  handlers
+ )
+ (preprocess
+  (pps lwt_ppx ppx_deriving_yojson)))
+
+

@@ -38,3 +38,11 @@ In ReScript, it's a good habit to keep track of the actual JS output the compile
 This will also make it easier for your Non-ReScript coworkers to read and understand the changes in Github PRs, and call you out when you are writing inefficient code.
 
 If you want to opt-out, feel free to remove all compiled `.res.mjs` files within the `src` directory and add `src/**/*.res.mjs` in your `.gitignore`.
+
+```bash
+cd frontend
+docker build -t ocaml-front .
+docker run -it -v "$PWD":/app/frontend -p 5173:5173  ocaml-front
+
+```
+

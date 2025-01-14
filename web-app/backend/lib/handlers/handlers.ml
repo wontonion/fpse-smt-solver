@@ -1,0 +1,4 @@
+let hello_handler = Hello_handler.hello_handler
+let generate_sudoku_handler = Sudoku_handler.generate_sudoku_handler
+let solve_sudoku_handler = Sudoku_handler.solve_sudoku_handler
+let solve_formula_handler = Formula_handler.solve_formula_handler

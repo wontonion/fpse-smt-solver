@@ -3,4 +3,7 @@
  (name main)
  (libraries 
   dream
+  lwt
+  routes
+  handlers
  ))

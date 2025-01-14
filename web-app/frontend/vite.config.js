@@ -8,4 +8,12 @@ export default defineConfig({
       include: ["**/*.res.mjs"],
     }),
   ],
+  server: {
+    proxy: {
+      '/backend': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
+  }
 });
